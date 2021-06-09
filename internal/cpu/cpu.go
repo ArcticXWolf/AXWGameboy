@@ -2,6 +2,7 @@ package cpu
 
 import (
 	"fmt"
+	"log"
 
 	"go.janniklasrichter.de/axwgameboy/internal/memory"
 )
@@ -32,6 +33,7 @@ type Cpu struct {
 
 func New() *Cpu {
 	fillUninplementedOpcodes()
+	fillUninplementedOpcodesCb()
 	return &Cpu{
 		Registers: &Registers{
 			A:     0,
@@ -65,17 +67,30 @@ func (c *Cpu) Reset() {
 }
 
 func (c *Cpu) Tick() {
-	opcode := c.getNextOpcode()
-	opcode.Function(c)
-	c.Registers.Pc++
-	c.Registers.Pc &= 0xFFFF
+	code, opcode := c.getNextOpcode()
+	log.Printf("Got next opcode: Code: %02x, %s", code, opcode.Label)
 	c.ClockCycles += opcode.Cycles
+	opcode.Function(c)
 }
 
-func (c *Cpu) getNextOpcode() *opcode {
-	return opcodes[c.Memory.ReadByte(c.Registers.Pc)]
+func (c *Cpu) getNextOpcode() (uint8, *opcode) {
+	code := c.popPc()
+	return code, opcodes[code]
+}
+
+func (c *Cpu) popPc() uint8 {
+	result := c.Memory.ReadByte(c.Registers.Pc)
+	c.Registers.Pc++
+	c.Registers.Pc &= 0xFFFF
+	return result
+}
+
+func (c *Cpu) popPc16() uint16 {
+	result1 := c.popPc()
+	result2 := c.popPc()
+	return uint16(result2<<8) | uint16(result1)
 }
 
 func (c *Cpu) String() string {
-	return fmt.Sprintf("Current State:\n%s\nClock: %v\n%s\n", c.Registers.String(), c.ClockCycles, c.Memory.String())
+	return fmt.Sprintf("Current State:\n%s\nClock: %v\n", c.Registers.String(), c.ClockCycles)
 }

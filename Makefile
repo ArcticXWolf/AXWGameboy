@@ -7,11 +7,11 @@ LDFLAGS=-ldflags "-w -s -X main.version=${VERSION} -X main.date=${BUILD} -X main
 
 build:
 	echo "Building for linux and windows"
-	GOOS=linux GOARCH=amd64 go build -o build/${BINARY}-linux-amd64 ${LDFLAGS} go.janniklasrichter.de/axwgameboy
-	GOOS=windows GOARCH=amd64 go build -o build/${BINARY}-windows-amd64.exe ${LDFLAGS} go.janniklasrichter.de/axwgameboy
+	GOOS=linux GOARCH=amd64 go build -o build/${BINARY}-linux-amd64 ${LDFLAGS} go.janniklasrichter.de/axwgameboy/cmd/axwgameboy
+	GOOS=windows GOARCH=amd64 go build -o build/${BINARY}-windows-amd64.exe ${LDFLAGS} go.janniklasrichter.de/axwgameboy/cmd/axwgameboy
 
 run:
-	go run go.janniklasrichter.de/axwgameboy
+	go run go.janniklasrichter.de/axwgameboy/cmd/axwgameboy
 
 clean:
 	rm -rf build/
