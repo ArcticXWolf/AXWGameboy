@@ -1,4 +1,4 @@
-package memory
+package internal
 
 type MemoryDevice interface {
 	ReadByte(address uint16) uint8

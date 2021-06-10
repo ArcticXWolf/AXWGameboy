@@ -1,10 +1,8 @@
-package memory
+package internal
 
 import (
 	"fmt"
 	"io/ioutil"
-
-	"go.janniklasrichter.de/axwgameboy/internal/gpu"
 )
 
 var gb_bios = [0x100]byte{
@@ -28,7 +26,7 @@ var gb_bios = [0x100]byte{
 
 type Mmu struct {
 	inbios bool
-	gpu    *gpu.Gpu
+	gpu    *Gpu
 	bios   [0x100]byte
 	rom    [0x8000]byte
 	vram   [0x2000]byte
@@ -41,7 +39,7 @@ func (m *Mmu) String() string {
 	return fmt.Sprintf("Memory: %v", *m)
 }
 
-func New(g *gpu.Gpu) *Mmu {
+func NewMemory(g *Gpu) *Mmu {
 	return &Mmu{
 		inbios: true,
 		gpu:    g,
@@ -54,7 +52,7 @@ func New(g *gpu.Gpu) *Mmu {
 	}
 }
 
-func NewFromRom(filename string, g *gpu.Gpu) (*Mmu, error) {
+func NewFromRom(filename string, g *Gpu) (*Mmu, error) {
 	var data []byte
 	var err error
 

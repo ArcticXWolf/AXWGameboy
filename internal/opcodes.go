@@ -1,10 +1,8 @@
-package cpu
+package internal
 
 import (
 	"fmt"
 	"log"
-
-	"go.janniklasrichter.de/axwgameboy/internal/utils"
 )
 
 type opcode struct {
@@ -868,8 +866,7 @@ func fillUninplementedOpcodes() {
 				1,
 				func(c *Cpu) {
 					log.Printf("Opcode not implemented: %02x", opcodeByte)
-					log.Print(c.String())
-					utils.BreakExecution()
+					log.Panic(c.String())
 				},
 			}
 		}
@@ -885,8 +882,7 @@ func fillUninplementedOpcodesCb() {
 				1,
 				func(c *Cpu) {
 					log.Printf("OpcodeCb not implemented: %02x", opcodeByte)
-					log.Print(c.String())
-					utils.BreakExecution()
+					log.Panic(c.String())
 				},
 			}
 		}

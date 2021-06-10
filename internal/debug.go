@@ -1,12 +1,12 @@
-package cpu
+package internal
 
 import (
+	"bufio"
+	"fmt"
 	"log"
 	"os"
 	"regexp"
 	"strconv"
-
-	"go.janniklasrichter.de/axwgameboy/internal/utils"
 )
 
 type Debugger struct {
@@ -24,7 +24,7 @@ func (d *Debugger) checkBreakpoint(c *Cpu) {
 func (d *Debugger) breakIfNecessary(c *Cpu) {
 	if d.Step {
 		log.Printf("%s", c.String())
-		str := utils.BreakExecution()
+		str := d.BreakExecution()
 		if str == "s\n" {
 			d.Step = false
 		} else if str == "sp\n" {
@@ -55,4 +55,14 @@ func (d *Debugger) breakIfNecessary(c *Cpu) {
 			log.Printf("Next breakpoint at 0x%04x", d.Address)
 		}
 	}
+}
+
+func (d *Debugger) BreakExecution() string {
+	reader := bufio.NewReader(os.Stdin)
+	str, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Printf("Inputerror: %v", err)
+		return d.BreakExecution()
+	}
+	return str
 }

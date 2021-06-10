@@ -1,4 +1,4 @@
-package gpu
+package internal
 
 type Gpu struct {
 	backgroundActivated bool

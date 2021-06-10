@@ -1,11 +1,10 @@
-package cpu
+package internal
 
 import (
 	"fmt"
-
-	"go.janniklasrichter.de/axwgameboy/internal/gpu"
-	"go.janniklasrichter.de/axwgameboy/internal/memory"
 )
+
+var ClockSpeed int = 4194304
 
 type Registers struct {
 	A     uint8
@@ -70,14 +69,14 @@ func (r *Registers) String() string {
 type Cpu struct {
 	Registers   *Registers
 	ClockCycles int
-	Memory      *memory.Mmu
-	Gpu         *gpu.Gpu
+	Memory      *Mmu
+	Gpu         *Gpu
 }
 
-func New() *Cpu {
+func NewCpu() *Cpu {
 	fillUninplementedOpcodes()
 	fillUninplementedOpcodesCb()
-	g := &gpu.Gpu{
+	g := &Gpu{
 		CurrentScanline: 0x90,
 	}
 	return &Cpu{
@@ -94,7 +93,7 @@ func New() *Cpu {
 			Sp:    0,
 		},
 		ClockCycles: 0,
-		Memory:      memory.New(g),
+		Memory:      NewMemory(g),
 		Gpu:         g,
 	}
 }
