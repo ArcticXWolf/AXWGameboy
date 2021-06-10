@@ -13,6 +13,9 @@ build:
 run:
 	go run go.janniklasrichter.de/axwgameboy/cmd/axwgameboy
 
+test:
+	go test -timeout 30s go.janniklasrichter.de/axwgameboy/internal/cpu -v
+
 clean:
 	rm -rf build/
 

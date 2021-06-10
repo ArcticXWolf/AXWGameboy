@@ -6,11 +6,12 @@ import (
 	"os"
 )
 
-func BreakExecution() {
+func BreakExecution() string {
 	reader := bufio.NewReader(os.Stdin)
-	_, err := reader.ReadString('\n')
+	str, err := reader.ReadString('\n')
 	if err != nil {
 		fmt.Printf("Inputerror: %v", err)
-		BreakExecution()
+		return BreakExecution()
 	}
+	return str
 }
