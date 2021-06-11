@@ -4,7 +4,10 @@ import (
 	"fmt"
 )
 
-var ClockSpeed int = 4194304
+var (
+	ClockSpeed int     = 4194304
+	SpeedBoost float32 = 0.1
+)
 
 type Registers struct {
 	A     uint8
@@ -69,16 +72,11 @@ func (r *Registers) String() string {
 type Cpu struct {
 	Registers   *Registers
 	ClockCycles int
-	Memory      *Mmu
-	Gpu         *Gpu
 }
 
 func NewCpu() *Cpu {
 	fillUninplementedOpcodes()
 	fillUninplementedOpcodesCb()
-	g := &Gpu{
-		CurrentScanline: 0x90,
-	}
 	return &Cpu{
 		Registers: &Registers{
 			A:     0,
@@ -93,8 +91,6 @@ func NewCpu() *Cpu {
 			Sp:    0,
 		},
 		ClockCycles: 0,
-		Memory:      NewMemory(g),
-		Gpu:         g,
 	}
 }
 
@@ -112,38 +108,40 @@ func (c *Cpu) Reset() {
 	c.ClockCycles = 0
 }
 
-func (c *Cpu) Tick(d *Debugger) {
-	d.checkBreakpoint(c)
-	d.breakIfNecessary(c)
-	_, opcode := c.getNextOpcode()
+func (c *Cpu) Tick(gb *Gameboy) int {
+	gb.Debugger.checkBreakpoint(gb)
+	gb.Debugger.breakIfNecessary(gb)
+	_, opcode := c.getNextOpcode(gb)
 	c.ClockCycles += opcode.Cycles
-	opcode.Function(c)
+	opcode.Function(gb)
+
+	return opcode.Cycles
 }
 
-func (c *Cpu) getNextOpcode() (uint8, *opcode) {
-	code := c.popPc()
+func (c *Cpu) getNextOpcode(gb *Gameboy) (uint8, *opcode) {
+	code := gb.popPc()
 	return code, opcodes[code]
 }
 
-func (c *Cpu) peekPc(offset int) uint8 {
-	return c.Memory.ReadByte(c.Registers.Pc + uint16(offset))
+func (gb *Gameboy) peekPc(offset int) uint8 {
+	return gb.Memory.ReadByte(gb.Cpu.Registers.Pc + uint16(offset))
 }
 
-func (c *Cpu) popPc() uint8 {
-	result := c.Memory.ReadByte(c.Registers.Pc)
-	c.Registers.Pc++
-	c.Registers.Pc &= 0xFFFF
+func (gb *Gameboy) popPc() uint8 {
+	result := gb.Memory.ReadByte(gb.Cpu.Registers.Pc)
+	gb.Cpu.Registers.Pc++
+	gb.Cpu.Registers.Pc &= 0xFFFF
 	return result
 }
 
-func (c *Cpu) popPc16() uint16 {
-	result1 := c.popPc()
-	result2 := c.popPc()
+func (gb *Gameboy) popPc16() uint16 {
+	result1 := gb.popPc()
+	result2 := gb.popPc()
 	return uint16(result2)<<8 | uint16(result1)
 }
 
-func (c *Cpu) String() string {
-	step := fmt.Sprintf("(0x%04x) %02x, %15s", c.Registers.Pc, c.peekPc(0), opcodes[c.peekPc(0)].Label)
-	peek := fmt.Sprintf("%02x %02x %02x", c.peekPc(1), c.peekPc(2), c.peekPc(3))
-	return fmt.Sprintf("STEP: %s | PEEK: %s | REG: %s | CLOCK: %v", step, peek, c.Registers.String(), c.ClockCycles)
+func (gb *Gameboy) String() string {
+	step := fmt.Sprintf("(0x%04x) %02x, %15s", gb.Cpu.Registers.Pc, gb.peekPc(0), opcodes[gb.peekPc(0)].Label)
+	peek := fmt.Sprintf("%02x %02x %02x", gb.peekPc(1), gb.peekPc(2), gb.peekPc(3))
+	return fmt.Sprintf("STEP: %s | PEEK: %s | REG: %s | CLOCK: %v", step, peek, gb.Cpu.Registers.String(), gb.Cpu.ClockCycles)
 }

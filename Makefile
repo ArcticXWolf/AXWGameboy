@@ -16,6 +16,9 @@ build:
 run:
 	go run go.janniklasrichter.de/axwgameboy/cmd/axwgameboy
 
+runwindows: clean build
+	./build/${BINARY}-windows-amd64.exe
+
 test:
 	go test -timeout 30s go.janniklasrichter.de/axwgameboy/internal/cpu -v
 

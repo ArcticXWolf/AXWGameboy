@@ -21,5 +21,6 @@ func start() {
 	log.Printf("AXWGameboy | Version %v | Builddate %v | Commit %v", version, date, commit)
 	gb := internal.NewGameboy()
 	gb.Debugger.Enabled = true
+	gb.Debugger.Address = 0x0000
 	gb.Run()
 }

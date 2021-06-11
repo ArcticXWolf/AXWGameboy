@@ -29,7 +29,6 @@ type Mmu struct {
 	gpu    *Gpu
 	bios   [0x100]byte
 	rom    [0x8000]byte
-	vram   [0x2000]byte
 	eram   [0x2000]byte
 	wram   [0x2000]byte
 	zram   [0x80]byte
@@ -45,7 +44,6 @@ func NewMemory(g *Gpu) *Mmu {
 		gpu:    g,
 		bios:   gb_bios,
 		rom:    [0x8000]byte{},
-		vram:   [0x2000]byte{},
 		eram:   [0x2000]byte{},
 		wram:   [0x2000]byte{},
 		zram:   [0x80]byte{},
@@ -74,7 +72,6 @@ func NewFromRom(filename string, g *Gpu) (*Mmu, error) {
 		gpu:    g,
 		bios:   gb_bios,
 		rom:    rom,
-		vram:   [0x2000]byte{},
 		eram:   [0x2000]byte{},
 		wram:   [0x2000]byte{},
 		zram:   [0x80]byte{},
@@ -91,7 +88,7 @@ func (m *Mmu) ReadByte(address uint16) (result uint8) {
 	case 0x1000, 0x2000, 0x3000, 0x4000, 0x5000, 0x6000, 0x7000: // ROM
 		return m.rom[address]
 	case 0x8000, 0x9000: // VRAM
-		return m.vram[address&0x1FFF]
+		return m.gpu.vram[address&0x1FFF]
 	case 0xA000, 0xB000: // External RAM
 		return m.eram[address&0x1FFF]
 	case 0xC000, 0xD000: // Working RAM
@@ -130,7 +127,8 @@ func (m *Mmu) WriteByte(address uint16, value uint8) {
 	case 0x1000, 0x2000, 0x3000, 0x4000, 0x5000, 0x6000, 0x7000: // ROM
 		return
 	case 0x8000, 0x9000: // VRAM
-		m.vram[address&0x1FFF] = value
+		m.gpu.vram[address&0x1FFF] = value
+		m.gpu.updateTile(address)
 		return
 	case 0xA000, 0xB000: // External RAM
 		m.eram[address&0x1FFF] = value
