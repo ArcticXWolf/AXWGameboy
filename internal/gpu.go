@@ -41,7 +41,7 @@ func (g *Gpu) ReadByte(address uint16) (result uint8) {
 		if g.backgroundMap {
 			bM = 0x08
 		}
-		if g.backgroundTile {
+		if !g.backgroundTile {
 			bT = 0x10
 		}
 		if g.lcdActivated {
@@ -66,7 +66,7 @@ func (g *Gpu) WriteByte(address uint16, value uint8) {
 	case 0xFF40:
 		g.backgroundActivated = value&0x01 != 0
 		g.backgroundMap = value&0x08 != 0
-		g.backgroundTile = value&0x10 != 0
+		g.backgroundTile = value&0x10 == 0
 		g.lcdActivated = value&0x80 != 0
 	case 0xFF41:
 		g.currentMode = value & 0x03
@@ -115,7 +115,7 @@ func (g *Gpu) Update(gb *Gameboy, cyclesUsed int) {
 		if g.modeClock >= 204 {
 			g.modeClock = 0
 			g.CurrentScanline++
-			if g.CurrentScanline >= uint8(ScreenHeight)-1 {
+			if g.CurrentScanline > uint8(ScreenHeight)-1 {
 				g.currentMode = 1
 				gb.ReadyToRender = gb.WorkingScreen
 				gb.WorkingScreen = [ScreenWidth][ScreenHeight][3]uint8{}
@@ -159,7 +159,7 @@ func (g *Gpu) renderTiles(gb *Gameboy) {
 	if g.backgroundMap {
 		mapOffset = 0x1C00
 	}
-	mapOffset += (uint16(g.CurrentScanline+g.scrollY) & 0xFF) >> 3
+	mapOffset += ((uint16(g.CurrentScanline+g.scrollY) & 0xFF) >> 3) << 5
 
 	lineOffset = uint16(g.scrollX) >> 3
 	x = g.scrollX & 0x7

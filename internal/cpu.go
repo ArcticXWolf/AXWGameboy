@@ -6,7 +6,7 @@ import (
 
 var (
 	ClockSpeed int     = 4194304
-	SpeedBoost float32 = 0.1
+	SpeedBoost float32 = 1.0
 )
 
 type Registers struct {
@@ -110,7 +110,9 @@ func (c *Cpu) Reset() {
 
 func (c *Cpu) Tick(gb *Gameboy) int {
 	gb.Debugger.checkBreakpoint(gb)
-	gb.Debugger.breakIfNecessary(gb)
+	if gb.Debugger.Step {
+		gb.Debugger.triggerBreakpoint(gb)
+	}
 	_, opcode := c.getNextOpcode(gb)
 	c.ClockCycles += opcode.Cycles
 	opcode.Function(gb)
