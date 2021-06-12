@@ -49,7 +49,7 @@ func (d *Display) Render(gb *Gameboy) {
 	screenSprite := pixel.NewSprite(d.picture, pixel.R(0, 0, float64(ScreenWidth), float64(ScreenHeight)))
 
 	d.window.Clear(color.White)
-	screenSprite.Draw(d.window, pixel.IM.Moved(d.window.Bounds().Center()))
+	screenSprite.Draw(d.window, pixel.IM.Moved(d.window.Bounds().Center()).Scaled(d.window.Bounds().Center(), float64(pixelSize)))
 
 	d.window.Update()
 }

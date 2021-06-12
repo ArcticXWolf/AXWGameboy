@@ -115,8 +115,12 @@ func (d *Debugger) dumpScreendata(data [ScreenWidth][ScreenHeight][3]uint8) {
 	for y := 0; y < ScreenHeight; y++ {
 		lineStr := ""
 		for x := 0; x < ScreenWidth; x++ {
-			if data[x][y][0]+data[x][y][1]+data[x][y][2] > 0 {
+			if data[x][y][0]+data[x][y][1]+data[x][y][2] > 200 {
 				lineStr = fmt.Sprintf("%s#", lineStr)
+			} else if data[x][y][0]+data[x][y][1]+data[x][y][2] > 100 {
+				lineStr = fmt.Sprintf("%s0", lineStr)
+			} else if data[x][y][0]+data[x][y][1]+data[x][y][2] > 0 {
+				lineStr = fmt.Sprintf("%s:", lineStr)
 			} else {
 				lineStr = fmt.Sprintf("%s.", lineStr)
 			}
@@ -131,8 +135,12 @@ func (d *Debugger) dumpTileset(gb *Gameboy) {
 		for y := 0; y < 8; y++ {
 			lineStr := ""
 			for x := 0; x < 8; x++ {
-				if gb.Gpu.tileSet[i][x][y] > 0 {
+				if gb.Gpu.tileSet[i][x][y] == 3 {
 					lineStr = fmt.Sprintf("%s#", lineStr)
+				} else if gb.Gpu.tileSet[i][x][y] == 2 {
+					lineStr = fmt.Sprintf("%s0", lineStr)
+				} else if gb.Gpu.tileSet[i][x][y] == 1 {
+					lineStr = fmt.Sprintf("%s:", lineStr)
 				} else {
 					lineStr = fmt.Sprintf("%s.", lineStr)
 				}
@@ -147,8 +155,12 @@ func (d *Debugger) dumpTile(gb *Gameboy, index int) {
 	for y := 0; y < 8; y++ {
 		lineStr := ""
 		for x := 0; x < 8; x++ {
-			if gb.Gpu.tileSet[index][x][y] > 0 {
+			if gb.Gpu.tileSet[index][x][y] == 3 {
 				lineStr = fmt.Sprintf("%s#", lineStr)
+			} else if gb.Gpu.tileSet[index][x][y] == 2 {
+				lineStr = fmt.Sprintf("%s0", lineStr)
+			} else if gb.Gpu.tileSet[index][x][y] == 1 {
+				lineStr = fmt.Sprintf("%s:", lineStr)
 			} else {
 				lineStr = fmt.Sprintf("%s.", lineStr)
 			}

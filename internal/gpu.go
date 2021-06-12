@@ -16,13 +16,14 @@ type Gpu struct {
 	CurrentScanline     uint8
 	tileSet             [512][8][8]uint8
 	vram                [0x2000]byte
-	bgPalette           [4]color.Color
+	bgPaletteMap        [4]uint8
+	bgPaletteColors     [4]color.Color
 }
 
 func NewGpu() *Gpu {
 
 	return &Gpu{
-		bgPalette: [4]color.Color{
+		bgPaletteColors: [4]color.Color{
 			color.RGBA{255, 255, 255, 255},
 			color.RGBA{192, 192, 192, 255},
 			color.RGBA{96, 96, 96, 255},
@@ -56,6 +57,8 @@ func (g *Gpu) ReadByte(address uint16) (result uint8) {
 		return g.scrollX
 	case 0xFF44:
 		return g.CurrentScanline
+	case 0xFF47:
+		return g.bgPaletteMap[0]&0x3 | ((g.bgPaletteMap[1] & 0x3) << 2) | ((g.bgPaletteMap[2] & 0x3) << 4) | ((g.bgPaletteMap[3] & 0x3) << 6)
 	default:
 		return 0x00
 	}
@@ -75,6 +78,10 @@ func (g *Gpu) WriteByte(address uint16, value uint8) {
 	case 0xFF43:
 		g.scrollX = value
 	case 0xFF47:
+		g.bgPaletteMap[0] = value & 0x3
+		g.bgPaletteMap[1] = (value >> 2) & 0x3
+		g.bgPaletteMap[2] = (value >> 4) & 0x3
+		g.bgPaletteMap[3] = (value >> 6) & 0x3
 	default:
 	}
 }
@@ -171,7 +178,9 @@ func (g *Gpu) renderTiles(gb *Gameboy) {
 	}
 
 	for i := 0; i < ScreenWidth; i++ {
-		red, green, blue, _ := g.bgPalette[g.tileSet[tile][x][y]].RGBA()
+		pixelPaletteColor := g.tileSet[tile][x][y]
+		pixelRealColor := g.bgPaletteMap[pixelPaletteColor]
+		red, green, blue, _ := g.bgPaletteColors[pixelRealColor].RGBA()
 		gb.WorkingScreen[i][g.CurrentScanline][0] = uint8(red)
 		gb.WorkingScreen[i][g.CurrentScanline][1] = uint8(green)
 		gb.WorkingScreen[i][g.CurrentScanline][2] = uint8(blue)
