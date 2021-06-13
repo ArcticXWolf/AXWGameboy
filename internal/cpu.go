@@ -76,7 +76,7 @@ type Cpu struct {
 
 func NewCpu() *Cpu {
 	fillUninplementedOpcodes()
-	fillUninplementedOpcodesCb()
+	fillOpcodesCb(true)
 	return &Cpu{
 		Registers: &Registers{
 			A:     0,

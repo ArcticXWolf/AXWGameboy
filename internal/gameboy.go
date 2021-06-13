@@ -55,4 +55,8 @@ func (gb *Gameboy) Run() {
 
 		gb.Display.Render(gb)
 	}
+
+	for !gb.Display.window.Closed() {
+		gb.Display.window.Update()
+	}
 }

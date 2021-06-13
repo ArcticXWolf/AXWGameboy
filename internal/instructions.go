@@ -55,3 +55,109 @@ func instructionSubstraction(gb *Gameboy, value byte, otherValue byte, carry boo
 
 	return byte(substraction)
 }
+
+func instructionTestBit(gb *Gameboy, value byte, bitIndex uint8) {
+	gb.Cpu.Registers.SetFlagZ((value>>bitIndex)&0x1 == 0x0)
+	gb.Cpu.Registers.SetFlagN(false)
+	gb.Cpu.Registers.SetFlagH(true)
+}
+
+func instructionSetBit(gb *Gameboy, value byte, bitIndex uint8) byte {
+	return value | (0x1 << bitIndex)
+}
+
+func instructionResetBit(gb *Gameboy, value byte, bitIndex uint8) byte {
+	return value & ^(0x1 << bitIndex)
+}
+
+func instructionSwap(gb *Gameboy, value byte) byte {
+	result := ((value << 4) & 0xF0) | (value >> 4)
+	gb.Cpu.Registers.SetFlagZ(result == 0)
+	gb.Cpu.Registers.SetFlagN(false)
+	gb.Cpu.Registers.SetFlagH(false)
+	gb.Cpu.Registers.SetFlagC(false)
+
+	return result
+}
+
+func instructionCBRL(gb *Gameboy, value byte) byte {
+	newCarry := value >> 7
+	rotation := (value << 1) & 0xFF
+	if gb.Cpu.Registers.FlagC() {
+		rotation |= 1
+	}
+
+	gb.Cpu.Registers.SetFlagZ(rotation == 0)
+	gb.Cpu.Registers.SetFlagN(false)
+	gb.Cpu.Registers.SetFlagH(false)
+	gb.Cpu.Registers.SetFlagC(newCarry == 1)
+	return rotation
+}
+
+func instructionCBRLC(gb *Gameboy, value byte) byte {
+	newCarry := value >> 7
+	rotation := (value<<1)&0xFF | newCarry
+
+	gb.Cpu.Registers.SetFlagZ(rotation == 0)
+	gb.Cpu.Registers.SetFlagN(false)
+	gb.Cpu.Registers.SetFlagH(false)
+	gb.Cpu.Registers.SetFlagC(newCarry == 1)
+	return rotation
+}
+
+func instructionCBRR(gb *Gameboy, value byte) byte {
+	newCarry := value & 0x1
+	rotation := (value >> 1)
+	if gb.Cpu.Registers.FlagC() {
+		rotation |= (1 << 7)
+	}
+
+	gb.Cpu.Registers.SetFlagZ(rotation == 0)
+	gb.Cpu.Registers.SetFlagN(false)
+	gb.Cpu.Registers.SetFlagH(false)
+	gb.Cpu.Registers.SetFlagC(newCarry == 1)
+	return rotation
+}
+
+func instructionCBRRC(gb *Gameboy, value byte) byte {
+	newCarry := value & 0x1
+	rotation := (value >> 1) | (newCarry << 7)
+
+	gb.Cpu.Registers.SetFlagZ(rotation == 0)
+	gb.Cpu.Registers.SetFlagN(false)
+	gb.Cpu.Registers.SetFlagH(false)
+	gb.Cpu.Registers.SetFlagC(newCarry == 1)
+	return rotation
+}
+
+func instructionCBSLA(gb *Gameboy, value byte) byte {
+	newCarry := value >> 7
+	rotation := (value << 1) & 0xFF
+
+	gb.Cpu.Registers.SetFlagZ(rotation == 0)
+	gb.Cpu.Registers.SetFlagN(false)
+	gb.Cpu.Registers.SetFlagH(false)
+	gb.Cpu.Registers.SetFlagC(newCarry == 1)
+	return rotation
+}
+
+func instructionCBSRA(gb *Gameboy, value byte) byte {
+	rotation := (value & 0x80) | (value >> 1)
+
+	gb.Cpu.Registers.SetFlagZ(rotation == 0)
+	gb.Cpu.Registers.SetFlagN(false)
+	gb.Cpu.Registers.SetFlagH(false)
+	gb.Cpu.Registers.SetFlagC(value&1 == 1)
+	return rotation
+}
+
+func instructionCBSRL(gb *Gameboy, value byte) byte {
+	newCarry := value & 1
+	rotation := (value >> 1)
+
+	gb.Cpu.Registers.SetFlagZ(rotation == 0)
+	gb.Cpu.Registers.SetFlagN(false)
+	gb.Cpu.Registers.SetFlagH(false)
+	gb.Cpu.Registers.SetFlagC(newCarry == 1)
+	return rotation
+}

@@ -13,6 +13,7 @@ func Test_amountOpcodesWritten(t *testing.T) {
 	}
 	t.Logf("Amount of implemented opcodes: %03d / %03d", implemented, 256)
 
+	fillOpcodesCb(false)
 	implemented = 0
 	for k, v := range opcodesCb {
 		if v != nil {
