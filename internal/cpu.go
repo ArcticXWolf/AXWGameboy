@@ -19,8 +19,9 @@ type Registers struct {
 	L     uint8
 	Flags uint8
 
-	Pc uint16
-	Sp uint16
+	Pc  uint16
+	Sp  uint16
+	Ime bool
 }
 
 func (r *Registers) FlagZ() bool {
@@ -89,6 +90,7 @@ func NewCpu() *Cpu {
 			Flags: 0,
 			Pc:    0,
 			Sp:    0,
+			Ime:   false,
 		},
 		ClockCycles: 0,
 	}
@@ -105,6 +107,7 @@ func (c *Cpu) Reset() {
 	c.Registers.Flags = 0
 	c.Registers.Pc = 0
 	c.Registers.Sp = 0
+	c.Registers.Ime = true
 	c.ClockCycles = 0
 }
 
@@ -117,12 +120,44 @@ func (c *Cpu) Tick(gb *Gameboy) int {
 	c.ClockCycles += opcode.Cycles
 	opcode.Function(gb)
 
-	return opcode.Cycles
+	cyclesInterrupt := c.handleInterrupts(gb)
+
+	return opcode.Cycles + cyclesInterrupt
 }
 
 func (c *Cpu) getNextOpcode(gb *Gameboy) (uint8, *opcode) {
 	code := gb.popPc()
 	return code, opcodes[code]
+}
+
+func (c *Cpu) handleInterrupts(gb *Gameboy) int {
+	cycles := 0
+	if c.Registers.Ime {
+		triggeredInterrupts := gb.Memory.GetInterruptFlags().EnableFlags & gb.Memory.GetInterruptFlags().TriggeredFlags
+
+		if triggeredInterrupts&0x01 != 0 {
+			gb.Memory.GetInterruptFlags().TriggeredFlags &= ^uint8(0x01)
+			instructionInterrupt(gb, 0x0040)
+			cycles += 20
+		} else if triggeredInterrupts&0x02 != 0 {
+			gb.Memory.GetInterruptFlags().TriggeredFlags &= ^uint8(0x02)
+			instructionInterrupt(gb, 0x0048)
+			cycles += 20
+		} else if triggeredInterrupts&0x04 != 0 {
+			gb.Memory.GetInterruptFlags().TriggeredFlags &= ^uint8(0x04)
+			instructionInterrupt(gb, 0x0050)
+			cycles += 20
+		} else if triggeredInterrupts&0x08 != 0 {
+			gb.Memory.GetInterruptFlags().TriggeredFlags &= ^uint8(0x08)
+			instructionInterrupt(gb, 0x0058)
+			cycles += 20
+		} else if triggeredInterrupts&0x10 != 0 {
+			gb.Memory.GetInterruptFlags().TriggeredFlags &= ^uint8(0x10)
+			instructionInterrupt(gb, 0x0060)
+			cycles += 20
+		}
+	}
+	return cycles
 }
 
 func (gb *Gameboy) peekPc(offset int) uint8 {
@@ -145,5 +180,6 @@ func (gb *Gameboy) popPc16() uint16 {
 func (gb *Gameboy) String() string {
 	step := fmt.Sprintf("(0x%04x) %02x, %15s", gb.Cpu.Registers.Pc, gb.peekPc(0), opcodes[gb.peekPc(0)].Label)
 	peek := fmt.Sprintf("%02x %02x %02x", gb.peekPc(1), gb.peekPc(2), gb.peekPc(3))
-	return fmt.Sprintf("STEP: %s | PEEK: %s | REG: %s | CLOCK: %v", step, peek, gb.Cpu.Registers.String(), gb.Cpu.ClockCycles)
+	isr := fmt.Sprintf("%02x %02x", gb.Memory.GetInterruptFlags().EnableFlags, gb.Memory.GetInterruptFlags().TriggeredFlags)
+	return fmt.Sprintf("STEP: %s | PEEK: %s | REG: %s | ISR: %s | CLOCK: %v", step, peek, gb.Cpu.Registers.String(), isr, gb.Cpu.ClockCycles)
 }

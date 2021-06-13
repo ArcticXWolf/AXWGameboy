@@ -24,6 +24,42 @@ var gb_bios = [0x100]byte{
 	0xF5, 0x06, 0x19, 0x78, 0x86, 0x23, 0x05, 0x20, 0xFB, 0x86, 0x20, 0xFE, 0x3E, 0x01, 0xE0, 0x50,
 }
 
+type InterruptFlags struct {
+	EnableFlags    uint8
+	TriggeredFlags uint8
+}
+
+func (isr *InterruptFlags) GetEnableFlagVblank() bool {
+	return isr.EnableFlags&0x1 != 0
+}
+func (isr *InterruptFlags) GetEnableFlagLCD() bool {
+	return isr.EnableFlags&0x2 != 0
+}
+func (isr *InterruptFlags) GetEnableFlagTimer() bool {
+	return isr.EnableFlags&0x4 != 0
+}
+func (isr *InterruptFlags) GetEnableFlagSerial() bool {
+	return isr.EnableFlags&0x8 != 0
+}
+func (isr *InterruptFlags) GetEnableFlagJoypad() bool {
+	return isr.EnableFlags&0x10 != 0
+}
+func (isr *InterruptFlags) IsTriggeredVblank() bool {
+	return isr.TriggeredFlags&0x1 != 0
+}
+func (isr *InterruptFlags) IsTriggeredLCD() bool {
+	return isr.TriggeredFlags&0x2 != 0
+}
+func (isr *InterruptFlags) IsTriggeredTimer() bool {
+	return isr.TriggeredFlags&0x4 != 0
+}
+func (isr *InterruptFlags) IsTriggeredSerial() bool {
+	return isr.TriggeredFlags&0x8 != 0
+}
+func (isr *InterruptFlags) IsTriggeredJoypad() bool {
+	return isr.TriggeredFlags&0x10 != 0
+}
+
 type Mmu struct {
 	inbios bool
 	gpu    *Gpu
@@ -32,6 +68,11 @@ type Mmu struct {
 	eram   [0x2000]byte
 	wram   [0x2000]byte
 	zram   [0x80]byte
+	isr    *InterruptFlags
+}
+
+func (m *Mmu) GetInterruptFlags() *InterruptFlags {
+	return m.isr
 }
 
 func (m *Mmu) String() string {
@@ -47,6 +88,7 @@ func NewMemory(g *Gpu) *Mmu {
 		eram:   [0x2000]byte{},
 		wram:   [0x2000]byte{},
 		zram:   [0x80]byte{},
+		isr:    &InterruptFlags{},
 	}
 }
 
@@ -75,6 +117,7 @@ func NewFromRom(filename string, g *Gpu) (*Mmu, error) {
 		eram:   [0x2000]byte{},
 		wram:   [0x2000]byte{},
 		zram:   [0x80]byte{},
+		isr:    &InterruptFlags{},
 	}, nil
 }
 
@@ -83,6 +126,8 @@ func (m *Mmu) ReadByte(address uint16) (result uint8) {
 	case 0x0000: // ROM / BIOS
 		if m.inbios && address < 0x0100 {
 			return m.bios[address]
+		} else if m.inbios && address == 0x0100 {
+			m.inbios = false
 		}
 		return m.rom[address]
 	case 0x1000, 0x2000, 0x3000, 0x4000, 0x5000, 0x6000, 0x7000: // ROM
@@ -105,10 +150,17 @@ func (m *Mmu) ReadByte(address uint16) (result uint8) {
 		}
 		if address < 0xFF80 { // I/O
 			switch address & 0x00F0 {
+			case 0x00:
+				if address == 0xFF0F {
+					return m.isr.TriggeredFlags
+				}
 			case 0x40, 0x50, 0x60, 0x70:
 				return m.gpu.ReadByte(address)
 			}
 			return 0 // TODO
+		}
+		if address == 0xFFFF {
+			return m.isr.EnableFlags
 		}
 		return m.zram[address&0x7F] // Highspeed Zero RAM
 	default:
@@ -149,10 +201,17 @@ func (m *Mmu) WriteByte(address uint16, value uint8) {
 		}
 		if address < 0xFF80 { // I/O
 			switch address & 0x00F0 {
+			case 0x00:
+				if address == 0xFF0F {
+					m.isr.TriggeredFlags = value
+				}
 			case 0x40, 0x50, 0x60, 0x70:
 				m.gpu.WriteByte(address, value)
 			}
 			return
+		}
+		if address == 0xFFFF {
+			m.isr.EnableFlags = value
 		}
 		m.zram[address&0x7F] = value
 		return

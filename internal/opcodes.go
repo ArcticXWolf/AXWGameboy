@@ -1072,6 +1072,7 @@ var opcodes = [0x100]*opcode{
 	0xd9: {"RETI", 8, func(gb *Gameboy) {
 		gb.Cpu.Registers.Pc = gb.Memory.ReadWord(gb.Cpu.Registers.Sp)
 		gb.Cpu.Registers.Sp += 2
+		gb.Cpu.Registers.Ime = true
 	}},
 
 	// ROT
@@ -1165,8 +1166,10 @@ var opcodes = [0x100]*opcode{
 	}},
 
 	0xF3: {"DI", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.Ime = false
 	}},
 	0xFB: {"EI", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.Ime = true
 	}},
 
 	// CB Mapper

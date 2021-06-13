@@ -161,3 +161,11 @@ func instructionCBSRL(gb *Gameboy, value byte) byte {
 	gb.Cpu.Registers.SetFlagC(newCarry == 1)
 	return rotation
 }
+
+func instructionInterrupt(gb *Gameboy, jumpAddress uint16) {
+	gb.Cpu.Registers.Ime = false
+
+	gb.Cpu.Registers.Sp -= 2
+	gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
+	gb.Cpu.Registers.Pc = jumpAddress
+}

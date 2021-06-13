@@ -126,6 +126,7 @@ func (g *Gpu) Update(gb *Gameboy, cyclesUsed int) {
 				g.currentMode = 1
 				gb.ReadyToRender = gb.WorkingScreen
 				gb.WorkingScreen = [ScreenWidth][ScreenHeight][3]uint8{}
+				gb.Memory.GetInterruptFlags().TriggeredFlags |= 0x01
 			} else {
 				g.currentMode = 2
 			}

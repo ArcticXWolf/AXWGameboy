@@ -27,6 +27,8 @@ func (d *Debugger) triggerBreakpoint(gb *Gameboy) {
 	str := d.BreakExecution()
 	if str == "c" {
 		d.Step = false
+	} else if str == "step" {
+		d.Step = true
 	} else if ok, _ := regexp.MatchString("b[0-9a-fA-F]{4}", str); ok {
 		d.Step = false
 		addr, _ := strconv.ParseUint(str[1:5], 16, 16)
