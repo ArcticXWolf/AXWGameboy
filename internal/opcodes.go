@@ -11,172 +11,6 @@ type opcode struct {
 	Function func(*Gameboy)
 }
 
-var opcodesCb = [0x100]*opcode{
-	0x10: {"RL B", 8, func(gb *Gameboy) {
-		carryNew := gb.Cpu.Registers.B&0x80 != 0
-		carryOld := gb.Cpu.Registers.FlagC()
-		gb.Cpu.Registers.B = (gb.Cpu.Registers.B << 1) & 0xFF
-		if carryOld {
-			gb.Cpu.Registers.B |= 0x1
-		}
-
-		gb.Cpu.Registers.SetFlagZ(gb.Cpu.Registers.B == 0x0)
-		gb.Cpu.Registers.SetFlagN(false)
-		gb.Cpu.Registers.SetFlagH(false)
-		gb.Cpu.Registers.SetFlagC(carryNew)
-	}},
-	0x11: {"RL C", 8, func(gb *Gameboy) {
-		carryNew := gb.Cpu.Registers.C&0x80 != 0
-		carryOld := gb.Cpu.Registers.FlagC()
-		gb.Cpu.Registers.C = (gb.Cpu.Registers.C << 1) & 0xFF
-		if carryOld {
-			gb.Cpu.Registers.C |= 0x1
-		}
-
-		gb.Cpu.Registers.SetFlagZ(gb.Cpu.Registers.C == 0x0)
-		gb.Cpu.Registers.SetFlagN(false)
-		gb.Cpu.Registers.SetFlagH(false)
-		gb.Cpu.Registers.SetFlagC(carryNew)
-	}},
-	0x12: {"RL D", 8, func(gb *Gameboy) {
-		carryNew := gb.Cpu.Registers.D&0x80 != 0
-		carryOld := gb.Cpu.Registers.FlagC()
-		gb.Cpu.Registers.D = (gb.Cpu.Registers.D << 1) & 0xFF
-		if carryOld {
-			gb.Cpu.Registers.D |= 0x1
-		}
-
-		gb.Cpu.Registers.SetFlagZ(gb.Cpu.Registers.D == 0x0)
-		gb.Cpu.Registers.SetFlagN(false)
-		gb.Cpu.Registers.SetFlagH(false)
-		gb.Cpu.Registers.SetFlagC(carryNew)
-	}},
-	0x13: {"RL E", 8, func(gb *Gameboy) {
-		carryNew := gb.Cpu.Registers.E&0x80 != 0
-		carryOld := gb.Cpu.Registers.FlagC()
-		gb.Cpu.Registers.E = (gb.Cpu.Registers.E << 1) & 0xFF
-		if carryOld {
-			gb.Cpu.Registers.E |= 0x1
-		}
-
-		gb.Cpu.Registers.SetFlagZ(gb.Cpu.Registers.E == 0x0)
-		gb.Cpu.Registers.SetFlagN(false)
-		gb.Cpu.Registers.SetFlagH(false)
-		gb.Cpu.Registers.SetFlagC(carryNew)
-	}},
-	0x14: {"RL H", 8, func(gb *Gameboy) {
-		carryNew := gb.Cpu.Registers.H&0x80 != 0
-		carryOld := gb.Cpu.Registers.FlagC()
-		gb.Cpu.Registers.H = (gb.Cpu.Registers.H << 1) & 0xFF
-		if carryOld {
-			gb.Cpu.Registers.H |= 0x1
-		}
-
-		gb.Cpu.Registers.SetFlagZ(gb.Cpu.Registers.H == 0x0)
-		gb.Cpu.Registers.SetFlagN(false)
-		gb.Cpu.Registers.SetFlagH(false)
-		gb.Cpu.Registers.SetFlagC(carryNew)
-	}},
-	0x15: {"RL L", 8, func(gb *Gameboy) {
-		carryNew := gb.Cpu.Registers.L&0x80 != 0
-		carryOld := gb.Cpu.Registers.FlagC()
-		gb.Cpu.Registers.L = (gb.Cpu.Registers.L << 1) & 0xFF
-		if carryOld {
-			gb.Cpu.Registers.L |= 0x1
-		}
-
-		gb.Cpu.Registers.SetFlagZ(gb.Cpu.Registers.L == 0x0)
-		gb.Cpu.Registers.SetFlagN(false)
-		gb.Cpu.Registers.SetFlagH(false)
-		gb.Cpu.Registers.SetFlagC(carryNew)
-	}},
-	0x16: {"RL (HL)", 16, func(gb *Gameboy) {
-		hlValue := gb.Memory.ReadByte(uint16(gb.Cpu.Registers.H)<<8 + uint16(gb.Cpu.Registers.L))
-		carryNew := hlValue&0x80 != 0
-		carryOld := gb.Cpu.Registers.FlagC()
-		rotation := (hlValue << 1) & 0xFF
-		if carryOld {
-			rotation |= 0x1
-		}
-		gb.Memory.WriteByte(uint16(gb.Cpu.Registers.H)<<8+uint16(gb.Cpu.Registers.L), rotation)
-
-		gb.Cpu.Registers.SetFlagZ(rotation == 0x0)
-		gb.Cpu.Registers.SetFlagN(false)
-		gb.Cpu.Registers.SetFlagH(false)
-		gb.Cpu.Registers.SetFlagC(carryNew)
-	}},
-	0x17: {"RL A", 8, func(gb *Gameboy) {
-		carryNew := gb.Cpu.Registers.A&0x80 != 0
-		carryOld := gb.Cpu.Registers.FlagC()
-		gb.Cpu.Registers.A = (gb.Cpu.Registers.A << 1) & 0xFF
-		if carryOld {
-			gb.Cpu.Registers.A |= 0x1
-		}
-
-		gb.Cpu.Registers.SetFlagZ(gb.Cpu.Registers.A == 0x0)
-		gb.Cpu.Registers.SetFlagN(false)
-		gb.Cpu.Registers.SetFlagH(false)
-		gb.Cpu.Registers.SetFlagC(carryNew)
-	}},
-
-	0x78: {"BIT 7, B", 8, func(gb *Gameboy) {
-		if gb.Cpu.Registers.B&0x80 == 0x0 {
-			gb.Cpu.Registers.Flags = 0x80
-		} else {
-			gb.Cpu.Registers.Flags = 0x0
-		}
-	}},
-	0x79: {"BIT 7, C", 8, func(gb *Gameboy) {
-		if gb.Cpu.Registers.C&0x80 == 0x0 {
-			gb.Cpu.Registers.Flags = 0x80
-		} else {
-			gb.Cpu.Registers.Flags = 0x0
-		}
-	}},
-	0x7a: {"BIT 7, D", 8, func(gb *Gameboy) {
-		if gb.Cpu.Registers.D&0x80 == 0x0 {
-			gb.Cpu.Registers.Flags = 0x80
-		} else {
-			gb.Cpu.Registers.Flags = 0x0
-		}
-	}},
-	0x7b: {"BIT 7, E", 8, func(gb *Gameboy) {
-		if gb.Cpu.Registers.E&0x80 == 0x0 {
-			gb.Cpu.Registers.Flags = 0x80
-		} else {
-			gb.Cpu.Registers.Flags = 0x0
-		}
-	}},
-	0x7c: {"BIT 7, H", 8, func(gb *Gameboy) {
-		if gb.Cpu.Registers.H&0x80 == 0x0 {
-			gb.Cpu.Registers.Flags = 0x80
-		} else {
-			gb.Cpu.Registers.Flags = 0x0
-		}
-	}},
-	0x7d: {"BIT 7, L", 8, func(gb *Gameboy) {
-		if gb.Cpu.Registers.L&0x80 == 0x0 {
-			gb.Cpu.Registers.Flags = 0x80
-		} else {
-			gb.Cpu.Registers.Flags = 0x0
-		}
-	}},
-	0x7e: {"BIT 7, (HL)", 12, func(gb *Gameboy) {
-		if gb.Memory.ReadByte(uint16(gb.Cpu.Registers.H)<<8+uint16(gb.Cpu.Registers.L))&0x80 == 0x0 {
-			gb.Cpu.Registers.Flags = 0x80
-		} else {
-			gb.Cpu.Registers.Flags = 0x0
-		}
-	}},
-	0x7f: {"BIT 7, A", 8, func(gb *Gameboy) {
-		if gb.Cpu.Registers.A&0x80 == 0x0 {
-			gb.Cpu.Registers.Flags = 0x80
-		} else {
-			gb.Cpu.Registers.Flags = 0x0
-		}
-	}},
-}
-
 var opcodes = [0x100]*opcode{
 	0x00: {"NOP", 4, func(gb *Gameboy) {}},
 	// 8-Bit Loads
@@ -360,6 +194,19 @@ var opcodes = [0x100]*opcode{
 	0x11: {"LD DE, nn", 12, func(gb *Gameboy) { gb.Cpu.Registers.E = gb.popPc(); gb.Cpu.Registers.D = gb.popPc() }},
 	0x21: {"LD HL, nn", 12, func(gb *Gameboy) { gb.Cpu.Registers.L = gb.popPc(); gb.Cpu.Registers.H = gb.popPc() }},
 	0x31: {"LD SP, nn", 12, func(gb *Gameboy) { gb.Cpu.Registers.Sp = gb.popPc16() }},
+	0xF8: {"LD HL, SP+n", 12, func(gb *Gameboy) {
+		n := int8(gb.popPc())
+		sum := uint16(int32(gb.Cpu.Registers.Sp) + int32(n))
+		gb.Cpu.Registers.L = uint8(sum) & 0xFF
+		gb.Cpu.Registers.H = uint8((sum & 0xFF00) >> 8)
+		sumTmp := gb.Cpu.Registers.Sp ^ uint16(n) ^ sum
+		gb.Cpu.Registers.SetFlagZ(false)
+		gb.Cpu.Registers.SetFlagN(false)
+		gb.Cpu.Registers.SetFlagH((sumTmp & 0x10) == 0x10)
+		gb.Cpu.Registers.SetFlagC((sumTmp & 0x100) == 0x100)
+	}},
+	0xF9: {"LD SP, HL", 8, func(gb *Gameboy) { gb.Cpu.Registers.Sp = uint16(gb.Cpu.Registers.H)<<8 + uint16(gb.Cpu.Registers.L) }},
+	0x08: {"LD (nn), SP", 20, func(gb *Gameboy) { address := gb.popPc16(); gb.Memory.WriteWord(address, gb.Cpu.Registers.Sp) }},
 
 	0xc5: {"PUSH BC", 16, func(gb *Gameboy) {
 		gb.Cpu.Registers.Sp--
@@ -411,6 +258,170 @@ var opcodes = [0x100]*opcode{
 		gb.Cpu.Registers.Sp++
 	}},
 
+	// AND
+	0xe6: {"AND n", 8, func(gb *Gameboy) {
+		gb.Cpu.Registers.A &= gb.popPc()
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0xa0
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
+	0xa0: {"AND B", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A &= gb.Cpu.Registers.B
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0xa0
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
+	0xa1: {"AND C", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A &= gb.Cpu.Registers.C
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0xa0
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
+	0xa2: {"AND D", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A &= gb.Cpu.Registers.D
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0xa0
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
+	0xa3: {"AND E", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A &= gb.Cpu.Registers.E
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0xa0
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
+	0xa4: {"AND H", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A &= gb.Cpu.Registers.H
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0xa0
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
+	0xa5: {"AND L", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A &= gb.Cpu.Registers.L
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0xa0
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
+	0xa6: {"AND (HL)", 8, func(gb *Gameboy) {
+		gb.Cpu.Registers.A &= gb.Memory.ReadByte(uint16(gb.Cpu.Registers.H)<<8 + uint16(gb.Cpu.Registers.L))
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0xa0
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
+	0xa7: {"AND A", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A &= gb.Cpu.Registers.A
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0xa0
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
+	// OR
+	0xf6: {"OR n", 8, func(gb *Gameboy) {
+		gb.Cpu.Registers.A |= gb.popPc()
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0x80
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
+	0xb0: {"OR B", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A |= gb.Cpu.Registers.B
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0x80
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
+	0xb1: {"OR C", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A |= gb.Cpu.Registers.C
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0x80
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
+	0xb2: {"OR D", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A |= gb.Cpu.Registers.D
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0x80
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
+	0xb3: {"OR E", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A |= gb.Cpu.Registers.E
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0x80
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
+	0xb4: {"OR H", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A |= gb.Cpu.Registers.H
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0x80
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
+	0xb5: {"OR L", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A |= gb.Cpu.Registers.L
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0x80
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
+	0xb6: {"OR (HL)", 8, func(gb *Gameboy) {
+		gb.Cpu.Registers.A |= gb.Memory.ReadByte(uint16(gb.Cpu.Registers.H)<<8 + uint16(gb.Cpu.Registers.L))
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0x80
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
+	0xb7: {"OR A", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A |= gb.Cpu.Registers.A
+		gb.Cpu.Registers.A &= 0xFF
+		if gb.Cpu.Registers.A == 0 {
+			gb.Cpu.Registers.Flags = 0x80
+		} else {
+			gb.Cpu.Registers.Flags = 0x0
+		}
+	}},
 	// XOR
 	0xee: {"XOR n", 8, func(gb *Gameboy) {
 		gb.Cpu.Registers.A ^= gb.popPc()
@@ -657,6 +668,35 @@ var opcodes = [0x100]*opcode{
 		gb.Cpu.Registers.SetFlagH(org&0x0F == 0)
 	}},
 
+	0x0B: {"DEC BC", 8, func(gb *Gameboy) {
+		gb.Cpu.Registers.C--
+		gb.Cpu.Registers.C &= 0xFF
+		if gb.Cpu.Registers.C == 0xFF {
+			gb.Cpu.Registers.B--
+			gb.Cpu.Registers.B &= 0xFF
+		}
+	}},
+	0x1B: {"DEC DE", 8, func(gb *Gameboy) {
+		gb.Cpu.Registers.E--
+		gb.Cpu.Registers.E &= 0xFF
+		if gb.Cpu.Registers.E == 0xFF {
+			gb.Cpu.Registers.D--
+			gb.Cpu.Registers.D &= 0xFF
+		}
+	}},
+	0x2B: {"DEC HL", 8, func(gb *Gameboy) {
+		gb.Cpu.Registers.L--
+		gb.Cpu.Registers.L &= 0xFF
+		if gb.Cpu.Registers.L == 0xFF {
+			gb.Cpu.Registers.H--
+			gb.Cpu.Registers.H &= 0xFF
+		}
+	}},
+	0x3B: {"DEC SP", 8, func(gb *Gameboy) {
+		gb.Cpu.Registers.Sp--
+		gb.Cpu.Registers.Sp &= 0xFFFF
+	}},
+
 	// ADD
 	0x80: {"ADD A, B", 4, func(gb *Gameboy) {
 		gb.Cpu.Registers.A = instructionAddition(gb, gb.Cpu.Registers.A, gb.Cpu.Registers.B, false)
@@ -685,6 +725,63 @@ var opcodes = [0x100]*opcode{
 	0xC6: {"ADD A, n", 8, func(gb *Gameboy) {
 		gb.Cpu.Registers.A = instructionAddition(gb, gb.Cpu.Registers.A, gb.popPc(), false)
 	}},
+	0x09: {"ADD HL, BC", 8, func(gb *Gameboy) {
+		result := instructionAddition16(gb, uint16(gb.Cpu.Registers.H)<<8+uint16(gb.Cpu.Registers.L), uint16(gb.Cpu.Registers.B)<<8+uint16(gb.Cpu.Registers.C))
+		gb.Cpu.Registers.H = uint8((result & 0xFF00) >> 8)
+		gb.Cpu.Registers.L = uint8(result & 0x00FF)
+	}},
+	0x19: {"ADD HL, DE", 8, func(gb *Gameboy) {
+		result := instructionAddition16(gb, uint16(gb.Cpu.Registers.H)<<8+uint16(gb.Cpu.Registers.L), uint16(gb.Cpu.Registers.D)<<8+uint16(gb.Cpu.Registers.E))
+		gb.Cpu.Registers.H = uint8((result & 0xFF00) >> 8)
+		gb.Cpu.Registers.L = uint8(result & 0x00FF)
+	}},
+	0x29: {"ADD HL, HL", 8, func(gb *Gameboy) {
+		result := instructionAddition16(gb, uint16(gb.Cpu.Registers.H)<<8+uint16(gb.Cpu.Registers.L), uint16(gb.Cpu.Registers.H)<<8+uint16(gb.Cpu.Registers.L))
+		gb.Cpu.Registers.H = uint8((result & 0xFF00) >> 8)
+		gb.Cpu.Registers.L = uint8(result & 0x00FF)
+	}},
+	0x39: {"ADD HL, SP", 8, func(gb *Gameboy) {
+		result := instructionAddition16(gb, uint16(gb.Cpu.Registers.H)<<8+uint16(gb.Cpu.Registers.L), gb.Cpu.Registers.Sp)
+		gb.Cpu.Registers.H = uint8((result & 0xFF00) >> 8)
+		gb.Cpu.Registers.L = uint8(result & 0x00FF)
+	}},
+	0xe8: {"ADD SP, n", 8, func(gb *Gameboy) {
+		n := int8(gb.popPc())
+		sum := uint16(int32(gb.Cpu.Registers.Sp) + int32(n))
+		gb.Cpu.Registers.Sp = sum
+		sumTmp := gb.Cpu.Registers.Sp ^ uint16(n) ^ sum
+		gb.Cpu.Registers.SetFlagZ(false)
+		gb.Cpu.Registers.SetFlagN(false)
+		gb.Cpu.Registers.SetFlagH((sumTmp & 0x10) == 0x10)
+		gb.Cpu.Registers.SetFlagC((sumTmp & 0x100) == 0x100)
+	}},
+	0x88: {"ADC A, B", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionAddition(gb, gb.Cpu.Registers.A, gb.Cpu.Registers.B, true)
+	}},
+	0x89: {"ADC A, C", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionAddition(gb, gb.Cpu.Registers.A, gb.Cpu.Registers.C, true)
+	}},
+	0x8a: {"ADC A, D", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionAddition(gb, gb.Cpu.Registers.A, gb.Cpu.Registers.D, true)
+	}},
+	0x8b: {"ADC A, E", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionAddition(gb, gb.Cpu.Registers.A, gb.Cpu.Registers.E, true)
+	}},
+	0x8c: {"ADC A, H", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionAddition(gb, gb.Cpu.Registers.A, gb.Cpu.Registers.H, true)
+	}},
+	0x8d: {"ADC A, L", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionAddition(gb, gb.Cpu.Registers.A, gb.Cpu.Registers.L, true)
+	}},
+	0x8e: {"ADC A, (HL)", 8, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionAddition(gb, gb.Cpu.Registers.A, gb.Memory.ReadByte(uint16(gb.Cpu.Registers.H)<<8+uint16(gb.Cpu.Registers.L)), true)
+	}},
+	0x8f: {"ADC A, A", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionAddition(gb, gb.Cpu.Registers.A, gb.Cpu.Registers.A, true)
+	}},
+	0xce: {"ADC A, n", 8, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionAddition(gb, gb.Cpu.Registers.A, gb.popPc(), true)
+	}},
 
 	0x90: {"SUB A, B", 4, func(gb *Gameboy) {
 		gb.Cpu.Registers.A = instructionSubstraction(gb, gb.Cpu.Registers.A, gb.Cpu.Registers.B, false)
@@ -711,6 +808,33 @@ var opcodes = [0x100]*opcode{
 		gb.Cpu.Registers.A = instructionSubstraction(gb, gb.Cpu.Registers.A, gb.Cpu.Registers.A, false)
 	}},
 	0xD6: {"SUB A, n", 8, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionSubstraction(gb, gb.Cpu.Registers.A, gb.popPc(), false)
+	}},
+	0x98: {"SBC A, B", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionSubstraction(gb, gb.Cpu.Registers.A, gb.Cpu.Registers.B, false)
+	}},
+	0x99: {"SBC A, C", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionSubstraction(gb, gb.Cpu.Registers.A, gb.Cpu.Registers.C, false)
+	}},
+	0x9a: {"SBC A, D", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionSubstraction(gb, gb.Cpu.Registers.A, gb.Cpu.Registers.D, false)
+	}},
+	0x9b: {"SBC A, E", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionSubstraction(gb, gb.Cpu.Registers.A, gb.Cpu.Registers.E, false)
+	}},
+	0x9c: {"SBC A, H", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionSubstraction(gb, gb.Cpu.Registers.A, gb.Cpu.Registers.H, false)
+	}},
+	0x9d: {"SBC A, L", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionSubstraction(gb, gb.Cpu.Registers.A, gb.Cpu.Registers.L, false)
+	}},
+	0x9e: {"SBC A, (HL)", 8, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionSubstraction(gb, gb.Cpu.Registers.A, gb.Memory.ReadByte(uint16(gb.Cpu.Registers.H)<<8+uint16(gb.Cpu.Registers.L)), false)
+	}},
+	0x9f: {"SBC A, A", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = instructionSubstraction(gb, gb.Cpu.Registers.A, gb.Cpu.Registers.A, false)
+	}},
+	0xde: {"SBC A, n", 8, func(gb *Gameboy) {
 		gb.Cpu.Registers.A = instructionSubstraction(gb, gb.Cpu.Registers.A, gb.popPc(), false)
 	}},
 
@@ -744,6 +868,40 @@ var opcodes = [0x100]*opcode{
 	}},
 
 	// Jumps
+	0xc3: {"JP nn", 12, func(gb *Gameboy) {
+		gb.Cpu.Registers.Pc = gb.popPc16()
+	}},
+	0xc2: {"JPNZ nn", 12, func(gb *Gameboy) {
+		jumpAddr := gb.popPc16()
+		if !gb.Cpu.Registers.FlagZ() {
+			gb.Cpu.Registers.Pc = jumpAddr
+			gb.Cpu.ClockCycles += 4
+		}
+	}},
+	0xca: {"JPZ nn", 12, func(gb *Gameboy) {
+		jumpAddr := gb.popPc16()
+		if gb.Cpu.Registers.FlagZ() {
+			gb.Cpu.Registers.Pc = jumpAddr
+			gb.Cpu.ClockCycles += 4
+		}
+	}},
+	0xd2: {"JPNC nn", 12, func(gb *Gameboy) {
+		jumpAddr := gb.popPc16()
+		if !gb.Cpu.Registers.FlagC() {
+			gb.Cpu.Registers.Pc = jumpAddr
+			gb.Cpu.ClockCycles += 4
+		}
+	}},
+	0xda: {"JPC nn", 12, func(gb *Gameboy) {
+		jumpAddr := gb.popPc16()
+		if gb.Cpu.Registers.FlagC() {
+			gb.Cpu.Registers.Pc = jumpAddr
+			gb.Cpu.ClockCycles += 4
+		}
+	}},
+	0xe9: {"JP (HL)", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.Pc = uint16(gb.Cpu.Registers.H)<<8 + uint16(gb.Cpu.Registers.L)
+	}},
 	0x18: {"JR n", 8, func(gb *Gameboy) {
 		jumpDistance := int16(gb.popPc())
 		if jumpDistance > 0x7F {
@@ -837,6 +995,56 @@ var opcodes = [0x100]*opcode{
 		}
 	}},
 
+	// RST
+	0xc7: {"RST 00", 12, func(gb *Gameboy) {
+		gb.Cpu.Registers.Sp -= 2
+		jumpAddr := uint16(0x0000)
+		gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
+		gb.Cpu.Registers.Pc = jumpAddr
+	}},
+	0xcf: {"RST 08", 12, func(gb *Gameboy) {
+		gb.Cpu.Registers.Sp -= 2
+		jumpAddr := uint16(0x0008)
+		gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
+		gb.Cpu.Registers.Pc = jumpAddr
+	}},
+	0xd7: {"RST 10", 12, func(gb *Gameboy) {
+		gb.Cpu.Registers.Sp -= 2
+		jumpAddr := uint16(0x0010)
+		gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
+		gb.Cpu.Registers.Pc = jumpAddr
+	}},
+	0xdf: {"RST 18", 12, func(gb *Gameboy) {
+		gb.Cpu.Registers.Sp -= 2
+		jumpAddr := uint16(0x0018)
+		gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
+		gb.Cpu.Registers.Pc = jumpAddr
+	}},
+	0xe7: {"RST 20", 12, func(gb *Gameboy) {
+		gb.Cpu.Registers.Sp -= 2
+		jumpAddr := uint16(0x0020)
+		gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
+		gb.Cpu.Registers.Pc = jumpAddr
+	}},
+	0xef: {"RST 28", 12, func(gb *Gameboy) {
+		gb.Cpu.Registers.Sp -= 2
+		jumpAddr := uint16(0x0028)
+		gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
+		gb.Cpu.Registers.Pc = jumpAddr
+	}},
+	0xf7: {"RST 30", 12, func(gb *Gameboy) {
+		gb.Cpu.Registers.Sp -= 2
+		jumpAddr := uint16(0x0030)
+		gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
+		gb.Cpu.Registers.Pc = jumpAddr
+	}},
+	0xff: {"RST 38", 12, func(gb *Gameboy) {
+		gb.Cpu.Registers.Sp -= 2
+		jumpAddr := uint16(0x0038)
+		gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
+		gb.Cpu.Registers.Pc = jumpAddr
+	}},
+
 	// RET
 	0xc9: {"RET", 12, func(gb *Gameboy) {
 		gb.Cpu.Registers.Pc = gb.Memory.ReadWord(gb.Cpu.Registers.Sp)
@@ -870,8 +1078,24 @@ var opcodes = [0x100]*opcode{
 			gb.Cpu.ClockCycles += 8
 		}
 	}},
+	0xd9: {"RETI", 8, func(gb *Gameboy) {
+		gb.Cpu.Registers.Pc = gb.Memory.ReadWord(gb.Cpu.Registers.Sp)
+		gb.Cpu.Registers.Sp += 2
+	}},
 
 	// ROT
+	0x07: {"RLCA", 8, func(gb *Gameboy) {
+		carry := gb.Cpu.Registers.A&0x80 != 0
+		gb.Cpu.Registers.A = (gb.Cpu.Registers.A << 1) & 0xFF
+		if carry {
+			gb.Cpu.Registers.A |= 0x1
+		}
+
+		gb.Cpu.Registers.SetFlagZ(false)
+		gb.Cpu.Registers.SetFlagN(false)
+		gb.Cpu.Registers.SetFlagH(false)
+		gb.Cpu.Registers.SetFlagC(carry)
+	}},
 	0x17: {"RLA", 8, func(gb *Gameboy) {
 		carryNew := gb.Cpu.Registers.A&0x80 != 0
 		carryOld := gb.Cpu.Registers.FlagC()
@@ -885,6 +1109,74 @@ var opcodes = [0x100]*opcode{
 		gb.Cpu.Registers.SetFlagH(false)
 		gb.Cpu.Registers.SetFlagC(carryNew)
 	}},
+	0x0F: {"RRCA", 8, func(gb *Gameboy) {
+		carry := gb.Cpu.Registers.A&0x1 != 0
+		gb.Cpu.Registers.A = (gb.Cpu.Registers.A >> 1) & 0xFF
+		if carry {
+			gb.Cpu.Registers.A |= 0x80
+		}
+
+		gb.Cpu.Registers.SetFlagZ(false)
+		gb.Cpu.Registers.SetFlagN(false)
+		gb.Cpu.Registers.SetFlagH(false)
+		gb.Cpu.Registers.SetFlagC(carry)
+	}},
+	0x1F: {"RRA", 8, func(gb *Gameboy) {
+		carryNew := gb.Cpu.Registers.A&0x1 != 0
+		carryOld := gb.Cpu.Registers.FlagC()
+		gb.Cpu.Registers.A = (gb.Cpu.Registers.A >> 1) & 0xFF
+		if carryOld {
+			gb.Cpu.Registers.A |= 0x80
+		}
+
+		gb.Cpu.Registers.SetFlagZ(false)
+		gb.Cpu.Registers.SetFlagN(false)
+		gb.Cpu.Registers.SetFlagH(false)
+		gb.Cpu.Registers.SetFlagC(carryNew)
+	}},
+
+	// Misc
+	0x27: {"DAA", 4, func(gb *Gameboy) {
+		if !gb.Cpu.Registers.FlagN() {
+			if gb.Cpu.Registers.FlagC() || gb.Cpu.Registers.A > 0x99 {
+				gb.Cpu.Registers.A += 0x60
+				gb.Cpu.Registers.SetFlagC(true)
+			}
+			if gb.Cpu.Registers.FlagH() || gb.Cpu.Registers.A&0xF > 0x9 {
+				gb.Cpu.Registers.A += 0x06
+				gb.Cpu.Registers.SetFlagH(false)
+			}
+		} else if gb.Cpu.Registers.FlagC() && gb.Cpu.Registers.FlagH() {
+			gb.Cpu.Registers.A += 0x9a
+			gb.Cpu.Registers.SetFlagH(false)
+		} else if gb.Cpu.Registers.FlagC() {
+			gb.Cpu.Registers.A += 0xA0
+		} else if gb.Cpu.Registers.FlagH() {
+			gb.Cpu.Registers.A += 0xFA
+			gb.Cpu.Registers.SetFlagH(false)
+		}
+		gb.Cpu.Registers.SetFlagZ(gb.Cpu.Registers.A == 0)
+	}},
+	0x2F: {"CPL", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.A = 0xFF ^ gb.Cpu.Registers.A
+		gb.Cpu.Registers.SetFlagN(true)
+		gb.Cpu.Registers.SetFlagH(true)
+	}},
+	0x37: {"SCF", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.SetFlagN(false)
+		gb.Cpu.Registers.SetFlagH(false)
+		gb.Cpu.Registers.SetFlagC(true)
+	}},
+	0x3F: {"CCF", 4, func(gb *Gameboy) {
+		gb.Cpu.Registers.SetFlagN(false)
+		gb.Cpu.Registers.SetFlagH(false)
+		gb.Cpu.Registers.SetFlagC(!gb.Cpu.Registers.FlagC())
+	}},
+
+	0xF3: {"DI", 4, func(gb *Gameboy) {
+	}},
+	0xFB: {"EI", 4, func(gb *Gameboy) {
+	}},
 
 	// CB Mapper
 	0xcb: {"PREFIX CB", 0, func(gb *Gameboy) {
@@ -892,6 +1184,47 @@ var opcodes = [0x100]*opcode{
 		opcodeCb := opcodesCb[opcodeByte]
 		gb.Cpu.ClockCycles += opcodeCb.Cycles
 		opcodeCb.Function(gb)
+	}},
+	0x76: {"HALT", 4, func(gb *Gameboy) {
+		gb.Halted = true
+	}},
+	0x10: {"STOP", 4, func(gb *Gameboy) {
+		gb.Halted = true
+		gb.popPc()
+	}},
+	// Disallowed
+	0xD3: {"ILLEGAL", 4, func(gb *Gameboy) {
+		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xD3, gb.Cpu.Registers.Pc)
+	}},
+	0xDB: {"ILLEGAL", 4, func(gb *Gameboy) {
+		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xDB, gb.Cpu.Registers.Pc)
+	}},
+	0xDD: {"ILLEGAL", 4, func(gb *Gameboy) {
+		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xDD, gb.Cpu.Registers.Pc)
+	}},
+	0xE3: {"ILLEGAL", 4, func(gb *Gameboy) {
+		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xE3, gb.Cpu.Registers.Pc)
+	}},
+	0xE4: {"ILLEGAL", 4, func(gb *Gameboy) {
+		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xE4, gb.Cpu.Registers.Pc)
+	}},
+	0xEB: {"ILLEGAL", 4, func(gb *Gameboy) {
+		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xEB, gb.Cpu.Registers.Pc)
+	}},
+	0xEC: {"ILLEGAL", 4, func(gb *Gameboy) {
+		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xEC, gb.Cpu.Registers.Pc)
+	}},
+	0xED: {"ILLEGAL", 4, func(gb *Gameboy) {
+		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xED, gb.Cpu.Registers.Pc)
+	}},
+	0xF4: {"ILLEGAL", 4, func(gb *Gameboy) {
+		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xF4, gb.Cpu.Registers.Pc)
+	}},
+	0xFC: {"ILLEGAL", 4, func(gb *Gameboy) {
+		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xFC, gb.Cpu.Registers.Pc)
+	}},
+	0xFD: {"ILLEGAL", 4, func(gb *Gameboy) {
+		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xFD, gb.Cpu.Registers.Pc)
 	}},
 }
 
@@ -904,22 +1237,6 @@ func fillUninplementedOpcodes() {
 				1,
 				func(gb *Gameboy) {
 					log.Printf("Opcode not implemented: %02x", opcodeByte)
-					log.Print(gb.String())
-				},
-			}
-		}
-	}
-}
-
-func fillUninplementedOpcodesCb() {
-	for k, v := range opcodesCb {
-		if v == nil {
-			opcodeByte := k
-			opcodesCb[k] = &opcode{
-				fmt.Sprintf("UNIMP CB: %02x", k),
-				1,
-				func(gb *Gameboy) {
-					log.Printf("OpcodeCb not implemented: %02x", opcodeByte)
 					log.Print(gb.String())
 				},
 			}

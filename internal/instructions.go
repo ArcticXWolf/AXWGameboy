@@ -27,6 +27,17 @@ func instructionAddition(gb *Gameboy, value byte, otherValue byte, carry bool) b
 	return byte(sum)
 }
 
+func instructionAddition16(gb *Gameboy, value uint16, otherValue uint16) uint16 {
+	// log.Printf("ADD: %x + %x", value, otherValue)
+	sum := int32(value) + int32(otherValue)
+
+	gb.Cpu.Registers.SetFlagN(false)
+	gb.Cpu.Registers.SetFlagH(int32(value&0xFFF) > (sum & 0xFFF))
+	gb.Cpu.Registers.SetFlagC(sum > 0xFFFF)
+
+	return uint16(sum)
+}
+
 func instructionSubstraction(gb *Gameboy, value byte, otherValue byte, carry bool) byte {
 	// log.Printf("SUB: %x + %x", value, otherValue)
 	doCarry := gb.Cpu.Registers.FlagC() && carry

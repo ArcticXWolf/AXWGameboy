@@ -27,3 +27,5 @@ build/
 !.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspacedist/
+
+roms/

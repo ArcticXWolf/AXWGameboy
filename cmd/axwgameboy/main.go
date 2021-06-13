@@ -20,7 +20,7 @@ func main() {
 func start() {
 	log.Printf("AXWGameboy | Version %v | Builddate %v | Commit %v", version, date, commit)
 	gb := internal.NewGameboy()
-	gb.Debugger.Enabled = true
+	gb.Debugger.Enabled = false
 	gb.Debugger.Address = 0x0100
 	gb.Run()
 }

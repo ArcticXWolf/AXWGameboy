@@ -11,7 +11,7 @@ func Test_amountOpcodesWritten(t *testing.T) {
 			t.Logf("Missing: 0x%02x", k)
 		}
 	}
-	t.Logf("Amount of implemented opcodes: %03d / %03d", implemented, 245)
+	t.Logf("Amount of implemented opcodes: %03d / %03d", implemented, 256)
 
 	implemented = 0
 	for k, v := range opcodesCb {

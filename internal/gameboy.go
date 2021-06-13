@@ -19,12 +19,13 @@ type Gameboy struct {
 	Debugger      *Debugger
 	WorkingScreen [ScreenWidth][ScreenHeight][3]uint8
 	ReadyToRender [ScreenWidth][ScreenHeight][3]uint8
+	Halted        bool
 }
 
 func NewGameboy() *Gameboy {
 	g := NewGpu()
 	c := NewCpu()
-	m, _ := NewFromRom(string(path.Join(path.Base("."), "cpu_instrs.gb")), g)
+	m, _ := NewFromRom(string(path.Join(path.Base("./roms/"), "cpu_instrs.gb")), g)
 	d := NewDisplay()
 
 	return &Gameboy{
@@ -33,6 +34,7 @@ func NewGameboy() *Gameboy {
 		Memory:   m,
 		Gpu:      g,
 		Debugger: &Debugger{Enabled: false},
+		Halted:   false,
 	}
 }
 
@@ -43,7 +45,7 @@ func (gb *Gameboy) Run() {
 
 	ticker := time.NewTicker(frameDuration)
 
-	for ; true; <-ticker.C {
+	for ; !gb.Halted; <-ticker.C {
 		frameCount++
 
 		for i := 0; i < cyclesPerFrame; i++ {
