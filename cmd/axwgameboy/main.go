@@ -20,10 +20,7 @@ func main() {
 func start() {
 	log.Printf("AXWGameboy | Version %v | Builddate %v | Commit %v", version, date, commit)
 	options := &internal.GameboyOptions{
-		RomPath: "./roms/01.gb",
-		SerialOutputFunction: func(b byte) {
-			log.Printf("Got serial output: %s", string(b))
-		},
+		RomPath: "./roms/cpu_instrs.gb",
 	}
 	gb, err := internal.NewGameboy(options)
 	if err != nil {

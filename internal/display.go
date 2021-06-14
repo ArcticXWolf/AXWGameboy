@@ -53,3 +53,25 @@ func (d *Display) Render(gb *Gameboy) {
 
 	d.window.Update()
 }
+
+var keys = map[pixelgl.Button]Button{
+	pixelgl.KeyY:       ButtonA,
+	pixelgl.KeyX:       ButtonB,
+	pixelgl.KeyLeftAlt: ButtonSelect,
+	pixelgl.KeySpace:   ButtonStart,
+	pixelgl.KeyRight:   ButtonRight,
+	pixelgl.KeyLeft:    ButtonLeft,
+	pixelgl.KeyUp:      ButtonUp,
+	pixelgl.KeyDown:    ButtonDown,
+}
+
+func (d *Display) HandleInput(gb *Gameboy) {
+	for key, button := range keys {
+		if d.window.JustPressed(key) {
+			gb.Inputs.buttonsPressed = append(gb.Inputs.buttonsPressed, button)
+		}
+		if d.window.JustReleased(key) {
+			gb.Inputs.buttonsReleased = append(gb.Inputs.buttonsReleased, button)
+		}
+	}
+}

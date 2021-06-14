@@ -22,6 +22,7 @@ type Gameboy struct {
 	Memory        MemoryDevice
 	Gpu           *Gpu
 	Timer         *Timer
+	Inputs        *Inputs
 	Debugger      *Debugger
 	WorkingScreen [ScreenWidth][ScreenHeight][3]uint8
 	ReadyToRender [ScreenWidth][ScreenHeight][3]uint8
@@ -33,6 +34,7 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 	g := NewGpu()
 	c := NewCpu()
 	t := NewTimer()
+	i := NewInputs()
 
 	var d *Display
 	if !options.Headless {
@@ -45,6 +47,7 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 		Memory:   nil,
 		Gpu:      g,
 		Timer:    t,
+		Inputs:   i,
 		Debugger: &Debugger{AddressEnabled: false},
 		Halted:   false,
 		Options:  options,
@@ -68,6 +71,10 @@ func (gb *Gameboy) Run() {
 
 	for ; true; <-ticker.C {
 		frameCount++
+
+		gb.Display.HandleInput(gb)
+		gb.Inputs.HandleInput(gb)
+		gb.Inputs.ClearButtonList()
 
 		for i := 0; i < cyclesPerFrame; i++ {
 			cycles := gb.Cpu.Tick(gb)

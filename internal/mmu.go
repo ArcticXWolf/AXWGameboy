@@ -143,6 +143,9 @@ func (m *Mmu) ReadByte(address uint16) (result uint8) {
 		if address < 0xFF80 { // I/O
 			switch address & 0x00F0 {
 			case 0x00:
+				if address == 0xFF00 {
+					return m.gb.Inputs.ReadByte(address)
+				}
 				if address == 0xFF01 {
 					return m.serialOutput
 				}
@@ -212,6 +215,10 @@ func (m *Mmu) WriteByte(address uint16, value uint8) {
 		if address < 0xFF80 { // I/O
 			switch address & 0x00F0 {
 			case 0x00:
+				if address == 0xFF00 {
+					m.gb.Inputs.WriteByte(address, value)
+					return
+				}
 				if address == 0xFF01 {
 					m.serialOutput = value
 					return
