@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"path"
 	"time"
 )
 
@@ -11,31 +10,53 @@ const (
 	ScreenWidth     int = 160
 )
 
+type GameboyOptions struct {
+	RomPath              string
+	SerialOutputFunction func(byte)
+	Headless             bool
+}
+
 type Gameboy struct {
 	Display       *Display
 	Cpu           *Cpu
 	Memory        MemoryDevice
 	Gpu           *Gpu
+	Timer         *Timer
 	Debugger      *Debugger
 	WorkingScreen [ScreenWidth][ScreenHeight][3]uint8
 	ReadyToRender [ScreenWidth][ScreenHeight][3]uint8
 	Halted        bool
+	Options       *GameboyOptions
 }
 
-func NewGameboy() *Gameboy {
+func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 	g := NewGpu()
 	c := NewCpu()
-	m, _ := NewFromRom(string(path.Join(path.Base("./roms/"), "cpu_instrs.gb")), g)
-	d := NewDisplay()
+	t := NewTimer()
 
-	return &Gameboy{
+	var d *Display
+	if !options.Headless {
+		d = NewDisplay()
+	}
+
+	gb := &Gameboy{
 		Cpu:      c,
 		Display:  d,
-		Memory:   m,
+		Memory:   nil,
 		Gpu:      g,
-		Debugger: &Debugger{Enabled: false},
+		Timer:    t,
+		Debugger: &Debugger{AddressEnabled: false},
 		Halted:   false,
+		Options:  options,
 	}
+
+	var err error
+	gb.Memory, err = NewMemory(gb)
+	if err != nil {
+		return nil, err
+	}
+
+	return gb, err
 }
 
 func (gb *Gameboy) Run() {
@@ -45,7 +66,7 @@ func (gb *Gameboy) Run() {
 
 	ticker := time.NewTicker(frameDuration)
 
-	for ; !gb.Halted; <-ticker.C {
+	for ; true; <-ticker.C {
 		frameCount++
 
 		for i := 0; i < cyclesPerFrame; i++ {
@@ -53,10 +74,8 @@ func (gb *Gameboy) Run() {
 			gb.Gpu.Update(gb, cycles)
 		}
 
-		gb.Display.Render(gb)
-	}
-
-	for !gb.Display.window.Closed() {
-		gb.Display.window.Update()
+		if !gb.Options.Headless {
+			gb.Display.Render(gb)
+		}
 	}
 }

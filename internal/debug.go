@@ -11,14 +11,27 @@ import (
 )
 
 type Debugger struct {
-	Enabled bool
-	Address uint16
-	Step    bool
+	AddressEnabled  bool
+	LogOnly         bool
+	LogEvery        int
+	logEveryCurrent int
+	Address         uint16
+	Step            bool
 }
 
 func (d *Debugger) checkBreakpoint(gb *Gameboy) {
-	if d.Enabled && gb.Cpu.Registers.Pc == d.Address {
+	if d.AddressEnabled && gb.Cpu.Registers.Pc == d.Address {
 		d.Step = true
+	} else if d.LogOnly {
+		if d.LogEvery > 0 {
+			d.logEveryCurrent++
+			if d.logEveryCurrent > d.LogEvery {
+				d.logEveryCurrent = 0
+			} else {
+				return
+			}
+		}
+		log.Printf("%s", gb.String())
 	}
 }
 

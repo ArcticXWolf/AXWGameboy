@@ -20,7 +20,7 @@ runwindows: clean build
 	./build/${BINARY}-windows-amd64.exe
 
 test:
-	go test -timeout 30s go.janniklasrichter.de/axwgameboy/internal -v
+	go test go.janniklasrichter.de/axwgameboy/internal -v
 
 clean:
 	rm -rf build/

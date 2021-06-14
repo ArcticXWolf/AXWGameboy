@@ -19,8 +19,21 @@ func main() {
 
 func start() {
 	log.Printf("AXWGameboy | Version %v | Builddate %v | Commit %v", version, date, commit)
-	gb := internal.NewGameboy()
-	gb.Debugger.Enabled = false
+	options := &internal.GameboyOptions{
+		RomPath: "./roms/01.gb",
+		SerialOutputFunction: func(b byte) {
+			log.Printf("Got serial output: %s", string(b))
+		},
+	}
+	gb, err := internal.NewGameboy(options)
+	if err != nil {
+		log.Panicf("Error loading rom: %s", err)
+	}
+
+	gb.Debugger.AddressEnabled = false
 	gb.Debugger.Address = 0x0100
+	gb.Debugger.LogOnly = false
+	gb.Debugger.LogEvery = 10
+
 	gb.Run()
 }

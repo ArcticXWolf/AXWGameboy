@@ -61,14 +61,15 @@ func (isr *InterruptFlags) IsTriggeredJoypad() bool {
 }
 
 type Mmu struct {
-	inbios bool
-	gpu    *Gpu
-	bios   [0x100]byte
-	rom    [0x8000]byte
-	eram   [0x2000]byte
-	wram   [0x2000]byte
-	zram   [0x80]byte
-	isr    *InterruptFlags
+	inbios       bool
+	gb           *Gameboy
+	bios         [0x100]byte
+	rom          [0x8000]byte
+	eram         [0x2000]byte
+	wram         [0x2000]byte
+	serialOutput byte
+	zram         [0x80]byte
+	isr          *InterruptFlags
 }
 
 func (m *Mmu) GetInterruptFlags() *InterruptFlags {
@@ -79,46 +80,37 @@ func (m *Mmu) String() string {
 	return fmt.Sprintf("Memory: %v", *m)
 }
 
-func NewMemory(g *Gpu) *Mmu {
-	return &Mmu{
-		inbios: true,
-		gpu:    g,
-		bios:   gb_bios,
-		rom:    [0x8000]byte{},
-		eram:   [0x2000]byte{},
-		wram:   [0x2000]byte{},
-		zram:   [0x80]byte{},
-		isr:    &InterruptFlags{},
-	}
-}
-
-func NewFromRom(filename string, g *Gpu) (*Mmu, error) {
-	var data []byte
+func NewMemory(gb *Gameboy) (*Mmu, error) {
+	var rom [0x8000]byte
 	var err error
 
-	data, err = ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
+	if gb.Options.RomPath != "" {
+		var data []byte
 
-	rom := [0x8000]byte{}
+		data, err = ioutil.ReadFile(gb.Options.RomPath)
+		if err != nil {
+			return nil, err
+		}
 
-	for k, v := range data {
-		if k < 0x8000 {
-			rom[k] = v
+		rom = [0x8000]byte{}
+
+		for k, v := range data {
+			if k < 0x8000 {
+				rom[k] = v
+			}
 		}
 	}
 
 	return &Mmu{
 		inbios: true,
-		gpu:    g,
+		gb:     gb,
 		bios:   gb_bios,
 		rom:    rom,
 		eram:   [0x2000]byte{},
 		wram:   [0x2000]byte{},
 		zram:   [0x80]byte{},
 		isr:    &InterruptFlags{},
-	}, nil
+	}, err
 }
 
 func (m *Mmu) ReadByte(address uint16) (result uint8) {
@@ -133,7 +125,7 @@ func (m *Mmu) ReadByte(address uint16) (result uint8) {
 	case 0x1000, 0x2000, 0x3000, 0x4000, 0x5000, 0x6000, 0x7000: // ROM
 		return m.rom[address]
 	case 0x8000, 0x9000: // VRAM
-		return m.gpu.vram[address&0x1FFF]
+		return m.gb.Gpu.vram[address&0x1FFF]
 	case 0xA000, 0xB000: // External RAM
 		return m.eram[address&0x1FFF]
 	case 0xC000, 0xD000: // Working RAM
@@ -151,11 +143,29 @@ func (m *Mmu) ReadByte(address uint16) (result uint8) {
 		if address < 0xFF80 { // I/O
 			switch address & 0x00F0 {
 			case 0x00:
+				if address == 0xFF01 {
+					return m.serialOutput
+				}
+				if address == 0xFF02 {
+					return 0x00
+				}
+				if address == 0xFF04 {
+					return m.gb.Timer.dividerValue
+				}
+				if address == 0xFF05 {
+					return uint8(m.gb.Timer.counterValue & 0xFF)
+				}
+				if address == 0xFF06 {
+					return m.gb.Timer.moduloValue
+				}
+				if address == 0xFF07 {
+					return m.gb.Timer.controlFlag
+				}
 				if address == 0xFF0F {
 					return m.isr.TriggeredFlags
 				}
 			case 0x40, 0x50, 0x60, 0x70:
-				return m.gpu.ReadByte(address)
+				return m.gb.Gpu.ReadByte(address)
 			}
 			return 0 // TODO
 		}
@@ -179,8 +189,8 @@ func (m *Mmu) WriteByte(address uint16, value uint8) {
 	case 0x1000, 0x2000, 0x3000, 0x4000, 0x5000, 0x6000, 0x7000: // ROM
 		return
 	case 0x8000, 0x9000: // VRAM
-		m.gpu.vram[address&0x1FFF] = value
-		m.gpu.updateTile(address)
+		m.gb.Gpu.vram[address&0x1FFF] = value
+		m.gb.Gpu.updateTile(address)
 		return
 	case 0xA000, 0xB000: // External RAM
 		m.eram[address&0x1FFF] = value
@@ -202,11 +212,34 @@ func (m *Mmu) WriteByte(address uint16, value uint8) {
 		if address < 0xFF80 { // I/O
 			switch address & 0x00F0 {
 			case 0x00:
+				if address == 0xFF01 {
+					m.serialOutput = value
+					return
+				}
+				if address == 0xFF02 {
+					sof := m.gb.Options.SerialOutputFunction
+					if sof != nil {
+						sof(m.serialOutput)
+					}
+					return
+				}
+				if address == 0xFF05 {
+					m.gb.Timer.counterValue = uint16(value)
+					return
+				}
+				if address == 0xFF06 {
+					m.gb.Timer.moduloValue = value
+					return
+				}
+				if address == 0xFF07 {
+					m.gb.Timer.controlFlag = value
+					return
+				}
 				if address == 0xFF0F {
 					m.isr.TriggeredFlags = value
 				}
 			case 0x40, 0x50, 0x60, 0x70:
-				m.gpu.WriteByte(address, value)
+				m.gb.Gpu.WriteByte(address, value)
 			}
 			return
 		}

@@ -9,6 +9,15 @@ func instructionCompare(gb *Gameboy, value byte, otherValue byte) {
 	gb.Cpu.Registers.SetFlagC(value > otherValue)
 }
 
+func instructionIncrement(gb *Gameboy, value byte) byte {
+	result := value + 1
+	gb.Cpu.Registers.SetFlagZ(result == 0x00)
+	gb.Cpu.Registers.SetFlagN(false)
+	gb.Cpu.Registers.SetFlagH((value&0xF)+1 > 0xF)
+
+	return byte(result)
+}
+
 func instructionAddition(gb *Gameboy, value byte, otherValue byte, carry bool) byte {
 	// log.Printf("ADD: %x + %x", value, otherValue)
 	doCarry := gb.Cpu.Registers.FlagC() && carry
@@ -162,10 +171,28 @@ func instructionCBSRL(gb *Gameboy, value byte) byte {
 	return rotation
 }
 
-func instructionInterrupt(gb *Gameboy, jumpAddress uint16) {
+func instructionInterrupt(gb *Gameboy, interruptIndex int) {
+	if !gb.Cpu.Registers.Ime && gb.Halted {
+		gb.Halted = false
+		return
+	}
+	gb.Halted = false
 	gb.Cpu.Registers.Ime = false
+	gb.Memory.GetInterruptFlags().TriggeredFlags = 0x00
 
 	gb.Cpu.Registers.Sp -= 2
 	gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
-	gb.Cpu.Registers.Pc = jumpAddress
+
+	switch interruptIndex {
+	case 0:
+		gb.Cpu.Registers.Pc = 0x40
+	case 1:
+		gb.Cpu.Registers.Pc = 0x48
+	case 2:
+		gb.Cpu.Registers.Pc = 0x50
+	case 3:
+		gb.Cpu.Registers.Pc = 0x58
+	case 4:
+		gb.Cpu.Registers.Pc = 0x60
+	}
 }

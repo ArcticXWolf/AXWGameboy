@@ -112,17 +112,28 @@ func (c *Cpu) Reset() {
 }
 
 func (c *Cpu) Tick(gb *Gameboy) int {
+	var cycles int
 	gb.Debugger.checkBreakpoint(gb)
 	if gb.Debugger.Step {
 		gb.Debugger.triggerBreakpoint(gb)
 	}
-	_, opcode := c.getNextOpcode(gb)
-	c.ClockCycles += opcode.Cycles
-	opcode.Function(gb)
 
-	cyclesInterrupt := c.handleInterrupts(gb)
+	if !gb.Halted {
+		_, opcode := c.getNextOpcode(gb)
+		cycles += opcode.Cycles
+		opcode.Function(gb)
+	} else {
+		cycles += 4
+	}
 
-	return opcode.Cycles + cyclesInterrupt
+	gb.Timer.Update(gb)
+
+	cycles += c.handleInterrupts(gb)
+
+	c.ClockCycles += cycles
+	gb.Timer.Update(gb)
+
+	return cycles
 }
 
 func (c *Cpu) getNextOpcode(gb *Gameboy) (uint8, *opcode) {
@@ -131,33 +142,20 @@ func (c *Cpu) getNextOpcode(gb *Gameboy) (uint8, *opcode) {
 }
 
 func (c *Cpu) handleInterrupts(gb *Gameboy) int {
-	cycles := 0
-	if c.Registers.Ime {
-		triggeredInterrupts := gb.Memory.GetInterruptFlags().EnableFlags & gb.Memory.GetInterruptFlags().TriggeredFlags
+	if !c.Registers.Ime && !gb.Halted {
+		return 0
+	}
 
-		if triggeredInterrupts&0x01 != 0 {
-			gb.Memory.GetInterruptFlags().TriggeredFlags &= ^uint8(0x01)
-			instructionInterrupt(gb, 0x0040)
-			cycles += 20
-		} else if triggeredInterrupts&0x02 != 0 {
-			gb.Memory.GetInterruptFlags().TriggeredFlags &= ^uint8(0x02)
-			instructionInterrupt(gb, 0x0048)
-			cycles += 20
-		} else if triggeredInterrupts&0x04 != 0 {
-			gb.Memory.GetInterruptFlags().TriggeredFlags &= ^uint8(0x04)
-			instructionInterrupt(gb, 0x0050)
-			cycles += 20
-		} else if triggeredInterrupts&0x08 != 0 {
-			gb.Memory.GetInterruptFlags().TriggeredFlags &= ^uint8(0x08)
-			instructionInterrupt(gb, 0x0058)
-			cycles += 20
-		} else if triggeredInterrupts&0x10 != 0 {
-			gb.Memory.GetInterruptFlags().TriggeredFlags &= ^uint8(0x10)
-			instructionInterrupt(gb, 0x0060)
-			cycles += 20
+	enabled := gb.Memory.GetInterruptFlags().EnableFlags
+	triggered := gb.Memory.GetInterruptFlags().TriggeredFlags
+
+	for i := 0; i < 5; i++ {
+		if (enabled>>i)&0x1 > 0 && (triggered>>i)&0x1 > 0 {
+			instructionInterrupt(gb, i)
+			return 20
 		}
 	}
-	return cycles
+	return 0
 }
 
 func (gb *Gameboy) peekPc(offset int) uint8 {
@@ -178,8 +176,8 @@ func (gb *Gameboy) popPc16() uint16 {
 }
 
 func (gb *Gameboy) String() string {
-	step := fmt.Sprintf("(0x%04x) %02x, %15s", gb.Cpu.Registers.Pc, gb.peekPc(0), opcodes[gb.peekPc(0)].Label)
+	step := fmt.Sprintf("(0x%04x) %02x, %15s %v", gb.Cpu.Registers.Pc, gb.peekPc(0), opcodes[gb.peekPc(0)].Label, gb.Halted)
 	peek := fmt.Sprintf("%02x %02x %02x", gb.peekPc(1), gb.peekPc(2), gb.peekPc(3))
-	isr := fmt.Sprintf("%02x %02x", gb.Memory.GetInterruptFlags().EnableFlags, gb.Memory.GetInterruptFlags().TriggeredFlags)
-	return fmt.Sprintf("STEP: %s | PEEK: %s | REG: %s | ISR: %s | CLOCK: %v", step, peek, gb.Cpu.Registers.String(), isr, gb.Cpu.ClockCycles)
+	isr := fmt.Sprintf("%v E%02x T%02x", gb.Cpu.Registers.Ime, gb.Memory.GetInterruptFlags().EnableFlags, gb.Memory.GetInterruptFlags().TriggeredFlags)
+	return fmt.Sprintf("%010d STEP: %s | PEEK: %s | REG: %s | ISR: %s", gb.Cpu.ClockCycles, step, peek, gb.Cpu.Registers.String(), isr)
 }

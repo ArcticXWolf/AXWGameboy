@@ -498,77 +498,29 @@ var opcodes = [0x100]*opcode{
 
 	// INC r
 	0x04: {"INC B", 4, func(gb *Gameboy) {
-		gb.Cpu.Registers.B++
-		gb.Cpu.Registers.B &= 0xFF
-		if gb.Cpu.Registers.B == 0 {
-			gb.Cpu.Registers.Flags = 0x80
-		} else {
-			gb.Cpu.Registers.Flags = 0x0
-		}
+		gb.Cpu.Registers.B = instructionIncrement(gb, gb.Cpu.Registers.B)
 	}},
 	0x0C: {"INC C", 4, func(gb *Gameboy) {
-		gb.Cpu.Registers.C++
-		gb.Cpu.Registers.C &= 0xFF
-		if gb.Cpu.Registers.C == 0 {
-			gb.Cpu.Registers.Flags = 0x80
-		} else {
-			gb.Cpu.Registers.Flags = 0x0
-		}
+		gb.Cpu.Registers.C = instructionIncrement(gb, gb.Cpu.Registers.C)
 	}},
 	0x14: {"INC D", 4, func(gb *Gameboy) {
-		gb.Cpu.Registers.D++
-		gb.Cpu.Registers.D &= 0xFF
-		if gb.Cpu.Registers.D == 0 {
-			gb.Cpu.Registers.Flags = 0x80
-		} else {
-			gb.Cpu.Registers.Flags = 0x0
-		}
+		gb.Cpu.Registers.D = instructionIncrement(gb, gb.Cpu.Registers.D)
 	}},
 	0x1C: {"INC E", 4, func(gb *Gameboy) {
-		gb.Cpu.Registers.E++
-		gb.Cpu.Registers.E &= 0xFF
-		if gb.Cpu.Registers.E == 0 {
-			gb.Cpu.Registers.Flags = 0x80
-		} else {
-			gb.Cpu.Registers.Flags = 0x0
-		}
+		gb.Cpu.Registers.E = instructionIncrement(gb, gb.Cpu.Registers.E)
 	}},
 	0x24: {"INC H", 4, func(gb *Gameboy) {
-		gb.Cpu.Registers.H++
-		gb.Cpu.Registers.H &= 0xFF
-		if gb.Cpu.Registers.H == 0 {
-			gb.Cpu.Registers.Flags = 0x80
-		} else {
-			gb.Cpu.Registers.Flags = 0x0
-		}
+		gb.Cpu.Registers.H = instructionIncrement(gb, gb.Cpu.Registers.H)
 	}},
 	0x2C: {"INC L", 4, func(gb *Gameboy) {
-		gb.Cpu.Registers.L++
-		gb.Cpu.Registers.L &= 0xFF
-		if gb.Cpu.Registers.L == 0 {
-			gb.Cpu.Registers.Flags = 0x80
-		} else {
-			gb.Cpu.Registers.Flags = 0x0
-		}
+		gb.Cpu.Registers.L = instructionIncrement(gb, gb.Cpu.Registers.L)
 	}},
 	0x34: {"INC (HL)", 4, func(gb *Gameboy) {
-		incValue := gb.Memory.ReadByte(uint16(gb.Cpu.Registers.H)<<8+uint16(gb.Cpu.Registers.L)) + 1
-		incValue &= 0xFF
-		gb.Memory.WriteByte(uint16(gb.Cpu.Registers.H)<<8+uint16(gb.Cpu.Registers.L), incValue)
-		if incValue == 0 {
-			gb.Cpu.Registers.Flags = 0x80
-		} else {
-			gb.Cpu.Registers.Flags = 0x0
-		}
+		incValue := gb.Memory.ReadByte(uint16(gb.Cpu.Registers.H)<<8 + uint16(gb.Cpu.Registers.L))
+		gb.Memory.WriteByte(uint16(gb.Cpu.Registers.H)<<8+uint16(gb.Cpu.Registers.L), instructionIncrement(gb, incValue))
 	}},
 	0x3C: {"INC A", 4, func(gb *Gameboy) {
-		gb.Cpu.Registers.A++
-		gb.Cpu.Registers.A &= 0xFF
-		if gb.Cpu.Registers.A == 0 {
-			gb.Cpu.Registers.Flags = 0x80
-		} else {
-			gb.Cpu.Registers.Flags = 0x0
-		}
+		gb.Cpu.Registers.A = instructionIncrement(gb, gb.Cpu.Registers.A)
 	}},
 
 	0x03: {"INC BC", 8, func(gb *Gameboy) {
