@@ -28,4 +28,5 @@ build/
 !.vscode/extensions.json
 *.code-workspacedist/
 
-roms/
+roms/*.gb
+roms/*.gbc

@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -31,7 +32,6 @@ type Gameboy struct {
 }
 
 func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
-	g := NewGpu()
 	c := NewCpu()
 	t := NewTimer()
 	i := NewInputs()
@@ -45,7 +45,7 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 		Cpu:      c,
 		Display:  d,
 		Memory:   nil,
-		Gpu:      g,
+		Gpu:      nil,
 		Timer:    t,
 		Inputs:   i,
 		Debugger: &Debugger{AddressEnabled: false},
@@ -53,6 +53,7 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 		Options:  options,
 	}
 
+	gb.Gpu = NewGpu(gb)
 	var err error
 	gb.Memory, err = NewMemory(gb)
 	if err != nil {
@@ -66,6 +67,7 @@ func (gb *Gameboy) Run() {
 	cyclesPerFrame := int(float32(ClockSpeed) / float32(FramesPerSecond) * SpeedBoost)
 	frameDuration := time.Second / time.Duration(FramesPerSecond)
 	frameCount := 0
+	lastFpsUpdate := time.Now()
 
 	ticker := time.NewTicker(frameDuration)
 
@@ -76,13 +78,22 @@ func (gb *Gameboy) Run() {
 		gb.Inputs.HandleInput(gb)
 		gb.Inputs.ClearButtonList()
 
-		for i := 0; i < cyclesPerFrame; i++ {
-			cycles := gb.Cpu.Tick(gb)
-			gb.Gpu.Update(gb, cycles)
+		cycles := 0
+		for cycles <= cyclesPerFrame {
+			cyclesCPU := gb.Cpu.Tick(gb)
+			cycles += cyclesCPU
+			gb.Gpu.Update(gb, cyclesCPU)
 		}
 
 		if !gb.Options.Headless {
 			gb.Display.Render(gb)
+		}
+
+		since := time.Since(lastFpsUpdate)
+		if since > time.Second {
+			lastFpsUpdate = time.Now()
+			gb.Display.window.SetTitle(fmt.Sprintf("AXWGameboy (%d FPS)", frameCount))
+			frameCount = 0
 		}
 	}
 }

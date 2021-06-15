@@ -135,7 +135,7 @@ func (m *Mmu) ReadByte(address uint16) (result uint8) {
 			return m.wram[address&0x1FFF]
 		}
 		if address < 0xFEA0 { // OAM
-			return 0 // TODO
+			return m.gb.Gpu.ReadByte(address)
 		}
 		if address < 0xFF00 { // Empty
 			return 0
@@ -207,7 +207,7 @@ func (m *Mmu) WriteByte(address uint16, value uint8) {
 			return
 		}
 		if address < 0xFEA0 { // OAM
-			return
+			m.gb.Gpu.WriteByte(address, value)
 		}
 		if address < 0xFF00 { // Empty
 			return

@@ -2,6 +2,7 @@ package internal
 
 import (
 	"image/color"
+	"os"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
@@ -66,6 +67,10 @@ var keys = map[pixelgl.Button]Button{
 }
 
 func (d *Display) HandleInput(gb *Gameboy) {
+	if d.window.JustPressed(pixelgl.KeyEscape) {
+		os.Exit(0)
+	}
+
 	for key, button := range keys {
 		if d.window.JustPressed(key) {
 			gb.Inputs.buttonsPressed = append(gb.Inputs.buttonsPressed, button)

@@ -118,19 +118,23 @@ func (c *Cpu) Tick(gb *Gameboy) int {
 		gb.Debugger.triggerBreakpoint(gb)
 	}
 
-	if !gb.Halted {
-		_, opcode := c.getNextOpcode(gb)
-		cycles += opcode.Cycles
-		opcode.Function(gb)
-	} else {
-		cycles += 4
-	}
+	cyclesInt := c.handleInterrupts(gb)
+	c.ClockCycles += cyclesInt
+	cycles += cyclesInt
 
 	gb.Timer.Update(gb)
 
-	cycles += c.handleInterrupts(gb)
+	var cyclesOp int
+	if !gb.Halted {
+		_, opcode := c.getNextOpcode(gb)
+		cyclesOp += opcode.Cycles
+		opcode.Function(gb)
+	} else {
+		cyclesOp += 4
+	}
+	c.ClockCycles += cyclesOp
+	cycles += cyclesOp
 
-	c.ClockCycles += cycles
 	gb.Timer.Update(gb)
 
 	return cycles

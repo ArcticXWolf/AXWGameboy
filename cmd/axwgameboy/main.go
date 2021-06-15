@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 
 	"github.com/faiface/pixel/pixelgl"
@@ -8,19 +9,35 @@ import (
 )
 
 var (
-	version = "dev"
-	date    = "dev"
-	commit  = "dev"
+	version      = "dev"
+	date         = "dev"
+	commit       = "dev"
+	romPath      string
+	headless     bool
+	serialOutput bool
 )
 
+func init() {
+	flag.StringVar(&romPath, "rom", "./cpu_instrs.gb", "Rom to use")
+	flag.BoolVar(&headless, "headless", false, "Run in headless (aka no display) mode")
+	flag.BoolVar(&serialOutput, "serial", false, "Show serial output in console")
+}
+
 func main() {
+	flag.Parse()
 	pixelgl.Run(start)
 }
 
 func start() {
 	log.Printf("AXWGameboy | Version %v | Builddate %v | Commit %v", version, date, commit)
 	options := &internal.GameboyOptions{
-		RomPath: "./roms/cpu_instrs.gb",
+		RomPath:  romPath,
+		Headless: headless,
+	}
+	if serialOutput {
+		options.SerialOutputFunction = func(b byte) {
+			log.Print(string(b))
+		}
 	}
 	gb, err := internal.NewGameboy(options)
 	if err != nil {

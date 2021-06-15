@@ -17,9 +17,12 @@ run:
 	go run go.janniklasrichter.de/axwgameboy/cmd/axwgameboy
 
 runwindows: clean build
-	./build/${BINARY}-windows-amd64.exe
+	./build/${BINARY}-windows-amd64.exe $(ARGS)
 
 test:
+	go test go.janniklasrichter.de/axwgameboy/internal
+
+testverbose:
 	go test go.janniklasrichter.de/axwgameboy/internal -v
 
 clean:

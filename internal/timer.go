@@ -45,8 +45,8 @@ func (t *Timer) Update(gb *Gameboy) {
 				overflowThreshold = 16
 			}
 
-			if t.counterForCounter >= overflowThreshold {
-				t.counterForCounter = 0
+			for t.counterForCounter >= overflowThreshold {
+				t.counterForCounter -= overflowThreshold
 				t.counterValue++
 
 				if t.counterValue > 0xFF {
