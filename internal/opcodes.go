@@ -5,13 +5,13 @@ import (
 	"log"
 )
 
-type opcode struct {
+type Opcode struct {
 	Label    string
 	Cycles   int
 	Function func(*Gameboy)
 }
 
-var opcodes = [0x100]*opcode{
+var Opcodes = [0x100]*Opcode{
 	0x00: {"NOP", 4, func(gb *Gameboy) {}},
 	// 8-Bit Loads
 	// LD r1,n
@@ -1127,7 +1127,7 @@ var opcodes = [0x100]*opcode{
 	// CB Mapper
 	0xcb: {"PREFIX CB", 0, func(gb *Gameboy) {
 		opcodeByte := gb.popPc()
-		opcodeCb := opcodesCb[opcodeByte]
+		opcodeCb := OpcodesCb[opcodeByte]
 		gb.Cpu.ClockCycles += opcodeCb.Cycles
 		opcodeCb.Function(gb)
 	}},
@@ -1175,10 +1175,10 @@ var opcodes = [0x100]*opcode{
 }
 
 func fillUninplementedOpcodes() {
-	for k, v := range opcodes {
+	for k, v := range Opcodes {
 		if v == nil {
 			opcodeByte := k
-			opcodes[k] = &opcode{
+			Opcodes[k] = &Opcode{
 				fmt.Sprintf("UNIMP: %02x", k),
 				1,
 				func(gb *Gameboy) {

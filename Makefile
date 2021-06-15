@@ -14,7 +14,7 @@ build:
 		go build -o build/${BINARY}-windows-amd64.exe ${LDFLAGS} go.janniklasrichter.de/axwgameboy/cmd/axwgameboy
 
 run:
-	go run go.janniklasrichter.de/axwgameboy/cmd/axwgameboy
+	go run go.janniklasrichter.de/axwgameboy/cmd/axwgameboy $(ARGS)
 
 runwindows: clean build
 	./build/${BINARY}-windows-amd64.exe $(ARGS)

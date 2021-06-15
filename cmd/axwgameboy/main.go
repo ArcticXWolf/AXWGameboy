@@ -31,9 +31,13 @@ func main() {
 
 func start() {
 	log.Printf("AXWGameboy | Version %v | Builddate %v | Commit %v", version, date, commit)
+	cui := debugCui.NewGui()
 	options := &internal.GameboyOptions{
 		RomPath:  romPath,
 		Headless: headless,
+		OnFrameFunction: func(g *internal.Gameboy) {
+			cui.UpdateView(g)
+		},
 	}
 	if serialOutput {
 		options.SerialOutputFunction = func(b byte) {
@@ -50,6 +54,6 @@ func start() {
 	gb.Debugger.LogOnly = false
 	gb.Debugger.LogEvery = 10
 
-	go debugCui.LaunchGui()
+	go cui.RunLoop()
 	gb.Run()
 }

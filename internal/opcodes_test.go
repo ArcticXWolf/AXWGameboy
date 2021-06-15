@@ -4,7 +4,7 @@ import "testing"
 
 func Test_amountOpcodesWritten(t *testing.T) {
 	implemented := 0
-	for k, v := range opcodes {
+	for k, v := range Opcodes {
 		if v != nil {
 			implemented++
 		} else {
@@ -15,7 +15,7 @@ func Test_amountOpcodesWritten(t *testing.T) {
 
 	fillOpcodesCb(false)
 	implemented = 0
-	for k, v := range opcodesCb {
+	for k, v := range OpcodesCb {
 		if v != nil {
 			implemented++
 		} else {

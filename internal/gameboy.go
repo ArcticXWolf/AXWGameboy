@@ -15,6 +15,8 @@ type GameboyOptions struct {
 	RomPath              string
 	SerialOutputFunction func(byte)
 	Headless             bool
+	OnCycleFunction      func(*Gameboy)
+	OnFrameFunction      func(*Gameboy)
 }
 
 type Gameboy struct {
@@ -74,7 +76,9 @@ func (gb *Gameboy) Run() {
 	for ; true; <-ticker.C {
 		frameCount++
 
-		gb.Display.HandleInput(gb)
+		if !gb.Options.Headless {
+			gb.Display.HandleInput(gb)
+		}
 		gb.Inputs.HandleInput(gb)
 		gb.Inputs.ClearButtonList()
 
@@ -83,17 +87,24 @@ func (gb *Gameboy) Run() {
 			cyclesCPU := gb.Cpu.Tick(gb)
 			cycles += cyclesCPU
 			gb.Gpu.Update(gb, cyclesCPU)
+
+			if gb.Options.OnCycleFunction != nil {
+				gb.Options.OnCycleFunction(gb)
+			}
 		}
 
+		if gb.Options.OnFrameFunction != nil {
+			gb.Options.OnFrameFunction(gb)
+		}
 		if !gb.Options.Headless {
 			gb.Display.Render(gb)
-		}
 
-		since := time.Since(lastFpsUpdate)
-		if since > time.Second {
-			lastFpsUpdate = time.Now()
-			gb.Display.window.SetTitle(fmt.Sprintf("AXWGameboy (%d FPS)", frameCount))
-			frameCount = 0
+			since := time.Since(lastFpsUpdate)
+			if since > time.Second {
+				lastFpsUpdate = time.Now()
+				gb.Display.window.SetTitle(fmt.Sprintf("AXWGameboy (%d FPS)", frameCount))
+				frameCount = 0
+			}
 		}
 	}
 }

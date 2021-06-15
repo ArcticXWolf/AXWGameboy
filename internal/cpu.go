@@ -140,9 +140,9 @@ func (c *Cpu) Tick(gb *Gameboy) int {
 	return cycles
 }
 
-func (c *Cpu) getNextOpcode(gb *Gameboy) (uint8, *opcode) {
+func (c *Cpu) getNextOpcode(gb *Gameboy) (uint8, *Opcode) {
 	code := gb.popPc()
-	return code, opcodes[code]
+	return code, Opcodes[code]
 }
 
 func (c *Cpu) handleInterrupts(gb *Gameboy) int {
@@ -162,7 +162,7 @@ func (c *Cpu) handleInterrupts(gb *Gameboy) int {
 	return 0
 }
 
-func (gb *Gameboy) peekPc(offset int) uint8 {
+func (gb *Gameboy) PeekPc(offset int) uint8 {
 	return gb.Memory.ReadByte(gb.Cpu.Registers.Pc + uint16(offset))
 }
 
@@ -180,8 +180,8 @@ func (gb *Gameboy) popPc16() uint16 {
 }
 
 func (gb *Gameboy) String() string {
-	step := fmt.Sprintf("(0x%04x) %02x, %15s %v", gb.Cpu.Registers.Pc, gb.peekPc(0), opcodes[gb.peekPc(0)].Label, gb.Halted)
-	peek := fmt.Sprintf("%02x %02x %02x", gb.peekPc(1), gb.peekPc(2), gb.peekPc(3))
+	step := fmt.Sprintf("(0x%04x) %02x, %15s %v", gb.Cpu.Registers.Pc, gb.PeekPc(0), Opcodes[gb.PeekPc(0)].Label, gb.Halted)
+	peek := fmt.Sprintf("%02x %02x %02x", gb.PeekPc(1), gb.PeekPc(2), gb.PeekPc(3))
 	isr := fmt.Sprintf("%v E%02x T%02x", gb.Cpu.Registers.Ime, gb.Memory.GetInterruptFlags().EnableFlags, gb.Memory.GetInterruptFlags().TriggeredFlags)
 	return fmt.Sprintf("%010d STEP: %s | PEEK: %s | REG: %s | ISR: %s", gb.Cpu.ClockCycles, step, peek, gb.Cpu.Registers.String(), isr)
 }

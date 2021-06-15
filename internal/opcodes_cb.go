@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-var opcodesCb = [0x100]*opcode{
+var OpcodesCb = [0x100]*Opcode{
 	0x00: {"RLC B", 8, func(gb *Gameboy) {
 		gb.Cpu.Registers.B = instructionCBRLC(gb, gb.Cpu.Registers.B)
 	}},
@@ -214,56 +214,56 @@ func fillOpcodesCb(handleUnimplemented bool) {
 		i := x
 
 		// BIT Tests
-		opcodesCb[0x40+0x8*x] = &opcode{
+		OpcodesCb[0x40+0x8*x] = &Opcode{
 			fmt.Sprintf("BIT %d, B", i),
 			8,
 			func(gb *Gameboy) {
 				instructionTestBit(gb, gb.Cpu.Registers.B, uint8(i))
 			},
 		}
-		opcodesCb[0x41+0x8*x] = &opcode{
+		OpcodesCb[0x41+0x8*x] = &Opcode{
 			fmt.Sprintf("BIT %d, C", i),
 			8,
 			func(gb *Gameboy) {
 				instructionTestBit(gb, gb.Cpu.Registers.C, uint8(i))
 			},
 		}
-		opcodesCb[0x42+0x8*x] = &opcode{
+		OpcodesCb[0x42+0x8*x] = &Opcode{
 			fmt.Sprintf("BIT %d, D", i),
 			8,
 			func(gb *Gameboy) {
 				instructionTestBit(gb, gb.Cpu.Registers.D, uint8(i))
 			},
 		}
-		opcodesCb[0x43+0x8*x] = &opcode{
+		OpcodesCb[0x43+0x8*x] = &Opcode{
 			fmt.Sprintf("BIT %d, E", i),
 			8,
 			func(gb *Gameboy) {
 				instructionTestBit(gb, gb.Cpu.Registers.E, uint8(i))
 			},
 		}
-		opcodesCb[0x44+0x8*x] = &opcode{
+		OpcodesCb[0x44+0x8*x] = &Opcode{
 			fmt.Sprintf("BIT %d, H", i),
 			8,
 			func(gb *Gameboy) {
 				instructionTestBit(gb, gb.Cpu.Registers.H, uint8(i))
 			},
 		}
-		opcodesCb[0x45+0x8*x] = &opcode{
+		OpcodesCb[0x45+0x8*x] = &Opcode{
 			fmt.Sprintf("BIT %d, L", i),
 			8,
 			func(gb *Gameboy) {
 				instructionTestBit(gb, gb.Cpu.Registers.L, uint8(i))
 			},
 		}
-		opcodesCb[0x46+0x8*x] = &opcode{
+		OpcodesCb[0x46+0x8*x] = &Opcode{
 			fmt.Sprintf("BIT %d, (HL)", i),
 			16,
 			func(gb *Gameboy) {
 				instructionTestBit(gb, gb.Memory.ReadByte(uint16(gb.Cpu.Registers.H)<<8+uint16(gb.Cpu.Registers.L)), uint8(i))
 			},
 		}
-		opcodesCb[0x47+0x8*x] = &opcode{
+		OpcodesCb[0x47+0x8*x] = &Opcode{
 			fmt.Sprintf("BIT %d, A", i),
 			8,
 			func(gb *Gameboy) {
@@ -272,49 +272,49 @@ func fillOpcodesCb(handleUnimplemented bool) {
 		}
 
 		// RES
-		opcodesCb[0x80+0x8*x] = &opcode{
+		OpcodesCb[0x80+0x8*x] = &Opcode{
 			fmt.Sprintf("RES %d, B", i),
 			8,
 			func(gb *Gameboy) {
 				gb.Cpu.Registers.B = instructionResetBit(gb, gb.Cpu.Registers.B, uint8(i))
 			},
 		}
-		opcodesCb[0x81+0x8*x] = &opcode{
+		OpcodesCb[0x81+0x8*x] = &Opcode{
 			fmt.Sprintf("RES %d, C", i),
 			8,
 			func(gb *Gameboy) {
 				gb.Cpu.Registers.C = instructionResetBit(gb, gb.Cpu.Registers.C, uint8(i))
 			},
 		}
-		opcodesCb[0x82+0x8*x] = &opcode{
+		OpcodesCb[0x82+0x8*x] = &Opcode{
 			fmt.Sprintf("RES %d, D", i),
 			8,
 			func(gb *Gameboy) {
 				gb.Cpu.Registers.D = instructionResetBit(gb, gb.Cpu.Registers.D, uint8(i))
 			},
 		}
-		opcodesCb[0x83+0x8*x] = &opcode{
+		OpcodesCb[0x83+0x8*x] = &Opcode{
 			fmt.Sprintf("RES %d, E", i),
 			8,
 			func(gb *Gameboy) {
 				gb.Cpu.Registers.E = instructionResetBit(gb, gb.Cpu.Registers.E, uint8(i))
 			},
 		}
-		opcodesCb[0x84+0x8*x] = &opcode{
+		OpcodesCb[0x84+0x8*x] = &Opcode{
 			fmt.Sprintf("RES %d, H", i),
 			8,
 			func(gb *Gameboy) {
 				gb.Cpu.Registers.H = instructionResetBit(gb, gb.Cpu.Registers.H, uint8(i))
 			},
 		}
-		opcodesCb[0x85+0x8*x] = &opcode{
+		OpcodesCb[0x85+0x8*x] = &Opcode{
 			fmt.Sprintf("RES %d, L", i),
 			8,
 			func(gb *Gameboy) {
 				gb.Cpu.Registers.L = instructionResetBit(gb, gb.Cpu.Registers.L, uint8(i))
 			},
 		}
-		opcodesCb[0x86+0x8*x] = &opcode{
+		OpcodesCb[0x86+0x8*x] = &Opcode{
 			fmt.Sprintf("RES %d, (HL)", i),
 			16,
 			func(gb *Gameboy) {
@@ -322,7 +322,7 @@ func fillOpcodesCb(handleUnimplemented bool) {
 				gb.Memory.WriteByte(addr, instructionResetBit(gb, gb.Memory.ReadByte(addr), uint8(i)))
 			},
 		}
-		opcodesCb[0x87+0x8*x] = &opcode{
+		OpcodesCb[0x87+0x8*x] = &Opcode{
 			fmt.Sprintf("RES %d, A", i),
 			8,
 			func(gb *Gameboy) {
@@ -331,49 +331,49 @@ func fillOpcodesCb(handleUnimplemented bool) {
 		}
 
 		// SET
-		opcodesCb[0xc0+0x8*x] = &opcode{
+		OpcodesCb[0xc0+0x8*x] = &Opcode{
 			fmt.Sprintf("SET %d, B", i),
 			8,
 			func(gb *Gameboy) {
 				gb.Cpu.Registers.B = instructionSetBit(gb, gb.Cpu.Registers.B, uint8(i))
 			},
 		}
-		opcodesCb[0xc1+0x8*x] = &opcode{
+		OpcodesCb[0xc1+0x8*x] = &Opcode{
 			fmt.Sprintf("SET %d, C", i),
 			8,
 			func(gb *Gameboy) {
 				gb.Cpu.Registers.C = instructionSetBit(gb, gb.Cpu.Registers.C, uint8(i))
 			},
 		}
-		opcodesCb[0xc2+0x8*x] = &opcode{
+		OpcodesCb[0xc2+0x8*x] = &Opcode{
 			fmt.Sprintf("SET %d, D", i),
 			8,
 			func(gb *Gameboy) {
 				gb.Cpu.Registers.D = instructionSetBit(gb, gb.Cpu.Registers.D, uint8(i))
 			},
 		}
-		opcodesCb[0xc3+0x8*x] = &opcode{
+		OpcodesCb[0xc3+0x8*x] = &Opcode{
 			fmt.Sprintf("SET %d, E", i),
 			8,
 			func(gb *Gameboy) {
 				gb.Cpu.Registers.E = instructionSetBit(gb, gb.Cpu.Registers.E, uint8(i))
 			},
 		}
-		opcodesCb[0xc4+0x8*x] = &opcode{
+		OpcodesCb[0xc4+0x8*x] = &Opcode{
 			fmt.Sprintf("SET %d, H", i),
 			8,
 			func(gb *Gameboy) {
 				gb.Cpu.Registers.H = instructionSetBit(gb, gb.Cpu.Registers.H, uint8(i))
 			},
 		}
-		opcodesCb[0xc5+0x8*x] = &opcode{
+		OpcodesCb[0xc5+0x8*x] = &Opcode{
 			fmt.Sprintf("SET %d, L", i),
 			8,
 			func(gb *Gameboy) {
 				gb.Cpu.Registers.L = instructionSetBit(gb, gb.Cpu.Registers.L, uint8(i))
 			},
 		}
-		opcodesCb[0xc6+0x8*x] = &opcode{
+		OpcodesCb[0xc6+0x8*x] = &Opcode{
 			fmt.Sprintf("SET %d, (HL)", i),
 			16,
 			func(gb *Gameboy) {
@@ -381,7 +381,7 @@ func fillOpcodesCb(handleUnimplemented bool) {
 				gb.Memory.WriteByte(addr, instructionSetBit(gb, gb.Memory.ReadByte(addr), uint8(i)))
 			},
 		}
-		opcodesCb[0xc7+0x8*x] = &opcode{
+		OpcodesCb[0xc7+0x8*x] = &Opcode{
 			fmt.Sprintf("SET %d, A", i),
 			8,
 			func(gb *Gameboy) {
@@ -392,10 +392,10 @@ func fillOpcodesCb(handleUnimplemented bool) {
 
 	if handleUnimplemented {
 		// Add handler for missing ones
-		for k, v := range opcodesCb {
+		for k, v := range OpcodesCb {
 			if v == nil {
 				opcodeByte := k
-				opcodesCb[k] = &opcode{
+				OpcodesCb[k] = &Opcode{
 					fmt.Sprintf("UNIMP CB: %02x", k),
 					1,
 					func(gb *Gameboy) {
