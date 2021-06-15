@@ -56,7 +56,7 @@ func (d *Display) Render(gb *Gameboy) {
 }
 
 var keys = map[pixelgl.Button]Button{
-	pixelgl.KeyY:       ButtonA,
+	pixelgl.KeyZ:       ButtonA,
 	pixelgl.KeyX:       ButtonB,
 	pixelgl.KeyLeftAlt: ButtonSelect,
 	pixelgl.KeySpace:   ButtonStart,
@@ -69,6 +69,9 @@ var keys = map[pixelgl.Button]Button{
 func (d *Display) HandleInput(gb *Gameboy) {
 	if d.window.JustPressed(pixelgl.KeyEscape) {
 		os.Exit(0)
+	}
+	if d.window.JustPressed(pixelgl.KeyD) {
+		gb.Debugger.triggerBreakpoint(gb)
 	}
 
 	for key, button := range keys {

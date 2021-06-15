@@ -2,6 +2,7 @@ package internal
 
 import (
 	"image/color"
+	"log"
 )
 
 type SpriteObject struct {
@@ -147,6 +148,9 @@ func (g *Gpu) WriteByte(address uint16, value uint8) {
 			g.windowActivated = value&0x20 != 0
 			g.windowMap = value&0x40 != 0
 			g.lcdActivated = value&0x80 != 0
+			if g.windowActivated {
+				log.Printf("Window was activated")
+			}
 		case 0xFF41:
 			g.currentMode = value & 0x03
 		case 0xFF42:

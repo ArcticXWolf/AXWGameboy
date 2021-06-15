@@ -6,6 +6,7 @@ import (
 
 	"github.com/faiface/pixel/pixelgl"
 	"go.janniklasrichter.de/axwgameboy/internal"
+	debugCui "go.janniklasrichter.de/axwgameboy/pkg/debug"
 )
 
 var (
@@ -49,5 +50,6 @@ func start() {
 	gb.Debugger.LogOnly = false
 	gb.Debugger.LogEvery = 10
 
+	go debugCui.LaunchGui()
 	gb.Run()
 }

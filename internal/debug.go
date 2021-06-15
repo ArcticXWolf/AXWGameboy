@@ -3,6 +3,7 @@ package internal
 import (
 	"bufio"
 	"fmt"
+	"image/color"
 	"log"
 	"os"
 	"regexp"
@@ -49,7 +50,9 @@ func (d *Debugger) triggerBreakpoint(gb *Gameboy) {
 		log.Printf("Next breakpoint at 0x%04x", d.Address)
 	} else if str == "gpu" {
 		log.Printf("GPU: %v", gb.Gpu)
-		d.dumpTileset(gb)
+		d.triggerBreakpoint(gb)
+	} else if str == "ipl" {
+		d.identifyPalettes(gb)
 		d.triggerBreakpoint(gb)
 	} else if ok, _ := regexp.MatchString("t[0-9]{3}", str); ok {
 		tile, _ := strconv.ParseInt(str[1:4], 10, 0)
@@ -181,5 +184,28 @@ func (d *Debugger) dumpTile(gb *Gameboy, index int) {
 			}
 		}
 		log.Printf("TILE |%s|", lineStr)
+	}
+}
+
+func (d *Debugger) identifyPalettes(gb *Gameboy) {
+	gb.Gpu.bgPaletteColors = [4]color.Color{
+		color.RGBA{255, 0, 0, 255},
+		color.RGBA{192, 0, 0, 255},
+		color.RGBA{96, 0, 0, 255},
+		color.RGBA{50, 0, 0, 255},
+	}
+	gb.Gpu.spritePaletteColors = [2][4]color.Color{
+		{
+			color.RGBA{0, 255, 0, 255},
+			color.RGBA{0, 192, 0, 255},
+			color.RGBA{0, 96, 0, 255},
+			color.RGBA{0, 50, 0, 255},
+		},
+		{
+			color.RGBA{0, 0, 255, 255},
+			color.RGBA{0, 0, 192, 255},
+			color.RGBA{0, 0, 96, 255},
+			color.RGBA{0, 0, 50, 255},
+		},
 	}
 }
