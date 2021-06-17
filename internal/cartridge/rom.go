@@ -1,5 +1,7 @@
 package cartridge
 
+import "fmt"
+
 type RomCartridge struct {
 	BaseCartridge
 }
@@ -22,4 +24,8 @@ func (rc *RomCartridge) ReadByte(address uint16) uint8 {
 
 func (rc *RomCartridge) WriteByte(address uint16, value uint8) {
 	return
+}
+
+func (c *RomCartridge) String() string {
+	return fmt.Sprintf("ROM Cartridge")
 }
