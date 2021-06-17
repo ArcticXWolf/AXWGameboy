@@ -9,6 +9,7 @@ type Cartridge interface {
 	ReadByte(address uint16) uint8
 	WriteByte(address uint16, value uint8)
 	String() string
+	CartridgeInfo() string
 }
 
 func LoadCartridge(filename string) (Cartridge, error) {

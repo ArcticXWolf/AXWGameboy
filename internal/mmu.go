@@ -65,7 +65,7 @@ type Mmu struct {
 	inbios       bool
 	gb           *Gameboy
 	bios         [0x100]byte
-	cartridge    cartridge.Cartridge
+	Cartridge    cartridge.Cartridge
 	wram         [0x2000]byte
 	serialOutput byte
 	zram         [0x80]byte
@@ -87,7 +87,7 @@ func NewMemory(gb *Gameboy) (*Mmu, error) {
 		inbios:    true,
 		gb:        gb,
 		bios:      gb_bios,
-		cartridge: cart,
+		Cartridge: cart,
 		wram:      [0x2000]byte{},
 		zram:      [0x80]byte{},
 		isr: &InterruptFlags{
@@ -104,13 +104,13 @@ func (m *Mmu) ReadByte(address uint16) (result uint8) {
 		} else if m.inbios && address == 0x0100 {
 			m.inbios = false
 		}
-		return m.cartridge.ReadByte(address)
+		return m.Cartridge.ReadByte(address)
 	case 0x1000, 0x2000, 0x3000, 0x4000, 0x5000, 0x6000, 0x7000: // ROM
-		return m.cartridge.ReadByte(address)
+		return m.Cartridge.ReadByte(address)
 	case 0x8000, 0x9000: // VRAM
 		return m.gb.Gpu.vram[address&0x1FFF]
 	case 0xA000, 0xB000: // External RAM
-		return m.cartridge.ReadByte(address)
+		return m.Cartridge.ReadByte(address)
 	case 0xC000, 0xD000: // Working RAM
 		return m.wram[address&0x1FFF]
 	case 0xE000, 0xF000:
@@ -162,17 +162,17 @@ func (m *Mmu) ReadWord(address uint16) (result uint16) {
 func (m *Mmu) WriteByte(address uint16, value uint8) {
 	switch address & 0xF000 {
 	case 0x0000: // ROM / BIOS
-		m.cartridge.WriteByte(address, value)
+		m.Cartridge.WriteByte(address, value)
 		return
 	case 0x1000, 0x2000, 0x3000, 0x4000, 0x5000, 0x6000, 0x7000: // ROM
-		m.cartridge.WriteByte(address, value)
+		m.Cartridge.WriteByte(address, value)
 		return
 	case 0x8000, 0x9000: // VRAM
 		m.gb.Gpu.vram[address&0x1FFF] = value
 		m.gb.Gpu.updateTile(address)
 		return
 	case 0xA000, 0xB000: // External RAM
-		m.cartridge.WriteByte(address, value)
+		m.Cartridge.WriteByte(address, value)
 		return
 	case 0xC000, 0xD000: // Working RAM
 		m.wram[address&0x1FFF] = value

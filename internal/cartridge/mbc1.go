@@ -1,6 +1,8 @@
 package cartridge
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Mbc1Cartridge struct {
 	BaseCartridge
@@ -17,6 +19,7 @@ func NewMbc1Cartridge(header *CartridgeHeader, data []byte) *Mbc1Cartridge {
 			Header:     header,
 			BinaryData: data,
 		},
+		RomBank: 1,
 	}
 }
 
@@ -65,5 +68,5 @@ func (c *Mbc1Cartridge) WriteByte(address uint16, value uint8) {
 }
 
 func (c *Mbc1Cartridge) String() string {
-	return fmt.Sprintf("%s %d %s %d", c.RamEnabled, c.RamBank, c.RamMode, c.RomBank)
+	return fmt.Sprintf("%v %d %v %d", c.RamEnabled, c.RamBank, c.RamMode, c.RomBank)
 }

@@ -2,6 +2,7 @@ package cartridge
 
 import (
 	"errors"
+	"fmt"
 	"math"
 )
 
@@ -189,4 +190,8 @@ func (ch *CartridgeHeader) IsGlobalChecksumValid(romBinary []byte) bool {
 	}
 
 	return x == ch.GlobalChecksum
+}
+
+func (ch *CartridgeHeader) String() string {
+	return fmt.Sprintf("Cartridge %s [0x%02x] Mode %01d | Romsize %010d | Ramsize %010d", ch.Title, ch.Type, ch.CartridgeGBMode, ch.RomSize, ch.RamSize)
 }

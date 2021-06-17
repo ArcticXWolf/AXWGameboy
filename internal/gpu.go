@@ -2,7 +2,6 @@ package internal
 
 import (
 	"image/color"
-	"log"
 )
 
 type SpriteObject struct {
@@ -16,7 +15,8 @@ type SpriteObject struct {
 }
 
 type Gpu struct {
-	gb                  *Gameboy
+	gb *Gameboy
+
 	backgroundActivated bool
 	spritesActivated    bool
 	bigSpritesActivated bool
@@ -25,11 +25,23 @@ type Gpu struct {
 	windowActivated     bool
 	windowMap           bool
 	lcdActivated        bool
-	currentMode         uint8
+
+	currentMode        uint8
+	StatTriggerLYC     bool
+	StatTriggerMode0   bool
+	StatTriggerMode1   bool
+	StatTriggerMode2   bool
+	StatEnableMode0    bool
+	StatEnableMode1    bool
+	StatEnableMode2    bool
+	StatEnableLYC      bool
+	StatInterruptDelay bool
+
 	scrollX             uint8
 	scrollY             uint8
-	modeClock           int
+	ScanlineCompare     uint8
 	CurrentScanline     uint8
+	modeClock           int
 	tileSet             [512][8][8]uint8
 	vram                [0x2000]byte
 	oam                 [0xA0]byte
@@ -113,13 +125,31 @@ func (g *Gpu) ReadByte(address uint16) (result uint8) {
 			}
 			return bA | sA | bSA | bM | bT | wA | wM | lA
 		case 0xFF41:
-			return g.currentMode & 0x03
+			value := g.currentMode & 0x3
+			if g.StatTriggerLYC {
+				value |= 0x4
+			}
+			if g.StatEnableMode0 {
+				value |= 0x8
+			}
+			if g.StatEnableMode1 {
+				value |= 0x10
+			}
+			if g.StatEnableMode2 {
+				value |= 0x20
+			}
+			if g.StatEnableLYC {
+				value |= 0x40
+			}
+			return value
 		case 0xFF42:
 			return g.scrollY
 		case 0xFF43:
 			return g.scrollX
 		case 0xFF44:
 			return g.CurrentScanline
+		case 0xFF45:
+			return g.ScanlineCompare
 		case 0xFF47:
 			return g.bgPaletteMap[0]&0x3 | ((g.bgPaletteMap[1] & 0x3) << 2) | ((g.bgPaletteMap[2] & 0x3) << 4) | ((g.bgPaletteMap[3] & 0x3) << 6)
 		default:
@@ -148,15 +178,17 @@ func (g *Gpu) WriteByte(address uint16, value uint8) {
 			g.windowActivated = value&0x20 != 0
 			g.windowMap = value&0x40 != 0
 			g.lcdActivated = value&0x80 != 0
-			if g.windowActivated {
-				log.Printf("Window was activated")
-			}
 		case 0xFF41:
-			g.currentMode = value & 0x03
+			g.StatEnableMode0 = value&0x8 != 0
+			g.StatEnableMode1 = value&0x10 != 0
+			g.StatEnableMode2 = value&0x20 != 0
+			g.StatEnableLYC = value&0x40 != 0
 		case 0xFF42:
 			g.scrollY = value
 		case 0xFF43:
 			g.scrollX = value
+		case 0xFF45:
+			g.ScanlineCompare = value
 		case 0xFF46:
 			g.oamDMA(value)
 		case 0xFF47:
@@ -255,38 +287,53 @@ func (g *Gpu) Update(gb *Gameboy, cyclesUsed int) {
 	case 0: // HBlank
 		if g.modeClock >= 204 {
 			g.modeClock = 0
-			g.CurrentScanline++
+			g.SetScanline(gb, g.CurrentScanline+1)
+
 			if g.CurrentScanline > uint8(ScreenHeight)-1 {
-				g.currentMode = 1
+				g.SetLCDMode(gb, 1)
 				gb.ReadyToRender = gb.WorkingScreen
 				gb.WorkingScreen = [ScreenWidth][ScreenHeight][3]uint8{}
 				gb.Memory.GetInterruptFlags().TriggeredFlags |= 0x01
 			} else {
-				g.currentMode = 2
+				g.SetLCDMode(gb, 2)
 			}
 		}
 	case 1: // VBlank
 		if g.modeClock >= 456 {
 			g.modeClock = 0
-			g.CurrentScanline++
+			g.SetScanline(gb, g.CurrentScanline+1)
+
 			if g.CurrentScanline > uint8(ScreenHeight)+10-1 {
-				g.currentMode = 2
-				g.CurrentScanline = 0
+				g.SetLCDMode(gb, 2)
+				g.SetScanline(gb, 0)
 			}
 		}
 	case 2:
 		if g.modeClock >= 80 {
 			g.modeClock = 0
-			g.currentMode = 3
+			g.SetLCDMode(gb, 3)
 		}
 	case 3:
 		if g.modeClock >= 172 {
 			g.modeClock = 0
-			g.currentMode = 0
+			g.SetLCDMode(gb, 0)
 
 			g.RenderScanline(gb)
 		}
 	}
+	g.HandleStatInterrupt()
+}
+
+func (g *Gpu) SetLCDMode(gb *Gameboy, value uint8) {
+	g.currentMode = value
+	g.StatTriggerMode0 = value == 0
+	g.StatTriggerMode1 = value == 1
+	g.StatTriggerMode2 = value == 2
+}
+
+func (g *Gpu) SetScanline(gb *Gameboy, value uint8) {
+	g.CurrentScanline = value
+	g.StatTriggerLYC = g.CurrentScanline == g.ScanlineCompare
 }
 
 func (g *Gpu) RenderScanline(gb *Gameboy) {
@@ -404,4 +451,23 @@ func (gb *Gameboy) clearScreen() {
 	}
 	gb.ReadyToRender = gb.WorkingScreen
 	gb.WorkingScreen = [ScreenWidth][ScreenHeight][3]uint8{}
+}
+
+func (g *Gpu) HandleStatInterrupt() {
+	LYCInterrupt := g.StatEnableLYC && g.StatTriggerLYC
+	Mode0Interrupt := g.StatEnableMode0 && g.StatTriggerMode0
+	Mode1Interrupt := g.StatEnableMode1 && g.StatTriggerMode1
+	Mode2Interrupt := g.StatEnableMode2 && g.StatTriggerMode2
+
+	StatInterruptTrigger := LYCInterrupt || Mode0Interrupt || Mode1Interrupt || Mode2Interrupt
+
+	if triggered := g.detectRisingEdge(StatInterruptTrigger); triggered {
+		g.gb.Memory.GetInterruptFlags().TriggeredFlags |= 0x2
+	}
+}
+
+func (g *Gpu) detectRisingEdge(signal bool) bool {
+	result := signal && !g.StatInterruptDelay
+	g.StatInterruptDelay = signal
+	return result
 }

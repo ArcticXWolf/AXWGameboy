@@ -191,5 +191,5 @@ func (gb *Gameboy) String() string {
 	step := fmt.Sprintf("(0x%04x) %02x, %15s", gb.Cpu.Registers.Pc, gb.PeekPc(0), Opcodes[gb.PeekPc(0)].Label)
 	peek := fmt.Sprintf("%02x %02x %02x", gb.PeekPc(1), gb.PeekPc(2), gb.PeekPc(3))
 	// isr := fmt.Sprintf("%v E%02x T%02x", gb.Cpu.Registers.Ime, gb.Memory.GetInterruptFlags().EnableFlags, gb.Memory.GetInterruptFlags().TriggeredFlags)
-	return fmt.Sprintf("%010d STEP: %s | PEEK: %s | REG: %s | %s", gb.Cpu.ClockCycles, step, peek, gb.Cpu.Registers.String(), gb.Memory.cartridge)
+	return fmt.Sprintf("%010d STEP: %s | PEEK: %s | REG: %s", gb.Cpu.ClockCycles, step, peek, gb.Cpu.Registers.String())
 }

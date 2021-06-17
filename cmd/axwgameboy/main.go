@@ -57,10 +57,12 @@ func start() {
 		log.Panicf("Error loading rom: %s", err)
 	}
 
-	gb.Debugger.AddressEnabled = true
-	gb.Debugger.Address = 0x0150
+	gb.Debugger.AddressEnabled = false
+	gb.Debugger.Address = 0x0100
 	gb.Debugger.LogOnly = false
-	gb.Debugger.LogEvery = 10
+	gb.Debugger.LogEvery = 50
+
+	log.Printf("Loaded %s", gb.Memory.Cartridge.CartridgeInfo())
 
 	gb.Run()
 }
