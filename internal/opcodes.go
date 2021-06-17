@@ -182,10 +182,10 @@ var Opcodes = [0x100]*Opcode{
 	}},
 
 	// LD A and ($FF00+n)
-	0xF0: {"LD A, ($FF00+n)", 8, func(gb *Gameboy) {
+	0xF0: {"LD A, ($FF00+n)", 12, func(gb *Gameboy) {
 		gb.Cpu.Registers.A = gb.Memory.ReadByte(uint16(0xFF00) + uint16(gb.popPc()))
 	}},
-	0xE0: {"LD ($FF00+n), A", 8, func(gb *Gameboy) {
+	0xE0: {"LD ($FF00+n), A", 12, func(gb *Gameboy) {
 		gb.Memory.WriteByte(uint16(0xFF00)+uint16(gb.popPc()), gb.Cpu.Registers.A)
 	}},
 
@@ -515,7 +515,7 @@ var Opcodes = [0x100]*Opcode{
 	0x2C: {"INC L", 4, func(gb *Gameboy) {
 		gb.Cpu.Registers.L = instructionIncrement(gb, gb.Cpu.Registers.L)
 	}},
-	0x34: {"INC (HL)", 4, func(gb *Gameboy) {
+	0x34: {"INC (HL)", 12, func(gb *Gameboy) {
 		incValue := gb.Memory.ReadByte(uint16(gb.Cpu.Registers.H)<<8 + uint16(gb.Cpu.Registers.L))
 		gb.Memory.WriteByte(uint16(gb.Cpu.Registers.H)<<8+uint16(gb.Cpu.Registers.L), instructionIncrement(gb, incValue))
 	}},
@@ -688,7 +688,7 @@ var Opcodes = [0x100]*Opcode{
 		gb.Cpu.Registers.H = uint8((result & 0xFF00) >> 8)
 		gb.Cpu.Registers.L = uint8(result & 0x00FF)
 	}},
-	0xe8: {"ADD SP, n", 8, func(gb *Gameboy) {
+	0xe8: {"ADD SP, n", 16, func(gb *Gameboy) {
 		n := int8(gb.popPc())
 		sum := uint16(int32(gb.Cpu.Registers.Sp) + int32(n))
 		sumTmp := gb.Cpu.Registers.Sp ^ uint16(n) ^ sum
@@ -811,7 +811,7 @@ var Opcodes = [0x100]*Opcode{
 	}},
 
 	// Jumps
-	0xc3: {"JP nn", 12, func(gb *Gameboy) {
+	0xc3: {"JP nn", 16, func(gb *Gameboy) {
 		gb.Cpu.Registers.Pc = gb.popPc16()
 	}},
 	0xc2: {"JPNZ nn", 12, func(gb *Gameboy) {
@@ -845,13 +845,12 @@ var Opcodes = [0x100]*Opcode{
 	0xe9: {"JP (HL)", 4, func(gb *Gameboy) {
 		gb.Cpu.Registers.Pc = uint16(gb.Cpu.Registers.H)<<8 + uint16(gb.Cpu.Registers.L)
 	}},
-	0x18: {"JR n", 8, func(gb *Gameboy) {
+	0x18: {"JR n", 12, func(gb *Gameboy) {
 		jumpDistance := int16(gb.popPc())
 		if jumpDistance > 0x7F {
 			jumpDistance = -((^jumpDistance + 1) & 0xFF)
 		}
 		gb.Cpu.Registers.Pc += uint16(jumpDistance)
-		gb.Cpu.ClockCycles += 4
 	}},
 	0x20: {"JR NZ, n", 8, func(gb *Gameboy) {
 		jumpDistance := int16(gb.popPc())
@@ -895,7 +894,7 @@ var Opcodes = [0x100]*Opcode{
 	}},
 
 	// CALL
-	0xcd: {"CALL nn", 12, func(gb *Gameboy) {
+	0xcd: {"CALL nn", 24, func(gb *Gameboy) {
 		gb.Cpu.Registers.Sp -= 2
 		jumpAddr := gb.popPc16()
 		gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
@@ -906,7 +905,7 @@ var Opcodes = [0x100]*Opcode{
 		if (gb.Cpu.Registers.Flags & 0x80) == 0x0 {
 			gb.Cpu.Registers.Sp -= 2
 			gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
-			gb.Cpu.ClockCycles += 8
+			gb.Cpu.ClockCycles += 12
 			gb.Cpu.Registers.Pc = jumpAddr
 		}
 	}},
@@ -915,7 +914,7 @@ var Opcodes = [0x100]*Opcode{
 		if (gb.Cpu.Registers.Flags & 0x80) == 0x80 {
 			gb.Cpu.Registers.Sp -= 2
 			gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
-			gb.Cpu.ClockCycles += 8
+			gb.Cpu.ClockCycles += 12
 			gb.Cpu.Registers.Pc = jumpAddr
 		}
 	}},
@@ -924,7 +923,7 @@ var Opcodes = [0x100]*Opcode{
 		if (gb.Cpu.Registers.Flags & 0x10) == 0x0 {
 			gb.Cpu.Registers.Sp -= 2
 			gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
-			gb.Cpu.ClockCycles += 8
+			gb.Cpu.ClockCycles += 12
 			gb.Cpu.Registers.Pc = jumpAddr
 		}
 	}},
@@ -933,55 +932,55 @@ var Opcodes = [0x100]*Opcode{
 		if (gb.Cpu.Registers.Flags & 0x10) == 0x10 {
 			gb.Cpu.Registers.Sp -= 2
 			gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
-			gb.Cpu.ClockCycles += 8
+			gb.Cpu.ClockCycles += 12
 			gb.Cpu.Registers.Pc = jumpAddr
 		}
 	}},
 
 	// RST
-	0xc7: {"RST 00", 12, func(gb *Gameboy) {
+	0xc7: {"RST 00", 16, func(gb *Gameboy) {
 		gb.Cpu.Registers.Sp -= 2
 		jumpAddr := uint16(0x0000)
 		gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
 		gb.Cpu.Registers.Pc = jumpAddr
 	}},
-	0xcf: {"RST 08", 12, func(gb *Gameboy) {
+	0xcf: {"RST 08", 16, func(gb *Gameboy) {
 		gb.Cpu.Registers.Sp -= 2
 		jumpAddr := uint16(0x0008)
 		gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
 		gb.Cpu.Registers.Pc = jumpAddr
 	}},
-	0xd7: {"RST 10", 12, func(gb *Gameboy) {
+	0xd7: {"RST 10", 16, func(gb *Gameboy) {
 		gb.Cpu.Registers.Sp -= 2
 		jumpAddr := uint16(0x0010)
 		gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
 		gb.Cpu.Registers.Pc = jumpAddr
 	}},
-	0xdf: {"RST 18", 12, func(gb *Gameboy) {
+	0xdf: {"RST 18", 16, func(gb *Gameboy) {
 		gb.Cpu.Registers.Sp -= 2
 		jumpAddr := uint16(0x0018)
 		gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
 		gb.Cpu.Registers.Pc = jumpAddr
 	}},
-	0xe7: {"RST 20", 12, func(gb *Gameboy) {
+	0xe7: {"RST 20", 16, func(gb *Gameboy) {
 		gb.Cpu.Registers.Sp -= 2
 		jumpAddr := uint16(0x0020)
 		gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
 		gb.Cpu.Registers.Pc = jumpAddr
 	}},
-	0xef: {"RST 28", 12, func(gb *Gameboy) {
+	0xef: {"RST 28", 16, func(gb *Gameboy) {
 		gb.Cpu.Registers.Sp -= 2
 		jumpAddr := uint16(0x0028)
 		gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
 		gb.Cpu.Registers.Pc = jumpAddr
 	}},
-	0xf7: {"RST 30", 12, func(gb *Gameboy) {
+	0xf7: {"RST 30", 16, func(gb *Gameboy) {
 		gb.Cpu.Registers.Sp -= 2
 		jumpAddr := uint16(0x0030)
 		gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
 		gb.Cpu.Registers.Pc = jumpAddr
 	}},
-	0xff: {"RST 38", 12, func(gb *Gameboy) {
+	0xff: {"RST 38", 16, func(gb *Gameboy) {
 		gb.Cpu.Registers.Sp -= 2
 		jumpAddr := uint16(0x0038)
 		gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
@@ -989,46 +988,46 @@ var Opcodes = [0x100]*Opcode{
 	}},
 
 	// RET
-	0xc9: {"RET", 12, func(gb *Gameboy) {
+	0xc9: {"RET", 16, func(gb *Gameboy) {
 		gb.Cpu.Registers.Pc = gb.Memory.ReadWord(gb.Cpu.Registers.Sp)
 		gb.Cpu.Registers.Sp += 2
 	}},
-	0xc0: {"RET NZ", 4, func(gb *Gameboy) {
+	0xc0: {"RET NZ", 8, func(gb *Gameboy) {
 		if !gb.Cpu.Registers.FlagZ() {
 			gb.Cpu.Registers.Pc = gb.Memory.ReadWord(gb.Cpu.Registers.Sp)
 			gb.Cpu.Registers.Sp += 2
-			gb.Cpu.ClockCycles += 8
+			gb.Cpu.ClockCycles += 12
 		}
 	}},
-	0xc8: {"RET Z", 4, func(gb *Gameboy) {
+	0xc8: {"RET Z", 8, func(gb *Gameboy) {
 		if gb.Cpu.Registers.FlagZ() {
 			gb.Cpu.Registers.Pc = gb.Memory.ReadWord(gb.Cpu.Registers.Sp)
 			gb.Cpu.Registers.Sp += 2
-			gb.Cpu.ClockCycles += 8
+			gb.Cpu.ClockCycles += 12
 		}
 	}},
-	0xd0: {"RET NC", 4, func(gb *Gameboy) {
+	0xd0: {"RET NC", 8, func(gb *Gameboy) {
 		if !gb.Cpu.Registers.FlagC() {
 			gb.Cpu.Registers.Pc = gb.Memory.ReadWord(gb.Cpu.Registers.Sp)
 			gb.Cpu.Registers.Sp += 2
-			gb.Cpu.ClockCycles += 8
+			gb.Cpu.ClockCycles += 12
 		}
 	}},
-	0xd8: {"RET C", 4, func(gb *Gameboy) {
+	0xd8: {"RET C", 8, func(gb *Gameboy) {
 		if gb.Cpu.Registers.FlagC() {
 			gb.Cpu.Registers.Pc = gb.Memory.ReadWord(gb.Cpu.Registers.Sp)
 			gb.Cpu.Registers.Sp += 2
-			gb.Cpu.ClockCycles += 8
+			gb.Cpu.ClockCycles += 12
 		}
 	}},
-	0xd9: {"RETI", 8, func(gb *Gameboy) {
+	0xd9: {"RETI", 16, func(gb *Gameboy) {
 		gb.Cpu.Registers.Pc = gb.Memory.ReadWord(gb.Cpu.Registers.Sp)
 		gb.Cpu.Registers.Sp += 2
 		gb.Cpu.Registers.Ime = true
 	}},
 
 	// ROT
-	0x07: {"RLCA", 8, func(gb *Gameboy) {
+	0x07: {"RLCA", 4, func(gb *Gameboy) {
 		carry := gb.Cpu.Registers.A&0x80 != 0
 		gb.Cpu.Registers.A = (gb.Cpu.Registers.A << 1) & 0xFF
 		if carry {
@@ -1040,7 +1039,7 @@ var Opcodes = [0x100]*Opcode{
 		gb.Cpu.Registers.SetFlagH(false)
 		gb.Cpu.Registers.SetFlagC(carry)
 	}},
-	0x17: {"RLA", 8, func(gb *Gameboy) {
+	0x17: {"RLA", 4, func(gb *Gameboy) {
 		carryNew := gb.Cpu.Registers.A&0x80 != 0
 		carryOld := gb.Cpu.Registers.FlagC()
 		gb.Cpu.Registers.A = (gb.Cpu.Registers.A << 1) & 0xFF
@@ -1053,7 +1052,7 @@ var Opcodes = [0x100]*Opcode{
 		gb.Cpu.Registers.SetFlagH(false)
 		gb.Cpu.Registers.SetFlagC(carryNew)
 	}},
-	0x0F: {"RRCA", 8, func(gb *Gameboy) {
+	0x0F: {"RRCA", 4, func(gb *Gameboy) {
 		carry := gb.Cpu.Registers.A&0x1 != 0
 		gb.Cpu.Registers.A = (gb.Cpu.Registers.A >> 1) & 0xFF
 		if carry {
@@ -1065,7 +1064,7 @@ var Opcodes = [0x100]*Opcode{
 		gb.Cpu.Registers.SetFlagH(false)
 		gb.Cpu.Registers.SetFlagC(carry)
 	}},
-	0x1F: {"RRA", 8, func(gb *Gameboy) {
+	0x1F: {"RRA", 4, func(gb *Gameboy) {
 		carryNew := gb.Cpu.Registers.A&0x1 != 0
 		carryOld := gb.Cpu.Registers.FlagC()
 		gb.Cpu.Registers.A = (gb.Cpu.Registers.A >> 1) & 0xFF
@@ -1139,37 +1138,37 @@ var Opcodes = [0x100]*Opcode{
 		gb.popPc()
 	}},
 	// Disallowed
-	0xD3: {"ILLEGAL", 4, func(gb *Gameboy) {
+	0xD3: {"ILLEGAL", 0, func(gb *Gameboy) {
 		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xD3, gb.Cpu.Registers.Pc)
 	}},
-	0xDB: {"ILLEGAL", 4, func(gb *Gameboy) {
+	0xDB: {"ILLEGAL", 0, func(gb *Gameboy) {
 		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xDB, gb.Cpu.Registers.Pc)
 	}},
-	0xDD: {"ILLEGAL", 4, func(gb *Gameboy) {
+	0xDD: {"ILLEGAL", 0, func(gb *Gameboy) {
 		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xDD, gb.Cpu.Registers.Pc)
 	}},
-	0xE3: {"ILLEGAL", 4, func(gb *Gameboy) {
+	0xE3: {"ILLEGAL", 0, func(gb *Gameboy) {
 		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xE3, gb.Cpu.Registers.Pc)
 	}},
-	0xE4: {"ILLEGAL", 4, func(gb *Gameboy) {
+	0xE4: {"ILLEGAL", 0, func(gb *Gameboy) {
 		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xE4, gb.Cpu.Registers.Pc)
 	}},
-	0xEB: {"ILLEGAL", 4, func(gb *Gameboy) {
+	0xEB: {"ILLEGAL", 0, func(gb *Gameboy) {
 		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xEB, gb.Cpu.Registers.Pc)
 	}},
-	0xEC: {"ILLEGAL", 4, func(gb *Gameboy) {
+	0xEC: {"ILLEGAL", 0, func(gb *Gameboy) {
 		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xEC, gb.Cpu.Registers.Pc)
 	}},
-	0xED: {"ILLEGAL", 4, func(gb *Gameboy) {
+	0xED: {"ILLEGAL", 0, func(gb *Gameboy) {
 		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xED, gb.Cpu.Registers.Pc)
 	}},
-	0xF4: {"ILLEGAL", 4, func(gb *Gameboy) {
+	0xF4: {"ILLEGAL", 0, func(gb *Gameboy) {
 		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xF4, gb.Cpu.Registers.Pc)
 	}},
-	0xFC: {"ILLEGAL", 4, func(gb *Gameboy) {
+	0xFC: {"ILLEGAL", 0, func(gb *Gameboy) {
 		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xFC, gb.Cpu.Registers.Pc)
 	}},
-	0xFD: {"ILLEGAL", 4, func(gb *Gameboy) {
+	0xFD: {"ILLEGAL", 0, func(gb *Gameboy) {
 		log.Panicf("Received illegal Opcode 0x%02x at 0x%04x", 0xFD, gb.Cpu.Registers.Pc)
 	}},
 }

@@ -19,6 +19,7 @@ func NewDisplay() *Display {
 	cfg := pixelgl.WindowConfig{
 		Title:  "AXWGameboy",
 		Bounds: pixel.R(0, 0, float64(ScreenWidth*pixelSize), float64(ScreenHeight*pixelSize)),
+		VSync:  true,
 	}
 	window, err := pixelgl.NewWindow(cfg)
 	if err != nil {

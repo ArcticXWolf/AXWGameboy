@@ -171,14 +171,14 @@ func instructionCBSRL(gb *Gameboy, value byte) byte {
 	return rotation
 }
 
-func instructionInterrupt(gb *Gameboy, interruptIndex int) {
+func instructionInterrupt(gb *Gameboy, interruptIndex int) bool {
 	if !gb.Cpu.Registers.Ime && gb.Halted {
 		gb.Halted = false
-		return
+		return false
 	}
 	gb.Halted = false
 	gb.Cpu.Registers.Ime = false
-	gb.Memory.GetInterruptFlags().TriggeredFlags = 0x00
+	gb.Memory.GetInterruptFlags().TriggeredFlags &= ^(1 << interruptIndex)
 
 	gb.Cpu.Registers.Sp -= 2
 	gb.Memory.WriteWord(gb.Cpu.Registers.Sp, gb.Cpu.Registers.Pc)
@@ -195,4 +195,6 @@ func instructionInterrupt(gb *Gameboy, interruptIndex int) {
 	case 4:
 		gb.Cpu.Registers.Pc = 0x60
 	}
+
+	return true
 }

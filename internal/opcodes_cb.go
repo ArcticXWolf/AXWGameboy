@@ -258,7 +258,7 @@ func fillOpcodesCb(handleUnimplemented bool) {
 		}
 		OpcodesCb[0x46+0x8*x] = &Opcode{
 			fmt.Sprintf("BIT %d, (HL)", i),
-			16,
+			12,
 			func(gb *Gameboy) {
 				instructionTestBit(gb, gb.Memory.ReadByte(uint16(gb.Cpu.Registers.H)<<8+uint16(gb.Cpu.Registers.L)), uint8(i))
 			},

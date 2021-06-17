@@ -2,7 +2,8 @@ package internal
 
 import (
 	"fmt"
-	"io/ioutil"
+
+	"go.janniklasrichter.de/axwgameboy/internal/cartridge"
 )
 
 var gb_bios = [0x100]byte{
@@ -64,8 +65,7 @@ type Mmu struct {
 	inbios       bool
 	gb           *Gameboy
 	bios         [0x100]byte
-	rom          [0x8000]byte
-	eram         [0x2000]byte
+	cartridge    cartridge.Cartridge
 	wram         [0x2000]byte
 	serialOutput byte
 	zram         [0x80]byte
@@ -81,35 +81,18 @@ func (m *Mmu) String() string {
 }
 
 func NewMemory(gb *Gameboy) (*Mmu, error) {
-	var rom [0x8000]byte
-	var err error
-
-	if gb.Options.RomPath != "" {
-		var data []byte
-
-		data, err = ioutil.ReadFile(gb.Options.RomPath)
-		if err != nil {
-			return nil, err
-		}
-
-		rom = [0x8000]byte{}
-
-		for k, v := range data {
-			if k < 0x8000 {
-				rom[k] = v
-			}
-		}
-	}
+	cart, err := cartridge.LoadCartridge(gb.Options.RomPath)
 
 	return &Mmu{
-		inbios: true,
-		gb:     gb,
-		bios:   gb_bios,
-		rom:    rom,
-		eram:   [0x2000]byte{},
-		wram:   [0x2000]byte{},
-		zram:   [0x80]byte{},
-		isr:    &InterruptFlags{},
+		inbios:    true,
+		gb:        gb,
+		bios:      gb_bios,
+		cartridge: cart,
+		wram:      [0x2000]byte{},
+		zram:      [0x80]byte{},
+		isr: &InterruptFlags{
+			TriggeredFlags: 0xE0,
+		},
 	}, err
 }
 
@@ -121,13 +104,13 @@ func (m *Mmu) ReadByte(address uint16) (result uint8) {
 		} else if m.inbios && address == 0x0100 {
 			m.inbios = false
 		}
-		return m.rom[address]
+		return m.cartridge.ReadByte(address)
 	case 0x1000, 0x2000, 0x3000, 0x4000, 0x5000, 0x6000, 0x7000: // ROM
-		return m.rom[address]
+		return m.cartridge.ReadByte(address)
 	case 0x8000, 0x9000: // VRAM
 		return m.gb.Gpu.vram[address&0x1FFF]
 	case 0xA000, 0xB000: // External RAM
-		return m.eram[address&0x1FFF]
+		return m.cartridge.ReadByte(address)
 	case 0xC000, 0xD000: // Working RAM
 		return m.wram[address&0x1FFF]
 	case 0xE000, 0xF000:
@@ -152,17 +135,8 @@ func (m *Mmu) ReadByte(address uint16) (result uint8) {
 				if address == 0xFF02 {
 					return 0x00
 				}
-				if address == 0xFF04 {
-					return m.gb.Timer.dividerValue
-				}
-				if address == 0xFF05 {
-					return uint8(m.gb.Timer.counterValue & 0xFF)
-				}
-				if address == 0xFF06 {
-					return m.gb.Timer.moduloValue
-				}
-				if address == 0xFF07 {
-					return m.gb.Timer.controlFlag
+				if address >= 0xFF04 && address <= 0xFF07 {
+					return m.gb.Timer.ReadByte(address)
 				}
 				if address == 0xFF0F {
 					return m.isr.TriggeredFlags
@@ -188,15 +162,17 @@ func (m *Mmu) ReadWord(address uint16) (result uint16) {
 func (m *Mmu) WriteByte(address uint16, value uint8) {
 	switch address & 0xF000 {
 	case 0x0000: // ROM / BIOS
+		m.cartridge.WriteByte(address, value)
 		return
 	case 0x1000, 0x2000, 0x3000, 0x4000, 0x5000, 0x6000, 0x7000: // ROM
+		m.cartridge.WriteByte(address, value)
 		return
 	case 0x8000, 0x9000: // VRAM
 		m.gb.Gpu.vram[address&0x1FFF] = value
 		m.gb.Gpu.updateTile(address)
 		return
 	case 0xA000, 0xB000: // External RAM
-		m.eram[address&0x1FFF] = value
+		m.cartridge.WriteByte(address, value)
 		return
 	case 0xC000, 0xD000: // Working RAM
 		m.wram[address&0x1FFF] = value
@@ -230,20 +206,11 @@ func (m *Mmu) WriteByte(address uint16, value uint8) {
 					}
 					return
 				}
-				if address == 0xFF05 {
-					m.gb.Timer.counterValue = uint16(value)
-					return
-				}
-				if address == 0xFF06 {
-					m.gb.Timer.moduloValue = value
-					return
-				}
-				if address == 0xFF07 {
-					m.gb.Timer.controlFlag = value
-					return
+				if address >= 0xFF04 && address <= 0xFF07 {
+					m.gb.Timer.WriteByte(address, value)
 				}
 				if address == 0xFF0F {
-					m.isr.TriggeredFlags = value
+					m.isr.TriggeredFlags = 0xE0 | value&(^uint8(0xE0))
 				}
 			case 0x40, 0x50, 0x60, 0x70:
 				m.gb.Gpu.WriteByte(address, value)

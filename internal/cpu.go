@@ -113,14 +113,11 @@ func (c *Cpu) Reset() {
 
 func (c *Cpu) Tick(gb *Gameboy) int {
 	var cycles int
+
 	gb.Debugger.checkBreakpoint(gb)
 	if gb.Debugger.Step {
 		gb.Debugger.triggerBreakpoint(gb)
 	}
-
-	cyclesInt := c.handleInterrupts(gb)
-	c.ClockCycles += cyclesInt
-	cycles += cyclesInt
 
 	gb.Timer.Update(gb)
 
@@ -135,7 +132,9 @@ func (c *Cpu) Tick(gb *Gameboy) int {
 	c.ClockCycles += cyclesOp
 	cycles += cyclesOp
 
-	gb.Timer.Update(gb)
+	cyclesInt := c.handleInterrupts(gb)
+	c.ClockCycles += cyclesInt
+	cycles += cyclesInt
 
 	return cycles
 }
@@ -155,8 +154,17 @@ func (c *Cpu) handleInterrupts(gb *Gameboy) int {
 
 	for i := 0; i < 5; i++ {
 		if (enabled>>i)&0x1 > 0 && (triggered>>i)&0x1 > 0 {
-			instructionInterrupt(gb, i)
-			return 20
+			cycles := 0
+			if gb.Halted {
+				cycles += 4
+			}
+
+			serviced := instructionInterrupt(gb, i)
+
+			if serviced {
+				cycles += 20
+			}
+			return cycles
 		}
 	}
 	return 0
@@ -180,8 +188,9 @@ func (gb *Gameboy) popPc16() uint16 {
 }
 
 func (gb *Gameboy) String() string {
-	step := fmt.Sprintf("(0x%04x) %02x, %15s %v", gb.Cpu.Registers.Pc, gb.PeekPc(0), Opcodes[gb.PeekPc(0)].Label, gb.Halted)
+	step := fmt.Sprintf("(0x%04x) %02x, %15s", gb.Cpu.Registers.Pc, gb.PeekPc(0), Opcodes[gb.PeekPc(0)].Label)
 	peek := fmt.Sprintf("%02x %02x %02x", gb.PeekPc(1), gb.PeekPc(2), gb.PeekPc(3))
-	isr := fmt.Sprintf("%v E%02x T%02x", gb.Cpu.Registers.Ime, gb.Memory.GetInterruptFlags().EnableFlags, gb.Memory.GetInterruptFlags().TriggeredFlags)
-	return fmt.Sprintf("%010d STEP: %s | PEEK: %s | REG: %s | ISR: %s", gb.Cpu.ClockCycles, step, peek, gb.Cpu.Registers.String(), isr)
+	timer := fmt.Sprintf("%#v", gb.Timer)
+	// isr := fmt.Sprintf("%v E%02x T%02x", gb.Cpu.Registers.Ime, gb.Memory.GetInterruptFlags().EnableFlags, gb.Memory.GetInterruptFlags().TriggeredFlags)
+	return fmt.Sprintf("%010d STEP: %s | PEEK: %s | REG: %s | TMR: %s", gb.Cpu.ClockCycles, step, peek, gb.Cpu.Registers.String(), timer)
 }

@@ -22,7 +22,7 @@ type GameboyOptions struct {
 type Gameboy struct {
 	Display       *Display
 	Cpu           *Cpu
-	Memory        MemoryDevice
+	Memory        *Mmu
 	Gpu           *Gpu
 	Timer         *Timer
 	Inputs        *Inputs
@@ -35,7 +35,6 @@ type Gameboy struct {
 
 func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 	c := NewCpu()
-	t := NewTimer()
 	i := NewInputs()
 
 	var d *Display
@@ -48,7 +47,7 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 		Display:  d,
 		Memory:   nil,
 		Gpu:      nil,
-		Timer:    t,
+		Timer:    nil,
 		Inputs:   i,
 		Debugger: &Debugger{AddressEnabled: false},
 		Halted:   false,
@@ -56,6 +55,7 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 	}
 
 	gb.Gpu = NewGpu(gb)
+	gb.Timer = NewTimer(gb)
 	var err error
 	gb.Memory, err = NewMemory(gb)
 	if err != nil {
