@@ -25,6 +25,12 @@ test:
 testverbose:
 	go test go.janniklasrichter.de/axwgameboy/internal -v
 
+mooneye:
+	go test go.janniklasrichter.de/axwgameboy/internal -v -run ^TestMooneyeRoms$
+
+blargg:
+	go test go.janniklasrichter.de/axwgameboy/internal -v -run ^TestBlargg.*$
+
 clean:
 	rm -rf build/
 
