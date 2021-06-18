@@ -39,6 +39,8 @@ type Gpu struct {
 
 	scrollX             uint8
 	scrollY             uint8
+	windowX             uint8
+	windowY             uint8
 	ScanlineCompare     uint8
 	CurrentScanline     uint8
 	modeClock           int
@@ -152,6 +154,10 @@ func (g *Gpu) ReadByte(address uint16) (result uint8) {
 			return g.ScanlineCompare
 		case 0xFF47:
 			return g.bgPaletteMap[0]&0x3 | ((g.bgPaletteMap[1] & 0x3) << 2) | ((g.bgPaletteMap[2] & 0x3) << 4) | ((g.bgPaletteMap[3] & 0x3) << 6)
+		case 0xFF4A:
+			return g.windowY
+		case 0xFF4B:
+			return g.windowX
 		default:
 			return 0x00
 		}
@@ -206,6 +212,10 @@ func (g *Gpu) WriteByte(address uint16, value uint8) {
 			g.spritePaletteMap[1][1] = (value >> 2) & 0x3
 			g.spritePaletteMap[1][2] = (value >> 4) & 0x3
 			g.spritePaletteMap[1][3] = (value >> 6) & 0x3
+		case 0xFF4A:
+			g.windowY = value
+		case 0xFF4B:
+			g.windowX = value
 		default:
 		}
 	default:
@@ -266,7 +276,7 @@ func (g *Gpu) updateSpriteObject(address uint16, value uint8) {
 			if value&0x40 > 0 {
 				g.spriteObjectData[objectId].yflip = true
 			}
-			if value&0x80 > 0 {
+			if value&0x80 == 0 {
 				g.spriteObjectData[objectId].priority = true
 			}
 		}
@@ -390,35 +400,52 @@ func (g *Gpu) renderTiles(gb *Gameboy) (scanrow [ScreenWidth]byte) {
 }
 
 func (g *Gpu) renderSprites(gb *Gameboy, scanrow [ScreenWidth]byte) {
+	spriteCount := 0
 	for i := 0; i < len(g.spriteObjectData); i++ {
+		var ySize int = 8
 		spriteObject := g.spriteObjectData[i]
+		if g.bigSpritesActivated {
+			ySize = 16
+		}
 
-		if spriteObject.y <= int(g.CurrentScanline) && spriteObject.y+8 > int(g.CurrentScanline) {
-			palette := g.spritePaletteMap[0]
-			paletteColors := g.spritePaletteColors[0]
-			if spriteObject.useSecondPalette {
-				palette = g.spritePaletteMap[1]
-				paletteColors = g.spritePaletteColors[1]
-			}
-			var tilerow [8]uint8
-			if spriteObject.yflip {
-				tilerow = g.tileSet[spriteObject.tile][7-(g.CurrentScanline-uint8(spriteObject.y))]
-			} else {
-				tilerow = g.tileSet[spriteObject.tile][g.CurrentScanline-uint8(spriteObject.y)]
+		if spriteObject.y > int(g.CurrentScanline) || spriteObject.y+ySize <= int(g.CurrentScanline) {
+			continue
+		}
+		if spriteCount >= 10 {
+			break
+		}
+		spriteCount++
+
+		palette := g.spritePaletteMap[0]
+		paletteColors := g.spritePaletteColors[0]
+		if spriteObject.useSecondPalette {
+			palette = g.spritePaletteMap[1]
+			paletteColors = g.spritePaletteColors[1]
+		}
+
+		tilerowIndex := g.CurrentScanline - uint8(spriteObject.y)
+		if spriteObject.yflip {
+			tilerowIndex = uint8(ySize) - tilerowIndex - 1
+		}
+		tilerow := g.tileSet[spriteObject.tile][tilerowIndex]
+
+		for x := 0; x < 8; x++ {
+			pixelPos := spriteObject.x + x
+
+			if pixelPos < 0 || pixelPos >= ScreenWidth {
+				continue
 			}
 
-			for x := 0; x < 8; x++ {
-				if (spriteObject.x+x >= 0 && spriteObject.x+x < ScreenWidth) && tilerow[x] > 0 && (spriteObject.priority || scanrow[spriteObject.x+x] == 0) {
-					pixelPaletteColor := tilerow[x]
-					if spriteObject.xflip {
-						pixelPaletteColor = tilerow[7-x]
-					}
-					pixelRealColor := palette[pixelPaletteColor]
-					red, green, blue, _ := paletteColors[pixelRealColor].RGBA()
-					gb.WorkingScreen[spriteObject.x+x][g.CurrentScanline][0] = uint8(red)
-					gb.WorkingScreen[spriteObject.x+x][g.CurrentScanline][1] = uint8(green)
-					gb.WorkingScreen[spriteObject.x+x][g.CurrentScanline][2] = uint8(blue)
-				}
+			pixelPaletteColor := tilerow[x]
+			if spriteObject.xflip {
+				pixelPaletteColor = tilerow[7-x]
+			}
+			if pixelPaletteColor > 0 && (spriteObject.priority || scanrow[pixelPos] == 0) {
+				pixelRealColor := palette[pixelPaletteColor]
+				red, green, blue, _ := paletteColors[pixelRealColor].RGBA()
+				gb.WorkingScreen[spriteObject.x+x][g.CurrentScanline][0] = uint8(red)
+				gb.WorkingScreen[spriteObject.x+x][g.CurrentScanline][1] = uint8(green)
+				gb.WorkingScreen[spriteObject.x+x][g.CurrentScanline][2] = uint8(blue)
 			}
 		}
 	}

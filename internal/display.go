@@ -8,7 +8,7 @@ import (
 	"github.com/faiface/pixel/pixelgl"
 )
 
-const pixelSize int = 3
+const pixelSize int = 5
 
 type Display struct {
 	window  *pixelgl.Window
