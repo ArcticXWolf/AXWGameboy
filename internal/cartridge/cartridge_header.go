@@ -137,17 +137,17 @@ func (ch *CartridgeHeader) parseRomSize() {
 }
 
 func (ch *CartridgeHeader) parseRamSize() {
-	switch ch.HeaderBinary[0x43] {
+	switch ch.HeaderBinary[0x49] {
 	case 0x00:
 		ch.RamSize = 0
 	case 0x02:
-		ch.RamSize = 8 * 1024 * 1024
+		ch.RamSize = 8 * 1024
 	case 0x03:
-		ch.RamSize = 32 * 1024 * 1024
+		ch.RamSize = 32 * 1024
 	case 0x04:
-		ch.RamSize = 128 * 1024 * 1024
+		ch.RamSize = 128 * 1024
 	case 0x05:
-		ch.RamSize = 64 * 1024 * 1024
+		ch.RamSize = 64 * 1024
 	}
 }
 

@@ -6,7 +6,7 @@ import (
 
 type Mbc1Cartridge struct {
 	BaseCartridge
-	Ram        [0x8000]byte
+	Ram        []byte
 	RamEnabled bool
 	RamMode    bool
 	RomBank    uint16
@@ -20,6 +20,7 @@ func NewMbc1Cartridge(header *CartridgeHeader, data []byte) *Mbc1Cartridge {
 			BinaryData: data,
 		},
 		RomBank: 1,
+		Ram:     make([]byte, header.RamSize),
 	}
 }
 
@@ -30,7 +31,15 @@ func (c *Mbc1Cartridge) ReadByte(address uint16) uint8 {
 	case 0x4000, 0x5000, 0x6000, 0x7000:
 		return c.BinaryData[c.RomBank*0x4000+(address&0x3fff)]
 	case 0xA000, 0xB000:
-		return c.Ram[c.RamBank*0x2000+(address&0x1fff)]
+		if c.RamEnabled {
+			if c.RamMode {
+				return c.Ram[c.RamBank*0x2000+(address&0x1fff)]
+			} else {
+				return c.Ram[address&0x1fff]
+			}
+		} else {
+			return 0xFF
+		}
 	default:
 		return 0
 	}
@@ -43,25 +52,45 @@ func (c *Mbc1Cartridge) WriteByte(address uint16, value uint8) {
 		case Mbc1Ram, Mbc1RamBattery:
 			c.RamEnabled = (value & 0x0F) == 0x0A
 		default:
-			c.RamEnabled = false
+			return
 		}
 	case 0x2000, 0x3000:
 		value &= 0x1F
-		if value == 0 {
-			value = 1
-		}
 		c.RomBank = (c.RomBank & 0x60) + uint16(value)
+		if int(c.RomBank)*0x4000 >= len(c.BinaryData) {
+			c.RomBank = uint16(int(c.RomBank) % (len(c.BinaryData) / 0x4000))
+		}
+		if c.RomBank == 0 {
+			c.RomBank = 1
+		}
 	case 0x4000, 0x5000:
 		if c.RamMode {
 			c.RamBank = uint16(value) & 0x3
+			if len(c.Ram) <= 0 {
+				c.RamBank = 0
+			} else if int(c.RamBank)*0x2000 >= len(c.Ram) {
+				c.RamBank = uint16(int(c.RamBank) % (len(c.Ram) / 0x2000))
+			}
 		} else {
 			value = (value & 0x3) << 5
 			c.RomBank = (c.RomBank & 0x1F) + uint16(value)
+			if int(c.RomBank)*0x4000 >= len(c.BinaryData) {
+				c.RomBank = uint16(int(c.RomBank) % (len(c.BinaryData) / 0x4000))
+			}
+			if c.RomBank == 0 {
+				c.RomBank = 1
+			}
 		}
 	case 0x6000, 0x7000:
 		c.RamMode = value&0x1 == 1
 	case 0xA000, 0xB000:
-		c.Ram[c.RamBank*0x2000+(address&0x1fff)] = value
+		if c.RamEnabled {
+			if c.RamMode {
+				c.Ram[c.RamBank*0x2000+(address&0x1fff)] = value
+			} else {
+				c.Ram[address&0x1fff] = value
+			}
+		}
 	default:
 		return
 	}
