@@ -1,11 +1,32 @@
 package internal
 
 import (
+	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
+
+func saveCurrentDisplayToImage(gb *Gameboy, filename string) {
+	image := image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{ScreenWidth, ScreenHeight}})
+	for y := 0; y < ScreenHeight; y++ {
+		for x := 0; x < ScreenWidth; x++ {
+			image.SetRGBA(x, y, color.RGBA{
+				R: gb.ReadyToRender[x][y][0],
+				G: gb.ReadyToRender[x][y][1],
+				B: gb.ReadyToRender[x][y][2],
+				A: 255,
+			})
+		}
+	}
+	f, _ := os.Create(filename)
+	defer f.Close()
+	png.Encode(f, image)
+}
 
 func executeRomUntilCompletionOrTimeout(t *testing.T, romPath string, maxExecutionCycles int, completionFunction func([]byte) (bool, bool)) {
 	name := strings.TrimSuffix(filepath.Base(romPath), filepath.Ext(romPath))
@@ -46,6 +67,11 @@ func executeRomUntilCompletionOrTimeout(t *testing.T, romPath string, maxExecuti
 					t.Errorf("ERRO: #%015d %s: %v", cyclecount, romPath, result)
 				}
 			}
+
+			imagepath := filepath.Join("..", "build", "testresults", filepath.Base(filepath.Dir(romPath)))
+			os.MkdirAll(imagepath, os.ModePerm)
+
+			saveCurrentDisplayToImage(gb, filepath.Join(imagepath, fmt.Sprintf("%s.png", name)))
 		},
 	)
 }
@@ -82,7 +108,7 @@ func TestBlarggInstrTimingRoms(t *testing.T) {
 func TestMooneyeRoms(t *testing.T) {
 	maxExecutionCycles := 20000000
 	romDirectories := []string{
-		"../roms/mooneye/acceptance",
+		// "../roms/mooneye/acceptance",
 		"../roms/mooneye/emulator-only/mbc1",
 		"../roms/mooneye/emulator-only/mbc5",
 		// "../roms/mooneye/misc",

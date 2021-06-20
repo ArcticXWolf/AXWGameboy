@@ -9,8 +9,8 @@ type Mbc1Cartridge struct {
 	Ram        []byte
 	RamEnabled bool
 	RamMode    bool
-	RomBank    uint16
-	RamBank    uint16
+	RomBank    int
+	RamBank    int
 }
 
 func NewMbc1Cartridge(header *CartridgeHeader, data []byte) *Mbc1Cartridge {
@@ -29,11 +29,11 @@ func (c *Mbc1Cartridge) ReadByte(address uint16) uint8 {
 	case 0x0000, 0x1000, 0x2000, 0x3000:
 		return c.BinaryData[address]
 	case 0x4000, 0x5000, 0x6000, 0x7000:
-		return c.BinaryData[c.RomBank*0x4000+(address&0x3fff)]
+		return c.BinaryData[c.RomBank*0x4000+int(address&0x3fff)]
 	case 0xA000, 0xB000:
 		if c.RamEnabled {
 			if c.RamMode {
-				return c.Ram[c.RamBank*0x2000+(address&0x1fff)]
+				return c.Ram[c.RamBank*0x2000+int(address&0x1fff)]
 			} else {
 				return c.Ram[address&0x1fff]
 			}
@@ -56,26 +56,26 @@ func (c *Mbc1Cartridge) WriteByte(address uint16, value uint8) {
 		}
 	case 0x2000, 0x3000:
 		value &= 0x1F
-		c.RomBank = (c.RomBank & 0x60) + uint16(value)
+		c.RomBank = (c.RomBank & 0x60) + int(value)
 		if int(c.RomBank)*0x4000 >= len(c.BinaryData) {
-			c.RomBank = uint16(int(c.RomBank) % (len(c.BinaryData) / 0x4000))
+			c.RomBank = int(c.RomBank) % (len(c.BinaryData) / 0x4000)
 		}
 		if c.RomBank == 0 {
 			c.RomBank = 1
 		}
 	case 0x4000, 0x5000:
 		if c.RamMode {
-			c.RamBank = uint16(value) & 0x3
+			c.RamBank = int(value) & 0x3
 			if len(c.Ram) <= 0 {
 				c.RamBank = 0
 			} else if int(c.RamBank)*0x2000 >= len(c.Ram) {
-				c.RamBank = uint16(int(c.RamBank) % (len(c.Ram) / 0x2000))
+				c.RamBank = int(c.RamBank) % (len(c.Ram) / 0x2000)
 			}
 		} else {
 			value = (value & 0x3) << 5
-			c.RomBank = (c.RomBank & 0x1F) + uint16(value)
+			c.RomBank = (c.RomBank & 0x1F) + int(value)
 			if int(c.RomBank)*0x4000 >= len(c.BinaryData) {
-				c.RomBank = uint16(int(c.RomBank) % (len(c.BinaryData) / 0x4000))
+				c.RomBank = int(c.RomBank) % (len(c.BinaryData) / 0x4000)
 			}
 			if c.RomBank == 0 {
 				c.RomBank = 1
@@ -86,7 +86,7 @@ func (c *Mbc1Cartridge) WriteByte(address uint16, value uint8) {
 	case 0xA000, 0xB000:
 		if c.RamEnabled {
 			if c.RamMode {
-				c.Ram[c.RamBank*0x2000+(address&0x1fff)] = value
+				c.Ram[c.RamBank*0x2000+int(address&0x1fff)] = value
 			} else {
 				c.Ram[address&0x1fff] = value
 			}

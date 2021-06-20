@@ -37,7 +37,7 @@ func (d *Debugger) checkBreakpoint(gb *Gameboy) {
 }
 
 func (d *Debugger) triggerBreakpoint(gb *Gameboy) {
-	log.Printf("%s", gb.String())
+	// log.Printf("%s", gb.String())
 	str := d.BreakExecution()
 	if str == "c" {
 		d.Step = false
