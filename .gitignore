@@ -19,6 +19,7 @@ build/
 ### Go Patch ###
 /vendor/
 /Godeps/
+dist/
 
 ### vscode ###
 .vscode/*

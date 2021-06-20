@@ -2,12 +2,24 @@ before:
   hooks:
     - go mod tidy
 builds:
-  - env:
+  - id: axwgameboy_windows
+    main: ./cmd/axwgameboy
+    env:
+      - CGO_ENABLED=1
+      - CXX=x86_64-w64-mingw32-g++
+      - CC=x86_64-w64-mingw32-gcc
+    goos:
+      - windows
+    goarch:
+      - amd64
+  - id: axwgameboy_linux
+    main: ./cmd/axwgameboy
+    env:
       - CGO_ENABLED=1
     goos:
       - linux
-      - windows
-      - darwin
+    goarch:
+      - amd64
 archives:
   - replacements:
       darwin: darwin
@@ -15,7 +27,7 @@ archives:
       windows: windows
       386: i386
     format: binary
-    name_template: "{{ tolower .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    name_template: "{{ tolower .ProjectName }}"
 checksum:
   name_template: 'checksums.txt'
 snapshot:

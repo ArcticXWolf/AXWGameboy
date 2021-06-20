@@ -23,6 +23,10 @@ func LoadCartridge(filename string) (Cartridge, error) {
 		return NewRomCartridge(header, data), nil
 	case Mbc1, Mbc1Ram, Mbc1RamBattery:
 		return NewMbc1Cartridge(header, data), nil
+	case Mbc3, Mbc3Ram, Mbc3RamBattery:
+		return NewMbc3Cartridge(header, data), nil
+	case Mbc5, Mbc5Ram, Mbc5RamBattery:
+		return NewMbc5Cartridge(header, data), nil
 	default:
 		return nil, fmt.Errorf("cartridge type %#v not implemented yet", header.Type)
 	}
