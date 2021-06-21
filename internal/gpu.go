@@ -352,48 +352,82 @@ func (g *Gpu) RenderScanline(gb *Gameboy) {
 		scanrow = g.renderTiles(gb)
 	}
 
+	if g.windowActivated {
+		scanrow = g.renderWindow(gb, scanrow)
+	}
+
 	if g.spritesActivated {
 		g.renderSprites(gb, scanrow)
 	}
 }
 
 func (g *Gpu) renderTiles(gb *Gameboy) (scanrow [ScreenWidth]byte) {
-	var mapOffset, lineOffset, tile uint16
-	var x, y uint8
+	var mapOffset uint16
+	var xPos, yPos uint8
 
 	mapOffset = 0x1800
 	if g.backgroundMap {
 		mapOffset = 0x1C00
 	}
-	mapOffset += ((uint16(g.CurrentScanline+g.scrollY) & 0xFF) >> 3) << 5
 
-	lineOffset = uint16(g.scrollX) >> 3
-	x = g.scrollX & 0x7
-	y = (g.CurrentScanline + g.scrollY) & 0x7
+	yPos = g.CurrentScanline + g.scrollY
 
-	tile = uint16(g.vram[mapOffset+lineOffset])
-	if g.backgroundTile && tile < 128 {
-		tile += 256
-	}
+	tileYIndex := uint16(yPos/8) * 32
 
-	for i := 0; i < ScreenWidth; i++ {
-		pixelPaletteColor := g.tileSet[tile][y][x]
+	for i := uint8(0); int(i) < ScreenWidth; i++ {
+		xPos = i + g.scrollX
+		tileXIndex := uint16(xPos / 8)
+
+		tileId := uint16(g.vram[mapOffset+tileYIndex+tileXIndex])
+		if g.backgroundTile && tileId < 128 {
+			tileId += 256
+		}
+
+		pixelPaletteColor := g.tileSet[tileId][yPos%8][xPos%8]
 		scanrow[i] = pixelPaletteColor
 		pixelRealColor := g.bgPaletteMap[pixelPaletteColor]
 		red, green, blue, _ := g.bgPaletteColors[pixelRealColor].RGBA()
 		gb.WorkingScreen[i][g.CurrentScanline][0] = uint8(red)
 		gb.WorkingScreen[i][g.CurrentScanline][1] = uint8(green)
 		gb.WorkingScreen[i][g.CurrentScanline][2] = uint8(blue)
+	}
 
-		x++
-		if x >= 8 {
-			x = 0
-			lineOffset = (lineOffset + 1) & 0x1F
-			tile = uint16(g.vram[mapOffset+lineOffset])
-			if g.backgroundTile && tile < 128 {
-				tile += 256
-			}
+	return scanrow
+}
+
+func (g *Gpu) renderWindow(gb *Gameboy, scanrow [ScreenWidth]byte) [ScreenWidth]byte {
+	var mapOffset uint16
+	var xPos, yPos uint8
+
+	if g.CurrentScanline < g.windowY {
+		return scanrow
+	}
+
+	mapOffset = 0x1800
+	if g.windowMap {
+		mapOffset = 0x1C00
+	}
+
+	yPos = g.CurrentScanline - g.windowY
+
+	tileYIndex := uint16(yPos/8) * 32
+
+	for i := uint8(0); int(i) < ScreenWidth; i++ {
+		xPos = i + g.windowX - 7
+		tileXIndex := uint16(xPos / 8)
+
+		tileId := uint16(g.vram[mapOffset+tileYIndex+tileXIndex])
+		if g.backgroundTile && tileId < 128 {
+			tileId += 256
 		}
+
+		pixelPaletteColor := g.tileSet[tileId][yPos%8][xPos%8]
+		scanrow[i] = pixelPaletteColor
+		pixelRealColor := g.bgPaletteMap[pixelPaletteColor]
+		red, green, blue, _ := g.bgPaletteColors[pixelRealColor].RGBA()
+		gb.WorkingScreen[i][g.CurrentScanline][0] = uint8(red)
+		gb.WorkingScreen[i][g.CurrentScanline][1] = uint8(green)
+		gb.WorkingScreen[i][g.CurrentScanline][2] = uint8(blue)
 	}
 
 	return scanrow
