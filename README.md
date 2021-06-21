@@ -6,14 +6,16 @@ This is a work-in-progress gameboy emulator written in golang.
 
 * CPU emulation
     * z80 specifications
-    * Some opcodes implemented (171/245 and 17/256)
+    * All opcodes with instruction timing
 * Memory emulation
-    * Only a simple implementation of the MMU layout
-    * No I/O, memory bank switching, etc
-
-# Working ROMs
-
-* GB Bootstrap ROM
+    * MBC1, MBC3, MBC5 mappers
+    * Multiple ROM banks and RAM banks
+* PPU
+    * Background layer
+    * Window layer
+    * Sprites
+* Simple debugger
+* Hardcoded keybindings
 
 # Learning resources
 

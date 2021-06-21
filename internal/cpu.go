@@ -6,7 +6,7 @@ import (
 
 var (
 	ClockSpeed int     = 4194304
-	SpeedBoost float32 = 3.0
+	SpeedBoost float32 = 1.0
 )
 
 type Registers struct {
