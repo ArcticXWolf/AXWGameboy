@@ -5,8 +5,7 @@ import (
 )
 
 var (
-	ClockSpeed int     = 4194304
-	SpeedBoost float32 = 1.0
+	ClockSpeed int = 4194304
 )
 
 type Registers struct {
@@ -73,6 +72,7 @@ func (r *Registers) String() string {
 type Cpu struct {
 	Registers   *Registers
 	ClockCycles int
+	SpeedBoost  float32
 }
 
 func NewCpu() *Cpu {
@@ -93,6 +93,7 @@ func NewCpu() *Cpu {
 			Ime:   false,
 		},
 		ClockCycles: 0,
+		SpeedBoost:  1.0,
 	}
 }
 

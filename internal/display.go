@@ -74,6 +74,11 @@ func (d *Display) HandleInput(gb *Gameboy) {
 	if d.window.JustPressed(pixelgl.KeyD) {
 		gb.Debugger.triggerBreakpoint(gb)
 	}
+	if d.window.JustPressed(pixelgl.KeyLeftShift) {
+		gb.Cpu.SpeedBoost = 4.0
+	} else if d.window.JustReleased(pixelgl.KeyLeftShift) {
+		gb.Cpu.SpeedBoost = 1.0
+	}
 
 	for key, button := range keys {
 		if d.window.JustPressed(key) {
