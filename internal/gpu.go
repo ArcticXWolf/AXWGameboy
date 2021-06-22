@@ -461,7 +461,24 @@ func (g *Gpu) renderSprites(gb *Gameboy, scanrow [ScreenWidth]byte) {
 		if spriteObject.yflip {
 			tilerowIndex = uint8(ySize) - tilerowIndex - 1
 		}
-		tilerow := g.tileSet[spriteObject.tile][tilerowIndex]
+		tilerowIndex = tilerowIndex % 8
+		tileId := spriteObject.tile
+		if g.bigSpritesActivated {
+			if g.CurrentScanline-uint8(spriteObject.y) < 8 {
+				if spriteObject.yflip {
+					tileId |= 0x01
+				} else {
+					tileId &= 0xFE
+				}
+			} else {
+				if spriteObject.yflip {
+					tileId &= 0xFE
+				} else {
+					tileId |= 0x01
+				}
+			}
+		}
+		tilerow := g.tileSet[tileId][tilerowIndex]
 
 		for x := 0; x < 8; x++ {
 			pixelPos := spriteObject.x + x
