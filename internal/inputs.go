@@ -38,7 +38,7 @@ func (i *Inputs) ReadByte(address uint16) (result uint8) {
 	case 0x20:
 		return i.inputRow[1]
 	default:
-		return 0
+		return 0xFF
 	}
 }
 
