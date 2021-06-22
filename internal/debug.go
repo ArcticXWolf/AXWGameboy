@@ -85,8 +85,10 @@ func (d *Debugger) triggerBreakpoint(gb *Gameboy) {
 		length, _ := strconv.ParseUint(str[5:9], 16, 16)
 		d.dumpMemory(gb, uint16(addr), uint16(length))
 		d.triggerBreakpoint(gb)
+	} else if str == "cart" {
+		log.Println(gb.Memory.Cartridge.String())
 	} else if str == "q" {
-		os.Exit(0)
+		gb.Quit = true
 	}
 }
 

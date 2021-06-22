@@ -2,7 +2,6 @@ package internal
 
 import (
 	"image/color"
-	"os"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
@@ -67,9 +66,20 @@ var keys = map[pixelgl.Button]Button{
 	pixelgl.KeyDown:    ButtonDown,
 }
 
+var gamepadKeys = map[pixelgl.GamepadButton]Button{
+	pixelgl.ButtonA:         ButtonA,
+	pixelgl.ButtonB:         ButtonB,
+	pixelgl.ButtonBack:      ButtonSelect,
+	pixelgl.ButtonStart:     ButtonStart,
+	pixelgl.ButtonDpadRight: ButtonRight,
+	pixelgl.ButtonDpadLeft:  ButtonLeft,
+	pixelgl.ButtonDpadUp:    ButtonUp,
+	pixelgl.ButtonDpadDown:  ButtonDown,
+}
+
 func (d *Display) HandleInput(gb *Gameboy) {
 	if d.window.JustPressed(pixelgl.KeyEscape) {
-		os.Exit(0)
+		gb.Quit = true
 	}
 	if d.window.JustPressed(pixelgl.KeyD) {
 		gb.Debugger.triggerBreakpoint(gb)
@@ -86,6 +96,19 @@ func (d *Display) HandleInput(gb *Gameboy) {
 		}
 		if d.window.JustReleased(key) {
 			gb.Inputs.buttonsReleased = append(gb.Inputs.buttonsReleased, button)
+		}
+	}
+
+	for joystick := pixelgl.Joystick1; joystick <= pixelgl.JoystickLast; joystick++ {
+		if present := d.window.JoystickPresent(joystick); present {
+			for key, button := range gamepadKeys {
+				if d.window.JoystickJustPressed(joystick, key) {
+					gb.Inputs.buttonsPressed = append(gb.Inputs.buttonsPressed, button)
+				}
+				if d.window.JoystickJustReleased(joystick, key) {
+					gb.Inputs.buttonsReleased = append(gb.Inputs.buttonsReleased, button)
+				}
+			}
 		}
 	}
 }
