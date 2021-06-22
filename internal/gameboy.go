@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -12,6 +13,7 @@ const (
 )
 
 type GameboyOptions struct {
+	SavePath             string
 	RomPath              string
 	SerialOutputFunction func(byte)
 	Headless             bool
@@ -30,6 +32,7 @@ type Gameboy struct {
 	WorkingScreen [ScreenWidth][ScreenHeight][3]uint8
 	ReadyToRender [ScreenWidth][ScreenHeight][3]uint8
 	Halted        bool
+	Quit          bool
 	Options       *GameboyOptions
 }
 
@@ -66,14 +69,15 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 }
 
 func (gb *Gameboy) Run() {
-	cyclesPerFrame := int(float32(ClockSpeed) / float32(FramesPerSecond) * SpeedBoost)
 	frameDuration := time.Second / time.Duration(FramesPerSecond)
 	frameCount := 0
 	lastFpsUpdate := time.Now()
+	lastSave := time.Now()
 
 	ticker := time.NewTicker(frameDuration)
 
-	for ; true; <-ticker.C {
+	for ; !gb.Quit; <-ticker.C {
+		cyclesPerFrame := int(float32(ClockSpeed) / float32(FramesPerSecond) * gb.Cpu.SpeedBoost)
 		frameCount++
 
 		if !gb.Options.Headless {
@@ -87,6 +91,7 @@ func (gb *Gameboy) Run() {
 			cyclesCPU := gb.Cpu.Tick(gb)
 			cycles += cyclesCPU
 			gb.Gpu.Update(gb, cyclesCPU)
+			gb.Memory.Cartridge.UpdateComponentsPerCycle()
 
 			if gb.Options.OnCycleFunction != nil {
 				gb.Options.OnCycleFunction(gb)
@@ -105,6 +110,22 @@ func (gb *Gameboy) Run() {
 				gb.Display.window.SetTitle(fmt.Sprintf("AXWGameboy (%d FPS)", frameCount))
 				frameCount = 0
 			}
+		}
+
+		if time.Since(lastSave) > time.Minute {
+			if gb.Options.SavePath != "" {
+				err := gb.Memory.Cartridge.SaveRam(gb.Options.SavePath)
+				if err != nil {
+					log.Println(err)
+				}
+			}
+		}
+	}
+
+	if gb.Options.SavePath != "" {
+		err := gb.Memory.Cartridge.SaveRam(gb.Options.SavePath)
+		if err != nil {
+			log.Panic(err)
 		}
 	}
 }

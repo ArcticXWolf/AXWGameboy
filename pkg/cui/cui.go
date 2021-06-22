@@ -40,6 +40,10 @@ func NewGui() *GameboyCui {
 	cui.widgets = append(cui.widgets, w2)
 	managers = append(managers, w2)
 
+	w3 := NewCartridgeViewWidget(cui, "Cartridge View", 0, 20)
+	cui.widgets = append(cui.widgets, w3)
+	managers = append(managers, w3)
+
 	cui.gui.SetManager(managers...)
 
 	if err := cui.gui.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {

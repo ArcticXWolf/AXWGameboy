@@ -13,6 +13,7 @@ var (
 	version      = "dev"
 	date         = "dev"
 	commit       = "dev"
+	savePath     string
 	romPath      string
 	headless     bool
 	serialOutput bool
@@ -20,7 +21,8 @@ var (
 )
 
 func init() {
-	flag.StringVar(&romPath, "rom", "./cpu_instrs.gb", "Rom to use")
+	flag.StringVar(&savePath, "save", "", "Savefile to use")
+	flag.StringVar(&romPath, "rom", "./roms/blargg/cpu_instrs.gb", "Rom to use")
 	flag.BoolVar(&headless, "headless", false, "Run in headless (aka no display) mode")
 	flag.BoolVar(&serialOutput, "serial", false, "Show serial output in console")
 	flag.BoolVar(&cuiEnabled, "cui", false, "Enable debug console interface")
@@ -36,6 +38,7 @@ func start() {
 
 	options := &internal.GameboyOptions{
 		RomPath:  romPath,
+		SavePath: savePath,
 		Headless: headless,
 	}
 	if serialOutput {

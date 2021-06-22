@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"os"
 
 	"go.janniklasrichter.de/axwgameboy/internal/cartridge"
 )
@@ -82,6 +83,15 @@ func (m *Mmu) String() string {
 
 func NewMemory(gb *Gameboy) (*Mmu, error) {
 	cart, err := cartridge.LoadCartridge(gb.Options.RomPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if gb.Options.SavePath != "" {
+		if _, err := os.Stat(gb.Options.SavePath); err == nil {
+			err = cart.LoadRam(gb.Options.SavePath)
+		}
+	}
 
 	return &Mmu{
 		inbios:    true,
