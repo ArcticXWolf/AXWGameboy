@@ -58,12 +58,6 @@ func (d *Debugger) triggerBreakpoint(gb *Gameboy) {
 		tile, _ := strconv.ParseInt(str[1:4], 10, 0)
 		d.dumpTile(gb, int(tile))
 		d.triggerBreakpoint(gb)
-	} else if str == "du" {
-		gb.Display.Render(gb)
-		d.triggerBreakpoint(gb)
-	} else if str == "rtr" {
-		d.dumpScreendata(gb.ReadyToRender)
-		d.triggerBreakpoint(gb)
 	} else if str == "ws" {
 		d.dumpScreendata(gb.WorkingScreen)
 		d.triggerBreakpoint(gb)

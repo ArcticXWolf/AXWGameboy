@@ -4,9 +4,10 @@ import (
 	"flag"
 	"log"
 
-	"github.com/faiface/pixel/pixelgl"
+	"github.com/hajimehoshi/ebiten/v2"
 	"go.janniklasrichter.de/axwgameboy/internal"
 	debugCui "go.janniklasrichter.de/axwgameboy/pkg/cui"
+	"go.janniklasrichter.de/axwgameboy/pkg/ebitenprovider"
 )
 
 var (
@@ -15,6 +16,7 @@ var (
 	commit       = "dev"
 	savePath     string
 	romPath      string
+	paletteName  string
 	headless     bool
 	serialOutput bool
 	cuiEnabled   bool
@@ -22,15 +24,15 @@ var (
 
 func init() {
 	flag.StringVar(&savePath, "save", "", "Savefile to use")
-	flag.StringVar(&romPath, "rom", "./roms/blargg/cpu_instrs.gb", "Rom to use")
-	flag.BoolVar(&headless, "headless", false, "Run in headless (aka no display) mode")
+	flag.StringVar(&romPath, "rom", "", "Rom to use")
+	flag.StringVar(&paletteName, "palette", "white", "Name of a palette to use")
 	flag.BoolVar(&serialOutput, "serial", false, "Show serial output in console")
 	flag.BoolVar(&cuiEnabled, "cui", false, "Enable debug console interface")
 }
 
 func main() {
 	flag.Parse()
-	pixelgl.Run(start)
+	start()
 }
 
 func start() {
@@ -39,7 +41,7 @@ func start() {
 	options := &internal.GameboyOptions{
 		RomPath:  romPath,
 		SavePath: savePath,
-		Headless: headless,
+		Palette:  paletteName,
 	}
 	if serialOutput {
 		options.SerialOutputFunction = func(b byte) {
@@ -59,13 +61,9 @@ func start() {
 	if err != nil {
 		log.Panicf("Error loading rom: %s", err)
 	}
-
-	gb.Debugger.AddressEnabled = false
-	gb.Debugger.Address = 0x0100
-	gb.Debugger.LogOnly = false
-	gb.Debugger.LogEvery = 50
-
 	log.Printf("Loaded %s", gb.Memory.Cartridge.CartridgeInfo())
 
-	gb.Run()
+	ebitenGame := ebitenprovider.NewAXWGameboyEbitenGame(gb, true)
+	ebiten.SetWindowResizable(true)
+	ebiten.RunGame(ebitenGame)
 }

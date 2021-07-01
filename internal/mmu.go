@@ -82,9 +82,19 @@ func (m *Mmu) String() string {
 }
 
 func NewMemory(gb *Gameboy) (*Mmu, error) {
-	cart, err := cartridge.LoadCartridge(gb.Options.RomPath)
-	if err != nil {
-		return nil, err
+	var cart cartridge.Cartridge
+	var err error
+
+	if gb.Options.RomPath != "" {
+		cart, err = cartridge.LoadCartridgeFromPath(gb.Options.RomPath)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		cart, err = cartridge.LoadEmbeddedCartridge()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if gb.Options.SavePath != "" {

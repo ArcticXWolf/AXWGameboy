@@ -39,7 +39,6 @@ func executeRomUntilCompletionOrTimeout(t *testing.T, romPath string, maxExecuti
 				SerialOutputFunction: func(character byte) {
 					result = append(result, character)
 				},
-				Headless: true,
 			}
 			gb, err := NewGameboy(options)
 			if err != nil {
@@ -109,7 +108,7 @@ func TestMooneyeRoms(t *testing.T) {
 	maxExecutionCycles := 20000000
 	romDirectories := []string{
 		// "../roms/mooneye/acceptance",
-		"../roms/mooneye/emulator-only/mbc1",
+		// "../roms/mooneye/emulator-only/mbc1",
 		"../roms/mooneye/emulator-only/mbc5",
 		// "../roms/mooneye/misc",
 	}

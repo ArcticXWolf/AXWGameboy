@@ -1,9 +1,13 @@
 package cartridge
 
 import (
+	_ "embed"
 	"fmt"
 	"io/ioutil"
 )
+
+//go:embed embeddedrom.gb
+var embeddedRom []byte
 
 type Cartridge interface {
 	ReadByte(address uint16) uint8
@@ -15,12 +19,48 @@ type Cartridge interface {
 	UpdateComponentsPerCycle()
 }
 
-func LoadCartridge(filename string) (Cartridge, error) {
-	header, data, err := LoadDataFromRomFile(filename)
+func LoadCartridgeFromPath(filename string) (Cartridge, error) {
+	data, err := LoadDataFromRomFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	header, err := ParseHeaderFromRomData(data)
+	if err != nil {
+		return nil, err
+	}
+	return InitializeCartridge(header, data)
+}
+
+func LoadEmbeddedCartridge() (Cartridge, error) {
+	header, err := ParseHeaderFromRomData(embeddedRom)
+	if err != nil {
+		return nil, err
+	}
+	return InitializeCartridge(header, embeddedRom)
+}
+
+func LoadDataFromRomFile(filepath string) (data []byte, err error) {
+	data, err = ioutil.ReadFile(filepath)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func ParseHeaderFromRomData(data []byte) (header *CartridgeHeader, err error) {
+	header, err = NewCartridgeHeader(data[0x100:0x150])
 	if err != nil {
 		return nil, err
 	}
 
+	// if ok := header.IsGlobalChecksumValid(data); !ok {
+	// 	return nil, errors.New("global checksum mismatch")
+	// }
+
+	return header, nil
+}
+
+func InitializeCartridge(header *CartridgeHeader, data []byte) (Cartridge, error) {
 	switch header.Type {
 	case Rom:
 		return NewRomCartridge(header, data), nil
@@ -33,22 +73,4 @@ func LoadCartridge(filename string) (Cartridge, error) {
 	default:
 		return nil, fmt.Errorf("cartridge type %#v not implemented yet", header.Type)
 	}
-}
-
-func LoadDataFromRomFile(filepath string) (header *CartridgeHeader, data []byte, err error) {
-	data, err = ioutil.ReadFile(filepath)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	header, err = NewCartridgeHeader(data[0x100:0x150])
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// if ok := header.IsGlobalChecksumValid(data); !ok {
-	// 	return nil, nil, errors.New("global checksum mismatch")
-	// }
-
-	return header, data, nil
 }

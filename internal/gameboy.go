@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"log"
 	"time"
 )
@@ -15,14 +14,16 @@ const (
 type GameboyOptions struct {
 	SavePath             string
 	RomPath              string
+	Palette              string
 	SerialOutputFunction func(byte)
-	Headless             bool
+	DisplayProvider      DisplayProvider
+	InputProvider        InputProvider
 	OnCycleFunction      func(*Gameboy)
 	OnFrameFunction      func(*Gameboy)
 }
 
 type Gameboy struct {
-	Display       *Display
+	InputProvider InputProvider
 	Cpu           *Cpu
 	Memory        *Mmu
 	Gpu           *Gpu
@@ -34,27 +35,24 @@ type Gameboy struct {
 	Halted        bool
 	Quit          bool
 	Options       *GameboyOptions
+	LastSave      time.Time
 }
 
 func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 	c := NewCpu()
 	i := NewInputs()
 
-	var d *Display
-	if !options.Headless {
-		d = NewDisplay()
-	}
-
 	gb := &Gameboy{
-		Cpu:      c,
-		Display:  d,
-		Memory:   nil,
-		Gpu:      nil,
-		Timer:    nil,
-		Inputs:   i,
-		Debugger: &Debugger{AddressEnabled: false},
-		Halted:   false,
-		Options:  options,
+		Cpu:           c,
+		InputProvider: options.InputProvider,
+		Memory:        nil,
+		Gpu:           nil,
+		Timer:         nil,
+		Inputs:        i,
+		Debugger:      &Debugger{AddressEnabled: false},
+		Halted:        false,
+		Options:       options,
+		LastSave:      time.Now(),
 	}
 
 	gb.Gpu = NewGpu(gb)
@@ -68,10 +66,10 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 	return gb, err
 }
 
+// Deprecated
 func (gb *Gameboy) Run() {
 	frameDuration := time.Second / time.Duration(FramesPerSecond)
 	frameCount := 0
-	lastFpsUpdate := time.Now()
 	lastSave := time.Now()
 
 	ticker := time.NewTicker(frameDuration)
@@ -80,8 +78,8 @@ func (gb *Gameboy) Run() {
 		cyclesPerFrame := int(float32(ClockSpeed) / float32(FramesPerSecond) * gb.Cpu.SpeedBoost)
 		frameCount++
 
-		if !gb.Options.Headless {
-			gb.Display.HandleInput(gb)
+		if gb.InputProvider != nil {
+			gb.InputProvider.HandleInput(gb)
 		}
 		gb.Inputs.HandleInput(gb)
 		gb.Inputs.ClearButtonList()
@@ -101,16 +99,9 @@ func (gb *Gameboy) Run() {
 		if gb.Options.OnFrameFunction != nil {
 			gb.Options.OnFrameFunction(gb)
 		}
-		if !gb.Options.Headless {
-			gb.Display.Render(gb)
-
-			since := time.Since(lastFpsUpdate)
-			if since > time.Second {
-				lastFpsUpdate = time.Now()
-				gb.Display.window.SetTitle(fmt.Sprintf("AXWGameboy (%d FPS)", frameCount))
-				frameCount = 0
-			}
-		}
+		// if gb.DisplayProvider != nil {
+		// 	gb.DisplayProvider.Render(gb)
+		// }
 
 		if time.Since(lastSave) > time.Minute {
 			if gb.Options.SavePath != "" {
@@ -126,6 +117,40 @@ func (gb *Gameboy) Run() {
 		err := gb.Memory.Cartridge.SaveRam(gb.Options.SavePath)
 		if err != nil {
 			log.Panic(err)
+		}
+	}
+}
+
+func (gb *Gameboy) UpdateFrame(cyclesPerFrame int) {
+	if gb.InputProvider != nil {
+		gb.InputProvider.HandleInput(gb)
+	}
+	gb.Inputs.HandleInput(gb)
+	gb.Inputs.ClearButtonList()
+
+	cycles := 0
+	for cycles <= cyclesPerFrame {
+		cyclesCPU := gb.Cpu.Tick(gb)
+		cycles += cyclesCPU
+		gb.Gpu.Update(gb, cyclesCPU)
+		gb.Memory.Cartridge.UpdateComponentsPerCycle()
+
+		if gb.Options.OnCycleFunction != nil {
+			gb.Options.OnCycleFunction(gb)
+		}
+	}
+
+	if gb.Options.OnFrameFunction != nil {
+		gb.Options.OnFrameFunction(gb)
+	}
+
+	if time.Since(gb.LastSave) > time.Minute {
+		if gb.Options.SavePath != "" {
+			err := gb.Memory.Cartridge.SaveRam(gb.Options.SavePath)
+			if err != nil {
+				log.Println(err)
+			}
+			gb.LastSave = time.Now()
 		}
 	}
 }

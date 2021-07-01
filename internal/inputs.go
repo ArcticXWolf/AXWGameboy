@@ -2,11 +2,15 @@ package internal
 
 type Button byte
 
+type InputProvider interface {
+	HandleInput(gb *Gameboy)
+}
+
 type Inputs struct {
 	inputRow        [2]byte
 	inputColumn     byte
-	buttonsPressed  []Button
-	buttonsReleased []Button
+	ButtonsPressed  []Button
+	ButtonsReleased []Button
 }
 
 const (
@@ -26,8 +30,8 @@ func NewInputs() *Inputs {
 			0xff,
 			0xff,
 		},
-		buttonsPressed:  make([]Button, 4),
-		buttonsReleased: make([]Button, 4),
+		ButtonsPressed:  make([]Button, 4),
+		ButtonsReleased: make([]Button, 4),
 	}
 }
 
@@ -47,7 +51,7 @@ func (i *Inputs) WriteByte(address uint16, value uint8) {
 }
 
 func (i *Inputs) HandleInput(gb *Gameboy) {
-	for _, button := range i.buttonsPressed {
+	for _, button := range i.ButtonsPressed {
 		if button > 3 {
 			i.inputRow[1] &= ^(0x1 << (button - 4))
 		} else {
@@ -55,7 +59,7 @@ func (i *Inputs) HandleInput(gb *Gameboy) {
 		}
 		gb.Memory.GetInterruptFlags().TriggeredFlags |= (1 << 4)
 	}
-	for _, button := range i.buttonsReleased {
+	for _, button := range i.ButtonsReleased {
 		if button > 3 {
 			i.inputRow[1] |= (0x1 << (button - 4))
 		} else {
@@ -65,6 +69,6 @@ func (i *Inputs) HandleInput(gb *Gameboy) {
 }
 
 func (i *Inputs) ClearButtonList() {
-	i.buttonsPressed = nil
-	i.buttonsReleased = nil
+	i.ButtonsPressed = nil
+	i.ButtonsReleased = nil
 }

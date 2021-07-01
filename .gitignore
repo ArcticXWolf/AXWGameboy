@@ -29,6 +29,7 @@ dist/
 !.vscode/extensions.json
 *.code-workspacedist/
 
-roms/*.gb
-roms/*.gbc
-roms/*.sav
+*.gb
+*.gbc
+*.sav
+*.apk

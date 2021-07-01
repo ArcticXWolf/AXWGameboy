@@ -57,26 +57,11 @@ type Gpu struct {
 func NewGpu(gb *Gameboy) *Gpu {
 
 	g := &Gpu{
-		gb: gb,
-		bgPaletteColors: [4]color.Color{
-			color.RGBA{255, 255, 255, 255},
-			color.RGBA{192, 192, 192, 255},
-			color.RGBA{96, 96, 96, 255},
-			color.RGBA{0, 0, 0, 255},
-		},
+		gb:              gb,
+		bgPaletteColors: getPaletteColorsByName(gb.Options.Palette),
 		spritePaletteColors: [2][4]color.Color{
-			{
-				color.RGBA{255, 255, 255, 255},
-				color.RGBA{192, 192, 192, 255},
-				color.RGBA{96, 96, 96, 255},
-				color.RGBA{0, 0, 0, 255},
-			},
-			{
-				color.RGBA{255, 255, 255, 255},
-				color.RGBA{192, 192, 192, 255},
-				color.RGBA{96, 96, 96, 255},
-				color.RGBA{0, 0, 0, 255},
-			},
+			getPaletteColorsByName(gb.Options.Palette),
+			getPaletteColorsByName(gb.Options.Palette),
 		},
 	}
 
@@ -520,11 +505,12 @@ func (g *Gpu) Reset(gb *Gameboy) {
 }
 
 func (gb *Gameboy) clearScreen() {
+	r, g, b, _ := gb.Gpu.bgPaletteColors[0].RGBA()
 	for y := 0; y < ScreenHeight; y++ {
 		for x := 0; x < ScreenWidth; x++ {
-			gb.WorkingScreen[x][y][0] = 255
-			gb.WorkingScreen[x][y][1] = 255
-			gb.WorkingScreen[x][y][2] = 255
+			gb.WorkingScreen[x][y][0] = uint8(r)
+			gb.WorkingScreen[x][y][1] = uint8(g)
+			gb.WorkingScreen[x][y][2] = uint8(b)
 		}
 	}
 	gb.ReadyToRender = gb.WorkingScreen
@@ -548,4 +534,18 @@ func (g *Gpu) detectRisingEdge(signal bool) bool {
 	result := signal && !g.StatInterruptDelay
 	g.StatInterruptDelay = signal
 	return result
+}
+
+func (gb *Gameboy) GetReadyFramebufferAsBytearray() []byte {
+	var frame []byte = make([]byte, 0, 4*ScreenHeight*ScreenWidth)
+	for y := 0; y < ScreenHeight; y++ {
+		for x := 0; x < ScreenWidth; x++ {
+			frame = append(frame, gb.ReadyToRender[x][y][0])
+			frame = append(frame, gb.ReadyToRender[x][y][1])
+			frame = append(frame, gb.ReadyToRender[x][y][2])
+			frame = append(frame, 0xFF)
+		}
+	}
+
+	return frame
 }

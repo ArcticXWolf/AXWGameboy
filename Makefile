@@ -10,8 +10,10 @@ build:
 	GOOS=linux GOARCH=amd64 \
 		go build -o build/${BINARY}-linux-amd64 ${LDFLAGS} go.janniklasrichter.de/axwgameboy/cmd/axwgameboy
 	GOOS=windows GOARCH=amd64 \
-		CGO_ENABLED=1 CXX=x86_64-w64-mingw32-g++ CC=x86_64-w64-mingw32-gcc \
 		go build -o build/${BINARY}-windows-amd64.exe ${LDFLAGS} go.janniklasrichter.de/axwgameboy/cmd/axwgameboy
+
+buildandroid:
+	gomobile build -target=android go.janniklasrichter.de/axwgameboy/cmd/axwgameboy
 
 run:
 	go run go.janniklasrichter.de/axwgameboy/cmd/axwgameboy $(ARGS)
