@@ -2,7 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
+	"os"
+	"runtime"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"go.janniklasrichter.de/axwgameboy/internal"
@@ -38,6 +41,11 @@ func main() {
 func start() {
 	log.Printf("AXWGameboy | Version %v | Builddate %v | Commit %v", version, date, commit)
 
+	if isAndroid, androidRomPath := handleAndroidRomPath(); isAndroid {
+		romPath = androidRomPath
+		savePath = fmt.Sprintf("%s.sav", androidRomPath)
+	}
+
 	options := &internal.GameboyOptions{
 		RomPath:  romPath,
 		SavePath: savePath,
@@ -66,4 +74,14 @@ func start() {
 	ebitenGame := ebitenprovider.NewAXWGameboyEbitenGame(gb, true)
 	ebiten.SetWindowResizable(true)
 	ebiten.RunGame(ebitenGame)
+}
+
+func handleAndroidRomPath() (bool, string) {
+	if runtime.GOOS == "android" {
+		androidRomPath := "/sdcard/rom.gb"
+		if _, err := os.Stat(androidRomPath); err == nil {
+			return true, androidRomPath
+		}
+	}
+	return false, ""
 }
