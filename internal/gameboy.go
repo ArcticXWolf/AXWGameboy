@@ -3,6 +3,8 @@ package internal
 import (
 	"log"
 	"time"
+
+	"go.janniklasrichter.de/axwgameboy/pkg/apu"
 )
 
 const (
@@ -27,6 +29,7 @@ type Gameboy struct {
 	Cpu           *Cpu
 	Memory        *Mmu
 	Gpu           *Gpu
+	Apu           Apu
 	Timer         *Timer
 	Inputs        *Inputs
 	Debugger      *Debugger
@@ -41,12 +44,15 @@ type Gameboy struct {
 func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 	c := NewCpu()
 	i := NewInputs()
+	a := &apu.APU{}
+	a.Init(true)
 
 	gb := &Gameboy{
 		Cpu:           c,
 		InputProvider: options.InputProvider,
 		Memory:        nil,
 		Gpu:           nil,
+		Apu:           a,
 		Timer:         nil,
 		Inputs:        i,
 		Debugger:      &Debugger{AddressEnabled: false},
@@ -94,6 +100,7 @@ func (gb *Gameboy) Run() {
 			if gb.Options.OnCycleFunction != nil {
 				gb.Options.OnCycleFunction(gb)
 			}
+			gb.Apu.Buffer(cyclesCPU, 1)
 		}
 
 		if gb.Options.OnFrameFunction != nil {
@@ -138,6 +145,8 @@ func (gb *Gameboy) UpdateFrame(cyclesPerFrame int) {
 		if gb.Options.OnCycleFunction != nil {
 			gb.Options.OnCycleFunction(gb)
 		}
+
+		gb.Apu.Buffer(cyclesCPU, 1)
 	}
 
 	if gb.Options.OnFrameFunction != nil {

@@ -6,6 +6,10 @@ const (
 	ShutdownGame MiscEvent = iota
 	SpeedboostToggle
 	PauseToggle
+	SoundChannel1Toggle
+	SoundChannel2Toggle
+	SoundChannel3Toggle
+	SoundChannel4Toggle
 )
 
 func (a *AXWGameboyEbitenGame) handleMiscEvents(events []MiscEvent) {
@@ -16,6 +20,14 @@ func (a *AXWGameboyEbitenGame) handleMiscEvents(events []MiscEvent) {
 			a.togglePause()
 		} else if event == ShutdownGame {
 			a.markGameForShutdown()
+		} else if event == SoundChannel1Toggle {
+			a.Gameboy.Apu.ToggleSoundChannel(1)
+		} else if event == SoundChannel2Toggle {
+			a.Gameboy.Apu.ToggleSoundChannel(2)
+		} else if event == SoundChannel3Toggle {
+			a.Gameboy.Apu.ToggleSoundChannel(3)
+		} else if event == SoundChannel4Toggle {
+			a.Gameboy.Apu.ToggleSoundChannel(4)
 		}
 	}
 }

@@ -161,6 +161,8 @@ func (m *Mmu) ReadByte(address uint16) (result uint8) {
 				if address == 0xFF0F {
 					return m.isr.TriggeredFlags
 				}
+			case 0x10, 0x20, 0x30:
+				return m.gb.Apu.ReadByte(address)
 			case 0x40, 0x50, 0x60, 0x70:
 				return m.gb.Gpu.ReadByte(address)
 			}
@@ -232,6 +234,10 @@ func (m *Mmu) WriteByte(address uint16, value uint8) {
 				if address == 0xFF0F {
 					m.isr.TriggeredFlags = 0xE0 | value&(^uint8(0xE0))
 				}
+			case 0x10, 0x20:
+				m.gb.Apu.WriteByte(address, value)
+			case 0x30:
+				m.gb.Apu.WriteWaveform(address, value)
 			case 0x40, 0x50, 0x60, 0x70:
 				m.gb.Gpu.WriteByte(address, value)
 			}

@@ -14,6 +14,7 @@ This is a work-in-progress gameboy emulator written in golang.
     * Background layer
     * Window layer
     * Sprites
+* APU copied from https://github.com/Humpheh/goboy (own implementation is on the way)
 * Simple debugger
 * Hardcoded keybindings
 
