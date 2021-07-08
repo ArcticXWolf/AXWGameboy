@@ -1,7 +1,12 @@
 package apu
 
-// Test GB with APU implementation of goboy https://github.com/Humpheh/goboy
-// This is licensed via MIT License: https://github.com/Humpheh/goboy/blob/master/LICENSE
+// Parts of the APU implementation of goboy https://github.com/Humpheh/goboy
+// Changes:
+// * Implemented empty buffer during CPU pauses
+// * Removed oto audio backend and replaced it with ebiten
+// * Switched from Writing to audioPlayer to using io.Reader interface
+//
+// Goboy is licensed via MIT License: https://github.com/Humpheh/goboy/blob/master/LICENSE
 
 import (
 	"fmt"
@@ -45,7 +50,7 @@ type APU struct {
 func (a *APU) Init(sound bool, masterVolume float64) {
 	a.playing = sound
 	a.waveformRam = make([]byte, 0x20)
-	a.masterVolume = math.Exp(5 * (masterVolume - 1))
+	a.masterVolume = masterVolume
 	a.audioBuffer = make([]byte, 0)
 
 	// Sets waveform ram to:
@@ -76,7 +81,7 @@ func (a *APU) Init(sound bool, masterVolume float64) {
 		if err != nil {
 			log.Panicf("could not create player: %s", err)
 		}
-		a.audioPlayer.SetVolume(a.masterVolume)
+		// a.audioPlayer.SetVolume(a.masterVolume)
 		a.audioPlayer.Play()
 	}
 }
@@ -87,8 +92,9 @@ func (a *APU) Read(buf []byte) (int, error) {
 		a.audioBuffer = a.audioBuffer[n:]
 		return n, nil
 	}
-	log.Println("AudioBuffer empty...")
-	return len(buf), nil
+	emptyBuf := make([]byte, len(buf))
+	n := copy(buf, emptyBuf)
+	return n, nil
 }
 
 func (a *APU) Buffer(cpuTicks int, speed int) {
@@ -106,10 +112,10 @@ func (a *APU) Buffer(cpuTicks int, speed int) {
 	chn3l, chn3r := a.chn3.Sample()
 	chn4l, chn4r := a.chn4.Sample()
 
-	valL := (chn1l + chn2l + chn3l + chn4l) / 4
-	valR := (chn1r + chn2r + chn3r + chn4r) / 4
+	valL := uint16((chn1l+chn2l+chn3l+chn4l)/4) * 128
+	valR := uint16((chn1r+chn2r+chn3r+chn4r)/4) * 128
 
-	a.audioBuffer = append(a.audioBuffer, byte(valL), byte(valR))
+	a.audioBuffer = append(a.audioBuffer, byte(valL), byte(valL>>8), byte(valR), byte(valR>>8))
 }
 
 var soundMask = []byte{

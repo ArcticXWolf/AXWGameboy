@@ -1,5 +1,13 @@
 package apu
 
+// Parts of the APU implementation of goboy https://github.com/Humpheh/goboy
+// Changes:
+// * Implemented empty buffer during CPU pauses
+// * Removed oto audio backend and replaced it with ebiten
+// * Switched from Writing to audioPlayer to using io.Reader interface
+//
+// Goboy is licensed via MIT License: https://github.com/Humpheh/goboy/blob/master/LICENSE
+
 import (
 	"math"
 	"math/rand"

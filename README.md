@@ -14,7 +14,10 @@ This is a work-in-progress gameboy emulator written in golang.
     * Background layer
     * Window layer
     * Sprites
-* APU copied from https://github.com/Humpheh/goboy (own implementation is on the way)
+* APU
+    * All 4 channels with all features
+    * Big parts are adapted from [Goboy Emulator](https://github.com/Humpheh/goboy)
+    * Changed audio backend to the ebiten native one
 * Simple debugger
 * Hardcoded keybindings
 
