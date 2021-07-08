@@ -20,7 +20,7 @@ var (
 	savePath     string
 	romPath      string
 	paletteName  string
-	headless     bool
+	soundVolume  float64
 	serialOutput bool
 	cuiEnabled   bool
 )
@@ -31,6 +31,7 @@ func init() {
 	flag.StringVar(&paletteName, "palette", "white", "Name of a palette to use")
 	flag.BoolVar(&serialOutput, "serial", false, "Show serial output in console")
 	flag.BoolVar(&cuiEnabled, "cui", false, "Enable debug console interface")
+	flag.Float64Var(&soundVolume, "sound", 0.5, "Volume as a float (0.5 for 50%)")
 }
 
 func main() {
@@ -47,9 +48,10 @@ func start() {
 	}
 
 	options := &internal.GameboyOptions{
-		RomPath:  romPath,
-		SavePath: savePath,
-		Palette:  paletteName,
+		RomPath:     romPath,
+		SavePath:    savePath,
+		Palette:     paletteName,
+		SoundVolume: soundVolume,
 	}
 	if serialOutput {
 		options.SerialOutputFunction = func(b byte) {

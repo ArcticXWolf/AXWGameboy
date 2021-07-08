@@ -17,6 +17,7 @@ type GameboyOptions struct {
 	SavePath             string
 	RomPath              string
 	Palette              string
+	SoundVolume          float64
 	SerialOutputFunction func(byte)
 	DisplayProvider      DisplayProvider
 	InputProvider        InputProvider
@@ -45,7 +46,7 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 	c := NewCpu()
 	i := NewInputs()
 	a := &apu.APU{}
-	a.Init(true)
+	a.Init(true, options.SoundVolume)
 
 	gb := &Gameboy{
 		Cpu:           c,

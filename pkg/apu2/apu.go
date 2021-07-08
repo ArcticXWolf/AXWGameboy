@@ -6,10 +6,11 @@ package apu
 import (
 	"fmt"
 	"math"
+	"time"
 
 	"log"
 
-	"github.com/hajimehoshi/ebiten/v2/audio"
+	"github.com/hajimehoshi/oto"
 )
 
 const (
@@ -17,7 +18,8 @@ const (
 	twoPi      = 2 * math.Pi
 	perSample  = 1 / float64(sampleRate)
 
-	cpuTicksPerSample = float64(4194304) / sampleRate
+	cpuTicksPerSample    = float64(4194304) / sampleRate
+	maxFrameBufferLength = 5000
 )
 
 // APU is the GameBoy's audio processing unit. Audio comprises four
@@ -31,14 +33,13 @@ type APU struct {
 	memory      [52]byte
 	waveformRam []byte
 
-	audioContext *audio.Context
-	audioPlayer  *audio.Player
-	audioBuffer  []byte
-
+	player                 *oto.Player
 	chn1, chn2, chn3, chn4 *Channel
 	tickCounter            float64
 	lVol, rVol             float64
 	masterVolume           float64
+
+	audioBuffer chan [2]byte
 }
 
 // Init the sound emulation for a Gameboy.
@@ -46,7 +47,7 @@ func (a *APU) Init(sound bool, masterVolume float64) {
 	a.playing = sound
 	a.waveformRam = make([]byte, 0x20)
 	a.masterVolume = math.Exp(5 * (masterVolume - 1))
-	a.audioBuffer = make([]byte, 0)
+	a.audioBuffer = make(chan [2]byte, maxFrameBufferLength)
 
 	// Sets waveform ram to:
 	// 00 FF 00 FF  00 FF 00 FF  00 FF 00 FF  00 FF 00 FF
@@ -64,31 +65,45 @@ func (a *APU) Init(sound bool, masterVolume float64) {
 	a.chn3 = NewChannel()
 	a.chn4 = NewChannel()
 
+	const bufferSeconds = 15
+
 	if sound {
-		ctx := audio.CurrentContext()
-		if ctx == nil {
-			ctx = audio.NewContext(sampleRate)
+		var err error
+		context, err := oto.NewContext(sampleRate, 2, 1, sampleRate/bufferSeconds)
+		if err != nil {
+			log.Fatalf("Failed to start audio: %v", err)
 		}
 
-		a.audioContext = ctx
-		var err error
-		a.audioPlayer, err = audio.NewPlayer(a.audioContext, a)
-		if err != nil {
-			log.Panicf("could not create player: %s", err)
-		}
-		a.audioPlayer.SetVolume(a.masterVolume)
-		a.audioPlayer.Play()
+		a.player = context.NewPlayer()
+		a.playSound(bufferSeconds)
 	}
 }
 
-func (a *APU) Read(buf []byte) (int, error) {
-	if len(a.audioBuffer) > 0 {
-		n := copy(buf, a.audioBuffer)
-		a.audioBuffer = a.audioBuffer[n:]
-		return n, nil
-	}
-	log.Println("AudioBuffer empty...")
-	return len(buf), nil
+// Starts a goroutine which plays the sound
+func (a *APU) playSound(bufferSeconds int) {
+	frameTime := time.Second / time.Duration(bufferSeconds)
+	ticker := time.NewTicker(frameTime)
+	targetSamples := sampleRate / bufferSeconds
+	go func() {
+		var reading [2]byte
+		var buffer []byte
+		for range ticker.C {
+			fbLen := len(a.audioBuffer)
+			if fbLen >= targetSamples/2 {
+				newBuffer := make([]byte, fbLen*2)
+				for i := 0; i < fbLen*2; i += 2 {
+					reading = <-a.audioBuffer
+					newBuffer[i], newBuffer[i+1] = byte(float64(reading[0])*a.masterVolume), byte(float64(reading[0])*a.masterVolume)
+				}
+				buffer = newBuffer
+			}
+
+			_, err := a.player.Write(buffer)
+			if err != nil {
+				log.Printf("error sampling: %v", err)
+			}
+		}
+	}()
 }
 
 func (a *APU) Buffer(cpuTicks int, speed int) {
@@ -109,7 +124,7 @@ func (a *APU) Buffer(cpuTicks int, speed int) {
 	valL := (chn1l + chn2l + chn3l + chn4l) / 4
 	valR := (chn1r + chn2r + chn3r + chn4r) / 4
 
-	a.audioBuffer = append(a.audioBuffer, byte(valL), byte(valR))
+	a.audioBuffer <- [2]byte{byte(float64(valL) * a.lVol), byte(float64(valR) * a.rVol)}
 }
 
 var soundMask = []byte{
