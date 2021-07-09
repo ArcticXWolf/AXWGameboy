@@ -34,8 +34,9 @@ type OnScreenButton struct {
 	yMin int
 	yMax int
 
-	gameButton internal.Button
-	event      MiscEvent
+	isMiscButton bool
+	gameButton   internal.Button
+	event        MiscEvent
 
 	touched bool
 
@@ -101,10 +102,35 @@ func (a *AXWGameboyEbitenGame) initOSB() {
 			yMax:       110,
 			gameButton: internal.ButtonLeft,
 		},
+		{
+			xMin:         90,
+			yMin:         50,
+			xMax:         110,
+			yMax:         70,
+			isMiscButton: true,
+			event:        SpeedboostToggle,
+		},
+		{
+			xMin:         0,
+			yMin:         0,
+			xMax:         20,
+			yMax:         20,
+			isMiscButton: true,
+			event:        PauseToggle,
+		},
+		{
+			xMin:         140,
+			yMin:         0,
+			xMax:         160,
+			yMax:         20,
+			isMiscButton: true,
+			event:        ShutdownGame,
+		},
 	}
 }
 
-func (a *AXWGameboyEbitenGame) handleOSBInputs() {
+func (a *AXWGameboyEbitenGame) handleOSBInputs() []MiscEvent {
+	var events []MiscEvent
 	tids := ebiten.TouchIDs()
 	for _, osb := range a.osbMap {
 		osb.touched = false
@@ -122,12 +148,20 @@ func (a *AXWGameboyEbitenGame) handleOSBInputs() {
 		}
 
 		if osb.detectRisingEdge(osb.touched) {
-			a.Gameboy.Inputs.ButtonsPressed = append(a.Gameboy.Inputs.ButtonsPressed, osb.gameButton)
+			if osb.isMiscButton {
+				events = append(events, osb.event)
+			} else {
+				a.Gameboy.Inputs.ButtonsPressed = append(a.Gameboy.Inputs.ButtonsPressed, osb.gameButton)
+			}
 		}
 		if osb.detectFallingEdge(osb.touched) {
-			a.Gameboy.Inputs.ButtonsReleased = append(a.Gameboy.Inputs.ButtonsReleased, osb.gameButton)
+			// Do not handle MiscButton release
+			if !osb.isMiscButton {
+				a.Gameboy.Inputs.ButtonsReleased = append(a.Gameboy.Inputs.ButtonsReleased, osb.gameButton)
+			}
 		}
 	}
+	return events
 }
 
 func (osb *OnScreenButton) detectFallingEdge(signal bool) bool {
