@@ -39,8 +39,8 @@ func NewAXWGameboyEbitenGame(gb *internal.Gameboy, enableOSB bool) *AXWGameboyEb
 
 func (a *AXWGameboyEbitenGame) Update() error {
 	a.handleKeyboardInputs()
-	a.handleOSBInputs()
-	events := a.handleKeyboardInputsForMiscEvents()
+	events := a.handleOSBInputs()
+	events = append(events, a.handleKeyboardInputsForMiscEvents()...)
 	a.handleMiscEvents(events)
 
 	if a.isTerminated {
