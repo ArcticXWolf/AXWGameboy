@@ -97,11 +97,11 @@ func (a *APU) Read(buf []byte) (int, error) {
 	return n, nil
 }
 
-func (a *APU) Buffer(cpuTicks int, speed int) {
+func (a *APU) Buffer(cpuTicks int, speed int, cpuSpeedBoost float64) {
 	if !a.playing {
 		return
 	}
-	a.tickCounter += float64(cpuTicks) / float64(speed)
+	a.tickCounter += float64(cpuTicks) / float64(speed) / cpuSpeedBoost
 	if a.tickCounter < cpuTicksPerSample {
 		return
 	}

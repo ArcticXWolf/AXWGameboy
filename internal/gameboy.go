@@ -101,7 +101,7 @@ func (gb *Gameboy) Run() {
 			if gb.Options.OnCycleFunction != nil {
 				gb.Options.OnCycleFunction(gb)
 			}
-			gb.Apu.Buffer(cyclesCPU, 1)
+			gb.Apu.Buffer(cyclesCPU, 1, float64(gb.Cpu.SpeedBoost))
 		}
 
 		if gb.Options.OnFrameFunction != nil {
@@ -147,7 +147,7 @@ func (gb *Gameboy) UpdateFrame(cyclesPerFrame int) {
 			gb.Options.OnCycleFunction(gb)
 		}
 
-		gb.Apu.Buffer(cyclesCPU, 1)
+		gb.Apu.Buffer(cyclesCPU, 1, float64(gb.Cpu.SpeedBoost))
 	}
 
 	if gb.Options.OnFrameFunction != nil {
