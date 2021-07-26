@@ -1,4 +1,4 @@
-package ebitenprovider
+package gameview
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 //go:embed osb.png
 var osb []byte
 
-func (ag *AXWGameboyEbitenGame) loadOSBBackground() (err error) {
+func (ag *AXWGameboyEbitenGameView) loadOSBBackground() (err error) {
 	ag.osbImg, err = png.Decode(bytes.NewReader(osb))
 	if err != nil {
 		return err
@@ -44,7 +44,7 @@ type OnScreenButton struct {
 	fallingEdgeDelay bool
 }
 
-func (a *AXWGameboyEbitenGame) initOSB() {
+func (a *AXWGameboyEbitenGameView) initOSB() {
 	a.osbMap = []*OnScreenButton{
 		{
 			xMin:       125,
@@ -129,7 +129,7 @@ func (a *AXWGameboyEbitenGame) initOSB() {
 	}
 }
 
-func (a *AXWGameboyEbitenGame) handleOSBInputs() []MiscEvent {
+func (a *AXWGameboyEbitenGameView) handleOSBInputs() []MiscEvent {
 	var events []MiscEvent
 	tids := ebiten.TouchIDs()
 	for _, osb := range a.osbMap {

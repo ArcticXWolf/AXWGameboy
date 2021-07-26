@@ -117,7 +117,7 @@ func (c *Cpu) Tick(gb *Gameboy) int {
 
 	gb.Debugger.checkBreakpoint(gb)
 	if gb.Debugger.Step {
-		gb.Debugger.triggerBreakpoint(gb)
+		gb.Debugger.TriggerBreakpoint(gb)
 	}
 
 	gb.Timer.Update(gb)

@@ -2,9 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
-	"os"
 	"runtime"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -23,6 +21,7 @@ var (
 	soundVolume  float64
 	serialOutput bool
 	cuiEnabled   bool
+	osbEnabled   bool
 )
 
 func init() {
@@ -31,6 +30,7 @@ func init() {
 	flag.StringVar(&paletteName, "palette", "white", "Name of a palette to use")
 	flag.BoolVar(&serialOutput, "serial", false, "Show serial output in console")
 	flag.BoolVar(&cuiEnabled, "cui", false, "Enable debug console interface")
+	flag.BoolVar(&osbEnabled, "osb", false, "Enable on-screen-buttons")
 	flag.Float64Var(&soundVolume, "sound", 0.5, "Volume as a float (0.5 for 50%)")
 }
 
@@ -42,16 +42,12 @@ func main() {
 func start() {
 	log.Printf("AXWGameboy | Version %v | Builddate %v | Commit %v", version, date, commit)
 
-	if isAndroid, androidRomPath := handleAndroidRomPath(); isAndroid {
-		romPath = androidRomPath
-		savePath = fmt.Sprintf("%s.sav", androidRomPath)
-	}
-
 	options := &internal.GameboyOptions{
 		RomPath:     romPath,
 		SavePath:    savePath,
 		Palette:     paletteName,
 		SoundVolume: soundVolume,
+		OSBEnabled:  osbEnabled,
 	}
 	if serialOutput {
 		options.SerialOutputFunction = func(b byte) {
@@ -67,23 +63,11 @@ func start() {
 		go cui.RunLoop()
 	}
 
-	gb, err := internal.NewGameboy(options)
-	if err != nil {
-		log.Panicf("Error loading rom: %s", err)
+	if runtime.GOOS == "android" {
+		options.OSBEnabled = true
 	}
-	log.Printf("Loaded %s", gb.Memory.Cartridge.CartridgeInfo())
 
-	ebitenGame := ebitenprovider.NewAXWGameboyEbitenGame(gb, true)
+	ebitenGame := ebitenprovider.NewAXWGameboyEbitenGame(options)
 	ebiten.SetWindowResizable(true)
 	ebiten.RunGame(ebitenGame)
-}
-
-func handleAndroidRomPath() (bool, string) {
-	if runtime.GOOS == "android" {
-		androidRomPath := "/sdcard/rom.gb"
-		if _, err := os.Stat(androidRomPath); err == nil {
-			return true, androidRomPath
-		}
-	}
-	return false, ""
 }

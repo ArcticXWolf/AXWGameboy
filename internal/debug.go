@@ -36,7 +36,7 @@ func (d *Debugger) checkBreakpoint(gb *Gameboy) {
 	}
 }
 
-func (d *Debugger) triggerBreakpoint(gb *Gameboy) {
+func (d *Debugger) TriggerBreakpoint(gb *Gameboy) {
 	// log.Printf("%s", gb.String())
 	str := d.BreakExecution()
 	if str == "c" {
@@ -50,35 +50,35 @@ func (d *Debugger) triggerBreakpoint(gb *Gameboy) {
 		log.Printf("Next breakpoint at 0x%04x", d.Address)
 	} else if str == "gpu" {
 		log.Printf("GPU: %v", gb.Gpu)
-		d.triggerBreakpoint(gb)
+		d.TriggerBreakpoint(gb)
 	} else if str == "ipl" {
 		d.identifyPalettes(gb)
-		d.triggerBreakpoint(gb)
+		d.TriggerBreakpoint(gb)
 	} else if ok, _ := regexp.MatchString("t[0-9]{3}", str); ok {
 		tile, _ := strconv.ParseInt(str[1:4], 10, 0)
 		d.dumpTile(gb, int(tile))
-		d.triggerBreakpoint(gb)
+		d.TriggerBreakpoint(gb)
 	} else if str == "ws" {
 		d.dumpScreendata(gb.WorkingScreen)
-		d.triggerBreakpoint(gb)
+		d.TriggerBreakpoint(gb)
 	} else if str == "sp" {
 		log.Printf("STACK: Starts at 0x%04x, dumping for 0x%04x",
 			gb.Cpu.Registers.Sp,
 			0xFFFF-gb.Cpu.Registers.Sp,
 		)
 		d.dumpMemory(gb, gb.Cpu.Registers.Sp, 0xFFFF-gb.Cpu.Registers.Sp)
-		d.triggerBreakpoint(gb)
+		d.TriggerBreakpoint(gb)
 	} else if str == "mem" {
 		d.dumpMemory(gb, 0, 0xFFFF)
-		d.triggerBreakpoint(gb)
+		d.TriggerBreakpoint(gb)
 	} else if str == "vmem" {
 		d.dumpMemory(gb, 0x8000, 0x1FFF)
-		d.triggerBreakpoint(gb)
+		d.TriggerBreakpoint(gb)
 	} else if ok, _ := regexp.MatchString("m[0-9a-fA-F]{8}", str); ok {
 		addr, _ := strconv.ParseUint(str[1:5], 16, 16)
 		length, _ := strconv.ParseUint(str[5:9], 16, 16)
 		d.dumpMemory(gb, uint16(addr), uint16(length))
-		d.triggerBreakpoint(gb)
+		d.TriggerBreakpoint(gb)
 	} else if str == "cart" {
 		log.Println(gb.Memory.Cartridge.String())
 	} else if str == "q" {

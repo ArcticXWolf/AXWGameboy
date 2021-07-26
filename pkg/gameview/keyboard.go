@@ -1,4 +1,4 @@
-package ebitenprovider
+package gameview
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
@@ -21,13 +21,15 @@ var keyboardMiscEventMap = map[ebiten.Key]MiscEvent{
 	ebiten.KeyEscape:    ShutdownGame,
 	ebiten.KeyShiftLeft: SpeedboostToggle,
 	ebiten.KeyP:         PauseToggle,
+	ebiten.KeyD:         DebugToggle,
+	ebiten.KeyT:         TilemapToggle,
 	ebiten.Key1:         SoundChannel1Toggle,
 	ebiten.Key2:         SoundChannel2Toggle,
 	ebiten.Key3:         SoundChannel3Toggle,
 	ebiten.Key4:         SoundChannel4Toggle,
 }
 
-func (a *AXWGameboyEbitenGame) handleKeyboardInputs() {
+func (a *AXWGameboyEbitenGameView) handleKeyboardInputs() {
 	for key, button := range keyboardButtonMap {
 		if inpututil.IsKeyJustPressed(key) {
 			a.Gameboy.Inputs.ButtonsPressed = append(a.Gameboy.Inputs.ButtonsPressed, button)
@@ -38,7 +40,7 @@ func (a *AXWGameboyEbitenGame) handleKeyboardInputs() {
 	}
 }
 
-func (a *AXWGameboyEbitenGame) handleKeyboardInputsForMiscEvents() (events []MiscEvent) {
+func (a *AXWGameboyEbitenGameView) handleKeyboardInputsForMiscEvents() (events []MiscEvent) {
 	for key, event := range keyboardMiscEventMap {
 		if inpututil.IsKeyJustPressed(key) {
 			events = append(events, event)

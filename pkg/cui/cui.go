@@ -36,13 +36,17 @@ func NewGui() *GameboyCui {
 	cui.widgets = append(cui.widgets, w1)
 	managers = append(managers, w1)
 
-	w2 := NewTimerViewWidget(cui, "Timer View", 50, 0)
+	w2 := NewGpuViewWidget(cui, "GPU View", 25, 0)
 	cui.widgets = append(cui.widgets, w2)
 	managers = append(managers, w2)
 
-	w3 := NewCartridgeViewWidget(cui, "Cartridge View", 0, 20)
-	cui.widgets = append(cui.widgets, w3)
-	managers = append(managers, w3)
+	// w3 := NewTimerViewWidget(cui, "Timer View", 50, 0)
+	// cui.widgets = append(cui.widgets, w3)
+	// managers = append(managers, w3)
+
+	// w4 := NewCartridgeViewWidget(cui, "Cartridge View", 0, 20)
+	// cui.widgets = append(cui.widgets, w4)
+	// managers = append(managers, w4)
 
 	cui.gui.SetManager(managers...)
 

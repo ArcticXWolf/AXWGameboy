@@ -47,10 +47,10 @@ type Gpu struct {
 	tileSet             [512][8][8]uint8
 	vram                [0x2000]byte
 	oam                 [0xA0]byte
-	spriteObjectData    [40]SpriteObject
-	bgPaletteMap        [4]uint8
+	SpriteObjectData    [40]SpriteObject
+	BgPaletteMap        [4]uint8
 	bgPaletteColors     [4]color.Color
-	spritePaletteMap    [2][4]uint8
+	SpritePaletteMap    [2][4]uint8
 	spritePaletteColors [2][4]color.Color
 }
 
@@ -65,8 +65,8 @@ func NewGpu(gb *Gameboy) *Gpu {
 		},
 	}
 
-	for i := 0; i < len(g.spriteObjectData); i++ {
-		g.spriteObjectData[i] = SpriteObject{
+	for i := 0; i < len(g.SpriteObjectData); i++ {
+		g.SpriteObjectData[i] = SpriteObject{
 			x: -8,
 			y: -16,
 		}
@@ -138,7 +138,11 @@ func (g *Gpu) ReadByte(address uint16) (result uint8) {
 		case 0xFF45:
 			return g.ScanlineCompare
 		case 0xFF47:
-			return g.bgPaletteMap[0]&0x3 | ((g.bgPaletteMap[1] & 0x3) << 2) | ((g.bgPaletteMap[2] & 0x3) << 4) | ((g.bgPaletteMap[3] & 0x3) << 6)
+			return g.BgPaletteMap[0]&0x3 | ((g.BgPaletteMap[1] & 0x3) << 2) | ((g.BgPaletteMap[2] & 0x3) << 4) | ((g.BgPaletteMap[3] & 0x3) << 6)
+		case 0xFF48:
+			return g.SpritePaletteMap[0][0]&0x3 | ((g.SpritePaletteMap[0][1] & 0x3) << 2) | ((g.SpritePaletteMap[0][2] & 0x3) << 4) | ((g.SpritePaletteMap[0][3] & 0x3) << 6)
+		case 0xFF49:
+			return g.SpritePaletteMap[1][0]&0x3 | ((g.SpritePaletteMap[1][1] & 0x3) << 2) | ((g.SpritePaletteMap[1][2] & 0x3) << 4) | ((g.SpritePaletteMap[1][3] & 0x3) << 6)
 		case 0xFF4A:
 			return g.windowY
 		case 0xFF4B:
@@ -183,20 +187,20 @@ func (g *Gpu) WriteByte(address uint16, value uint8) {
 		case 0xFF46:
 			g.oamDMA(value)
 		case 0xFF47:
-			g.bgPaletteMap[0] = value & 0x3
-			g.bgPaletteMap[1] = (value >> 2) & 0x3
-			g.bgPaletteMap[2] = (value >> 4) & 0x3
-			g.bgPaletteMap[3] = (value >> 6) & 0x3
+			g.BgPaletteMap[0] = value & 0x3
+			g.BgPaletteMap[1] = (value >> 2) & 0x3
+			g.BgPaletteMap[2] = (value >> 4) & 0x3
+			g.BgPaletteMap[3] = (value >> 6) & 0x3
 		case 0xFF48:
-			g.spritePaletteMap[0][0] = value & 0x3
-			g.spritePaletteMap[0][1] = (value >> 2) & 0x3
-			g.spritePaletteMap[0][2] = (value >> 4) & 0x3
-			g.spritePaletteMap[0][3] = (value >> 6) & 0x3
+			g.SpritePaletteMap[0][0] = value & 0x3
+			g.SpritePaletteMap[0][1] = (value >> 2) & 0x3
+			g.SpritePaletteMap[0][2] = (value >> 4) & 0x3
+			g.SpritePaletteMap[0][3] = (value >> 6) & 0x3
 		case 0xFF49:
-			g.spritePaletteMap[1][0] = value & 0x3
-			g.spritePaletteMap[1][1] = (value >> 2) & 0x3
-			g.spritePaletteMap[1][2] = (value >> 4) & 0x3
-			g.spritePaletteMap[1][3] = (value >> 6) & 0x3
+			g.SpritePaletteMap[1][0] = value & 0x3
+			g.SpritePaletteMap[1][1] = (value >> 2) & 0x3
+			g.SpritePaletteMap[1][2] = (value >> 4) & 0x3
+			g.SpritePaletteMap[1][3] = (value >> 6) & 0x3
 		case 0xFF4A:
 			g.windowY = value
 		case 0xFF4B:
@@ -238,31 +242,31 @@ func (g *Gpu) oamDMA(value uint8) {
 
 func (g *Gpu) updateSpriteObject(address uint16, value uint8) {
 	objectId := address >> 2
-	if objectId < uint16(len(g.spriteObjectData)) {
+	if objectId < uint16(len(g.SpriteObjectData)) {
 		switch address & 0x3 {
 		case 0:
-			g.spriteObjectData[objectId].y = int(value) - 16
+			g.SpriteObjectData[objectId].y = int(value) - 16
 		case 1:
-			g.spriteObjectData[objectId].x = int(value) - 8
+			g.SpriteObjectData[objectId].x = int(value) - 8
 		case 2:
-			g.spriteObjectData[objectId].tile = value
+			g.SpriteObjectData[objectId].tile = value
 		case 3:
 			// log.Printf("Updated tile %d: %v, Change was at address 0x%04x with value 0x%02x 0b%08b", objectId, g.spriteObjectData[objectId], address&0x3, value, value)
-			g.spriteObjectData[objectId].useSecondPalette = false
-			g.spriteObjectData[objectId].xflip = false
-			g.spriteObjectData[objectId].yflip = false
-			g.spriteObjectData[objectId].priority = false
+			g.SpriteObjectData[objectId].useSecondPalette = false
+			g.SpriteObjectData[objectId].xflip = false
+			g.SpriteObjectData[objectId].yflip = false
+			g.SpriteObjectData[objectId].priority = false
 			if value&0x10 > 0 {
-				g.spriteObjectData[objectId].useSecondPalette = true
+				g.SpriteObjectData[objectId].useSecondPalette = true
 			}
 			if value&0x20 > 0 {
-				g.spriteObjectData[objectId].xflip = true
+				g.SpriteObjectData[objectId].xflip = true
 			}
 			if value&0x40 > 0 {
-				g.spriteObjectData[objectId].yflip = true
+				g.SpriteObjectData[objectId].yflip = true
 			}
 			if value&0x80 == 0 {
-				g.spriteObjectData[objectId].priority = true
+				g.SpriteObjectData[objectId].priority = true
 			}
 		}
 	}
@@ -370,7 +374,7 @@ func (g *Gpu) renderTiles(gb *Gameboy) (scanrow [ScreenWidth]byte) {
 
 		pixelPaletteColor := g.tileSet[tileId][yPos%8][xPos%8]
 		scanrow[i] = pixelPaletteColor
-		pixelRealColor := g.bgPaletteMap[pixelPaletteColor]
+		pixelRealColor := g.BgPaletteMap[pixelPaletteColor]
 		red, green, blue, _ := g.bgPaletteColors[pixelRealColor].RGBA()
 		gb.WorkingScreen[i][g.CurrentScanline][0] = uint8(red)
 		gb.WorkingScreen[i][g.CurrentScanline][1] = uint8(green)
@@ -408,7 +412,7 @@ func (g *Gpu) renderWindow(gb *Gameboy, scanrow [ScreenWidth]byte) [ScreenWidth]
 
 		pixelPaletteColor := g.tileSet[tileId][yPos%8][xPos%8]
 		scanrow[i] = pixelPaletteColor
-		pixelRealColor := g.bgPaletteMap[pixelPaletteColor]
+		pixelRealColor := g.BgPaletteMap[pixelPaletteColor]
 		red, green, blue, _ := g.bgPaletteColors[pixelRealColor].RGBA()
 		gb.WorkingScreen[i][g.CurrentScanline][0] = uint8(red)
 		gb.WorkingScreen[i][g.CurrentScanline][1] = uint8(green)
@@ -418,11 +422,42 @@ func (g *Gpu) renderWindow(gb *Gameboy, scanrow [ScreenWidth]byte) [ScreenWidth]
 	return scanrow
 }
 
+func (g *Gpu) GetTilemapAsBytearray() []byte {
+	var frame []byte = make([]byte, 4*ScreenHeight*ScreenWidth)
+
+	palette := [4]color.Color{
+		color.RGBA{0x00, 0x00, 0x00, 255},
+		color.RGBA{0xFF, 0x00, 0x00, 255},
+		color.RGBA{0x00, 0xFF, 0x00, 255},
+		color.RGBA{0x00, 0x00, 0xFF, 255},
+	}
+
+	for tileId := range g.tileSet {
+		xBase := tileId % (ScreenWidth / 8)
+		yBase := tileId / (ScreenWidth / 8)
+		for x := 0; x < 8; x++ {
+			for y := 0; y < 8; y++ {
+				pixelPaletteColor := g.tileSet[tileId][y][x]
+				red, green, blue, _ := palette[pixelPaletteColor].RGBA()
+				pixelPos := (yBase*8+y)*ScreenWidth + (xBase*8 + x)
+				if 4*pixelPos+3 < len(frame) {
+					frame[4*pixelPos] = byte(red)
+					frame[4*pixelPos+1] = byte(green)
+					frame[4*pixelPos+2] = byte(blue)
+					frame[4*pixelPos+3] = 0xFF
+				}
+			}
+		}
+	}
+
+	return frame
+}
+
 func (g *Gpu) renderSprites(gb *Gameboy, scanrow [ScreenWidth]byte) {
 	spriteCount := 0
-	for i := 0; i < len(g.spriteObjectData); i++ {
+	for i := 0; i < len(g.SpriteObjectData); i++ {
 		var ySize int = 8
-		spriteObject := g.spriteObjectData[i]
+		spriteObject := g.SpriteObjectData[i]
 		if g.bigSpritesActivated {
 			ySize = 16
 		}
@@ -435,10 +470,10 @@ func (g *Gpu) renderSprites(gb *Gameboy, scanrow [ScreenWidth]byte) {
 		}
 		spriteCount++
 
-		palette := g.spritePaletteMap[0]
+		palette := g.SpritePaletteMap[0]
 		paletteColors := g.spritePaletteColors[0]
 		if spriteObject.useSecondPalette {
-			palette = g.spritePaletteMap[1]
+			palette = g.SpritePaletteMap[1]
 			paletteColors = g.spritePaletteColors[1]
 		}
 
@@ -494,10 +529,10 @@ func (g *Gpu) Reset(gb *Gameboy) {
 
 	g.tileSet = [512][8][8]uint8{}
 	g.oam = [0xA0]uint8{}
-	g.spriteObjectData = [40]SpriteObject{}
+	g.SpriteObjectData = [40]SpriteObject{}
 
-	for i := 0; i < len(g.spriteObjectData); i++ {
-		g.spriteObjectData[i] = SpriteObject{
+	for i := 0; i < len(g.SpriteObjectData); i++ {
+		g.SpriteObjectData[i] = SpriteObject{
 			x: -8,
 			y: -16,
 		}

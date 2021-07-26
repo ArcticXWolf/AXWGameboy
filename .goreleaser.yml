@@ -4,22 +4,31 @@ before:
 builds:
   - id: axwgameboy_windows
     main: ./cmd/axwgameboy
-    env:
-      - CGO_ENABLED=1
-      - CXX=x86_64-w64-mingw32-g++
-      - CC=x86_64-w64-mingw32-gcc
     goos:
       - windows
     goarch:
       - amd64
   - id: axwgameboy_linux
     main: ./cmd/axwgameboy
-    env:
-      - CGO_ENABLED=1
     goos:
       - linux
     goarch:
       - amd64
+  - id: axwgameboy_android
+    main: ./cmd/axwgameboy
+    goos:
+      - android
+    goarch:
+      - amd64
+    gobinary: "gomobile"
+    binary: "AXWGameboy.apk"
+    ldflags:
+      - \"-x main.version={{.Version}} -x main.commit={{.Commit}} -x main.date={{.Date}}\"
+    flags:
+      - -target=android
+    hooks:
+      pre: mkdir -p {{dir .Path}}
+
 archives:
   - replacements:
       darwin: darwin
@@ -29,12 +38,12 @@ archives:
     format: binary
     name_template: "{{ tolower .ProjectName }}"
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 snapshot:
   name_template: "{{ .Tag }}-next"
 changelog:
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
+      - "^docs:"
+      - "^test:"

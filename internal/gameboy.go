@@ -18,6 +18,7 @@ type GameboyOptions struct {
 	RomPath              string
 	Palette              string
 	SoundVolume          float64
+	OSBEnabled           bool
 	SerialOutputFunction func(byte)
 	DisplayProvider      DisplayProvider
 	InputProvider        InputProvider

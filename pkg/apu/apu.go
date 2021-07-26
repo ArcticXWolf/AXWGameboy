@@ -81,7 +81,8 @@ func (a *APU) Init(sound bool, masterVolume float64) {
 		if err != nil {
 			log.Panicf("could not create player: %s", err)
 		}
-		// a.audioPlayer.SetVolume(a.masterVolume)
+
+		a.audioPlayer.SetVolume(a.masterVolume)
 		a.audioPlayer.Play()
 	}
 }
