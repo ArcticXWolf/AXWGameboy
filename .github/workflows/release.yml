@@ -23,6 +23,8 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: "^1.16.3"
+      - name: Install build dependencies
+        run: sudo apt-get install libc6-dev libglu1-mesa-dev libgl1-mesa-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev libxxf86vm-dev libasound2-dev pkg-config
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@master
         with:
