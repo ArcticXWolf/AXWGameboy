@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"go.janniklasrichter.de/axwgameboy/internal/cartridge"
@@ -91,10 +92,7 @@ func NewMemory(gb *Gameboy) (*Mmu, error) {
 			return nil, err
 		}
 	} else {
-		cart, err = cartridge.LoadEmbeddedCartridge()
-		if err != nil {
-			return nil, err
-		}
+		log.Panic("no rom loaded")
 	}
 
 	if gb.Options.SavePath != "" {

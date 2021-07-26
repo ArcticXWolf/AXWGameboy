@@ -6,9 +6,6 @@ import (
 	"io/ioutil"
 )
 
-//go:embed embeddedrom.gb
-var embeddedRom []byte
-
 type Cartridge interface {
 	ReadByte(address uint16) uint8
 	WriteByte(address uint16, value uint8)
@@ -29,14 +26,6 @@ func LoadCartridgeFromPath(filename string) (Cartridge, error) {
 		return nil, err
 	}
 	return InitializeCartridge(header, data)
-}
-
-func LoadEmbeddedCartridge() (Cartridge, error) {
-	header, err := ParseHeaderFromRomData(embeddedRom)
-	if err != nil {
-		return nil, err
-	}
-	return InitializeCartridge(header, embeddedRom)
 }
 
 func LoadDataFromRomFile(filepath string) (data []byte, err error) {
