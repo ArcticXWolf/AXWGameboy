@@ -27,7 +27,10 @@ builds:
     flags:
       - -target=android
     hooks:
-      pre: mkdir -p {{dir .Path}}
+      pre:
+        - mkdir -p {{dir .Path}}
+        - go get golang.org/x/mobile/cmd/gomobile
+        - gomobile init
 
 archives:
   - replacements:
