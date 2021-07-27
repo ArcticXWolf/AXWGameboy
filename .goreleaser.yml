@@ -38,7 +38,7 @@ archives:
       linux: linux
       windows: windows
       386: i386
-    format: binary
+    format: zip
     name_template: "{{ tolower .ProjectName }}_{{.Os}}_{{.Arch}}"
 checksum:
   name_template: "checksums.txt"
