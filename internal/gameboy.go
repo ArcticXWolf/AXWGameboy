@@ -19,6 +19,7 @@ type GameboyOptions struct {
 	Palette              string
 	SoundVolume          float64
 	OSBEnabled           bool
+	CGBEnabled           bool
 	SerialOutputFunction func(byte)
 	DisplayProvider      DisplayProvider
 	InputProvider        InputProvider
@@ -27,20 +28,21 @@ type GameboyOptions struct {
 }
 
 type Gameboy struct {
-	InputProvider InputProvider
-	Cpu           *Cpu
-	Memory        *Mmu
-	Gpu           *Gpu
-	Apu           Apu
-	Timer         *Timer
-	Inputs        *Inputs
-	Debugger      *Debugger
-	WorkingScreen [ScreenWidth][ScreenHeight][3]uint8
-	ReadyToRender [ScreenWidth][ScreenHeight][3]uint8
-	Halted        bool
-	Quit          bool
-	Options       *GameboyOptions
-	LastSave      time.Time
+	InputProvider  InputProvider
+	Cpu            *Cpu
+	Memory         *Mmu
+	Gpu            *Gpu
+	Apu            Apu
+	Timer          *Timer
+	Inputs         *Inputs
+	Debugger       *Debugger
+	WorkingScreen  [ScreenWidth][ScreenHeight][3]uint8
+	ReadyToRender  [ScreenWidth][ScreenHeight][3]uint8
+	cgbModeEnabled bool
+	Halted         bool
+	Quit           bool
+	Options        *GameboyOptions
+	LastSave       time.Time
 }
 
 func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
@@ -66,10 +68,12 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 	gb.Gpu = NewGpu(gb)
 	gb.Timer = NewTimer(gb)
 	var err error
-	gb.Memory, err = NewMemory(gb)
+	gb.Memory, _, err = NewMemory(gb)
 	if err != nil {
 		return nil, err
 	}
+
+	gb.cgbModeEnabled = options.CGBEnabled
 
 	return gb, err
 }

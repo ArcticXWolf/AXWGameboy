@@ -20,6 +20,7 @@ var (
 	paletteName  string
 	soundVolume  float64
 	serialOutput bool
+	colorEnabled bool
 	cuiEnabled   bool
 	osbEnabled   bool
 )
@@ -30,6 +31,7 @@ func init() {
 	flag.StringVar(&paletteName, "palette", "white", "Name of a palette to use")
 	flag.BoolVar(&serialOutput, "serial", false, "Show serial output in console")
 	flag.BoolVar(&cuiEnabled, "cui", false, "Enable debug console interface")
+	flag.BoolVar(&colorEnabled, "color", true, "Enable CGB mode")
 	flag.BoolVar(&osbEnabled, "osb", false, "Enable on-screen-buttons")
 	flag.Float64Var(&soundVolume, "sound", 0.5, "Volume as a float (0.5 for 50%)")
 }
@@ -48,6 +50,7 @@ func start() {
 		Palette:     paletteName,
 		SoundVolume: soundVolume,
 		OSBEnabled:  osbEnabled,
+		CGBEnabled:  colorEnabled,
 	}
 	if serialOutput {
 		options.SerialOutputFunction = func(b byte) {

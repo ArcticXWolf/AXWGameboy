@@ -29,6 +29,7 @@ dist/
 !.vscode/extensions.json
 *.code-workspacedist/
 
+internal/bootroms/*
 *.gb
 *.gbc
 *.sav

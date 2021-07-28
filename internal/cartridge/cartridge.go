@@ -11,6 +11,7 @@ type Cartridge interface {
 	WriteByte(address uint16, value uint8)
 	String() string
 	CartridgeInfo() string
+	CartridgeHeader() *CartridgeHeader
 	SaveRam(filename string) error
 	LoadRam(filename string) error
 	UpdateComponentsPerCycle()

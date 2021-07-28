@@ -8,3 +8,7 @@ type BaseCartridge struct {
 func (b *BaseCartridge) CartridgeInfo() string {
 	return b.Header.String()
 }
+
+func (b *BaseCartridge) CartridgeHeader() *CartridgeHeader {
+	return b.Header
+}

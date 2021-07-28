@@ -75,7 +75,7 @@ func (a *AXWGameboyEbitenGameView) Draw(screen *ebiten.Image) {
 		bounds := a.osbImg.Bounds()
 		osbscreen := screen.SubImage(image.Rect(0, internal.ScreenHeight, bounds.Size().X, internal.ScreenHeight+bounds.Size().Y)).(*ebiten.Image)
 		if a.isTilemapEnabled {
-			osbscreen.ReplacePixels(a.Gameboy.Gpu.GetTilemapAsBytearray())
+			osbscreen.ReplacePixels(a.Gameboy.Gpu.GetTilemapAsBytearray(1))
 		} else {
 			osbscreen.ReplacePixels(a.osbData)
 		}

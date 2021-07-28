@@ -42,10 +42,26 @@ func (w *GpuViewWidget) UpdateWidget(gb *internal.Gameboy) error {
 		gb.Gpu.SpritePaletteMap[0],
 		gb.Gpu.SpritePaletteMap[1],
 	)
-	for i, x := range gb.Gpu.SpriteObjectData {
+	for i, x := range gb.Gpu.CgbBgPaletteColors {
 		fmt.Fprintf(
 			v,
-			"S%d: %v\n",
+			"CBG%d: %v\n",
+			i,
+			x,
+		)
+	}
+	for i, x := range gb.Gpu.CgbObjPaletteColors {
+		fmt.Fprintf(
+			v,
+			"COBJ%d: %v\n",
+			i,
+			x,
+		)
+	}
+	for i, x := range gb.Gpu.TileAttributes {
+		fmt.Fprintf(
+			v,
+			"TA%d: %v\n",
 			i,
 			x,
 		)
