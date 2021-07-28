@@ -371,6 +371,7 @@ func (g *Gpu) updateTile(address uint16) {
 
 	address &= 0x1FFE
 	tileIndex := int(address>>4) + 384*g.vramBank
+	// tileIndex := int(address >> 4)
 	y := (address >> 1) & 0x7
 
 	for x := 0; x < 8; x++ {
@@ -378,10 +379,10 @@ func (g *Gpu) updateTile(address uint16) {
 		lowerBit := 0
 		higherBit := 0
 
-		if g.vram[address]&byte(bitIndex) != 0 {
+		if g.vram[address+uint16(g.vramBank)*0x2000]&byte(bitIndex) != 0 {
 			lowerBit = 1
 		}
-		if g.vram[address+1]&byte(bitIndex) != 0 {
+		if g.vram[address+uint16(g.vramBank)*0x2000+1]&byte(bitIndex) != 0 {
 			higherBit = 2
 		}
 
@@ -630,12 +631,12 @@ func (g *Gpu) renderWindow(gb *Gameboy, scanrow [ScreenWidth]byte) [ScreenWidth]
 func (g *Gpu) GetTilemapAsBytearray(vramBank int) []byte {
 	var frame []byte = make([]byte, 4*ScreenHeight*ScreenWidth)
 
-	// palette := [4]color.Color{
-	// 	color.RGBA{0x00, 0x00, 0x00, 255},
-	// 	color.RGBA{0xFF, 0x00, 0x00, 255},
-	// 	color.RGBA{0x00, 0xFF, 0x00, 255},
-	// 	color.RGBA{0x00, 0x00, 0xFF, 255},
-	// }
+	palette := [4]color.Color{
+		color.RGBA{0x00, 0x00, 0x00, 255},
+		color.RGBA{0xFF, 0x00, 0x00, 255},
+		color.RGBA{0x00, 0xFF, 0x00, 255},
+		color.RGBA{0x00, 0x00, 0xFF, 255},
+	}
 
 	start := 384 * vramBank
 	for tileId := start; tileId < len(g.tileSet); tileId++ {
@@ -644,7 +645,7 @@ func (g *Gpu) GetTilemapAsBytearray(vramBank int) []byte {
 		for x := 0; x < 8; x++ {
 			for y := 0; y < 8; y++ {
 				pixelPaletteColor := g.tileSet[tileId][y][x]
-				red, green, blue, _ := g.bgPaletteColors[pixelPaletteColor].RGBA()
+				red, green, blue, _ := palette[pixelPaletteColor].RGBA()
 				pixelPos := (yBase*8+y)*ScreenWidth + (xBase*8 + x)
 				if 4*pixelPos+3 < len(frame) {
 					frame[4*pixelPos] = byte(red)

@@ -18,6 +18,7 @@ type AXWGameboyEbitenGameView struct {
 	isOSBEnabled       bool
 	isTilemapRequested bool
 	isTilemapEnabled   bool
+	tilemapVram        int
 	osbData            []byte
 	osbImg             image.Image
 	osbMap             []*OnScreenButton
@@ -75,7 +76,7 @@ func (a *AXWGameboyEbitenGameView) Draw(screen *ebiten.Image) {
 		bounds := a.osbImg.Bounds()
 		osbscreen := screen.SubImage(image.Rect(0, internal.ScreenHeight, bounds.Size().X, internal.ScreenHeight+bounds.Size().Y)).(*ebiten.Image)
 		if a.isTilemapEnabled {
-			osbscreen.ReplacePixels(a.Gameboy.Gpu.GetTilemapAsBytearray(1))
+			osbscreen.ReplacePixels(a.Gameboy.Gpu.GetTilemapAsBytearray(a.tilemapVram))
 		} else {
 			osbscreen.ReplacePixels(a.osbData)
 		}

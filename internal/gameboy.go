@@ -112,9 +112,6 @@ func (gb *Gameboy) Run() {
 		if gb.Options.OnFrameFunction != nil {
 			gb.Options.OnFrameFunction(gb)
 		}
-		// if gb.DisplayProvider != nil {
-		// 	gb.DisplayProvider.Render(gb)
-		// }
 
 		if time.Since(lastSave) > time.Minute {
 			if gb.Options.SavePath != "" {

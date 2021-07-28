@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"io/fs"
 	"path/filepath"
+	"strings"
 
 	"github.com/golang/freetype/truetype"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -28,8 +29,10 @@ var ErrGoToGame = errors.New("switch to gameview")
 func NewAXWGameboyEbitenMenuView(options *internal.GameboyOptions) *AXWGameboyEbitenMenuView {
 	files := make([]string, 0)
 	filepath.Walk(GetRootPathForCurrentPlattform(), func(path string, info fs.FileInfo, err error) error {
-		if filepath.Ext(path) == ".gb" || filepath.Ext(path) == ".gbc" {
-			files = append(files, filepath.Clean(path))
+		if !strings.Contains(path, "blargg") && !strings.Contains(path, "mooneye") {
+			if filepath.Ext(path) == ".gb" || filepath.Ext(path) == ".gbc" {
+				files = append(files, filepath.Clean(path))
+			}
 		}
 
 		return nil
