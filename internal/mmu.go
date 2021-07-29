@@ -104,7 +104,7 @@ func NewMemory(gb *Gameboy) (*Mmu, bool, error) {
 		},
 	}
 
-	if m.gb.Options.CGBEnabled {
+	if gb.Options.CGBEnabled && romCGBEnabled {
 		m.bios = cgb_bios
 	}
 
@@ -251,6 +251,8 @@ func (m *Mmu) WriteByte(address uint16, value uint8) {
 			case 0x40, 0x50, 0x60, 0x70:
 				if address == 0xFF50 {
 					m.inbios = false
+					m.gb.Gpu.ResetTileAttributes()
+					m.gb.Gpu.ResetOAM()
 					return
 				}
 				if address == 0xFF70 {

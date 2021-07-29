@@ -371,7 +371,6 @@ func (g *Gpu) updateTile(address uint16) {
 
 	address &= 0x1FFE
 	tileIndex := int(address>>4) + 384*g.vramBank
-	// tileIndex := int(address >> 4)
 	y := (address >> 1) & 0x7
 
 	for x := 0; x < 8; x++ {
@@ -391,14 +390,26 @@ func (g *Gpu) updateTile(address uint16) {
 }
 
 func (g *Gpu) updateTileAttribute(address uint16) {
-	if address >= 0x9800 && address < 0xA000 {
-		tileId := address - 0x9800
-		ram := g.vram[tileId+0x3800]
-		g.TileAttributes[tileId].useBgPriorityInsteadOfOam = (ram>>7)&0x1 > 0x0
-		g.TileAttributes[tileId].yFlip = (ram>>6)&0x1 > 0x0
-		g.TileAttributes[tileId].xFlip = (ram>>5)&0x1 > 0x0
-		g.TileAttributes[tileId].tileVramBank = int((ram >> 3) & 0x1)
-		g.TileAttributes[tileId].bgPaletteNumber = int(ram & 0x7)
+	if g.vramBank != 1 || address < 0x9800 || address >= 0xA000 {
+		return
+	}
+	tileId := address - 0x9800
+	ram := g.vram[tileId+0x3800]
+	g.TileAttributes[tileId].useBgPriorityInsteadOfOam = (ram>>7)&0x1 > 0x0
+	g.TileAttributes[tileId].yFlip = (ram>>6)&0x1 > 0x0
+	g.TileAttributes[tileId].xFlip = (ram>>5)&0x1 > 0x0
+	g.TileAttributes[tileId].tileVramBank = int((ram >> 3) & 0x1)
+	g.TileAttributes[tileId].bgPaletteNumber = int(ram & 0x7)
+}
+
+func (g *Gpu) ResetTileAttributes() {
+	for i := 0; i < len(g.TileAttributes); i++ {
+		g.vram[i+0x3800] = 0x00
+		g.TileAttributes[i].bgPaletteNumber = 0
+		g.TileAttributes[i].tileVramBank = 0
+		g.TileAttributes[i].xFlip = false
+		g.TileAttributes[i].yFlip = false
+		g.TileAttributes[i].useBgPriorityInsteadOfOam = false
 	}
 }
 
@@ -421,7 +432,6 @@ func (g *Gpu) updateSpriteObject(address uint16, value uint8) {
 		case 2:
 			g.SpriteObjectData[objectId].tile = value
 		case 3:
-			// log.Printf("Updated tile %d: %v, Change was at address 0x%04x with value 0x%02x 0b%08b", objectId, g.spriteObjectData[objectId], address&0x3, value, value)
 			g.SpriteObjectData[objectId].useSecondPalette = false
 			g.SpriteObjectData[objectId].xflip = false
 			g.SpriteObjectData[objectId].yflip = false
@@ -443,6 +453,14 @@ func (g *Gpu) updateSpriteObject(address uint16, value uint8) {
 				g.SpriteObjectData[objectId].vramBank = int((value >> 3) & 0x1)
 			}
 		}
+	}
+}
+
+func (g *Gpu) ResetOAM() {
+	var x uint16
+	for x = 0; x < 0xA0; x++ {
+		g.oam[x] = 0x00
+		g.updateSpriteObject(x, g.oam[x])
 	}
 }
 

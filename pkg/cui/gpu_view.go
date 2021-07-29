@@ -58,10 +58,10 @@ func (w *GpuViewWidget) UpdateWidget(gb *internal.Gameboy) error {
 			x,
 		)
 	}
-	for i, x := range gb.Gpu.TileAttributes {
+	for i, x := range gb.Gpu.SpriteObjectData {
 		fmt.Fprintf(
 			v,
-			"TA%d: %v\n",
+			"SP%d: %v\n",
 			i,
 			x,
 		)

@@ -68,12 +68,13 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 	gb.Gpu = NewGpu(gb)
 	gb.Timer = NewTimer(gb)
 	var err error
-	gb.Memory, _, err = NewMemory(gb)
+	var romCGBEnabled bool
+	gb.Memory, romCGBEnabled, err = NewMemory(gb)
 	if err != nil {
 		return nil, err
 	}
 
-	gb.cgbModeEnabled = options.CGBEnabled
+	gb.cgbModeEnabled = options.CGBEnabled && romCGBEnabled
 
 	return gb, err
 }
