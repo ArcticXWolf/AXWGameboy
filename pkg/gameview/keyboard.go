@@ -18,16 +18,18 @@ var keyboardButtonMap = map[ebiten.Key]internal.Button{
 }
 
 var keyboardMiscEventMap = map[ebiten.Key]MiscEvent{
-	ebiten.KeyEscape:    ShutdownGame,
-	ebiten.KeyShiftLeft: SpeedboostToggle,
-	ebiten.KeyP:         PauseToggle,
-	ebiten.KeyD:         DebugToggle,
-	ebiten.KeyT:         Tilemap0Toggle,
-	ebiten.KeyY:         Tilemap1Toggle,
-	ebiten.Key1:         SoundChannel1Toggle,
-	ebiten.Key2:         SoundChannel2Toggle,
-	ebiten.Key3:         SoundChannel3Toggle,
-	ebiten.Key4:         SoundChannel4Toggle,
+	ebiten.KeyEscape:         ShutdownGame,
+	ebiten.KeyShiftLeft:      SpeedboostToggle,
+	ebiten.KeyP:              PauseToggle,
+	ebiten.KeyD:              DebugToggle,
+	ebiten.KeyT:              Tilemap0Toggle,
+	ebiten.KeyY:              Tilemap1Toggle,
+	ebiten.Key1:              SoundChannel1Toggle,
+	ebiten.Key2:              SoundChannel2Toggle,
+	ebiten.Key3:              SoundChannel3Toggle,
+	ebiten.Key4:              SoundChannel4Toggle,
+	ebiten.KeyNumpadAdd:      VolumeUp,
+	ebiten.KeyNumpadSubtract: VolumeDown,
 }
 
 func (a *AXWGameboyEbitenGameView) handleKeyboardInputs() {

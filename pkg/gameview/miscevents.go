@@ -13,6 +13,8 @@ const (
 	SoundChannel2Toggle
 	SoundChannel3Toggle
 	SoundChannel4Toggle
+	VolumeUp
+	VolumeDown
 )
 
 func (a *AXWGameboyEbitenGameView) handleMiscEvents(events []MiscEvent) {
@@ -37,6 +39,10 @@ func (a *AXWGameboyEbitenGameView) handleMiscEvents(events []MiscEvent) {
 			a.Gameboy.Apu.ToggleSoundChannel(3)
 		} else if event == SoundChannel4Toggle {
 			a.Gameboy.Apu.ToggleSoundChannel(4)
+		} else if event == VolumeUp {
+			a.Gameboy.Apu.ChangeVolume(0.1)
+		} else if event == VolumeDown {
+			a.Gameboy.Apu.ChangeVolume(-0.1)
 		}
 	}
 }

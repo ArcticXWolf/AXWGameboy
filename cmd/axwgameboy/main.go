@@ -26,14 +26,14 @@ var (
 )
 
 func init() {
-	flag.StringVar(&savePath, "save", "", "Savefile to use")
-	flag.StringVar(&romPath, "rom", "", "Rom to use")
-	flag.StringVar(&paletteName, "palette", "DMG", "Name of a palette to use")
-	flag.BoolVar(&serialOutput, "serial", false, "Show serial output in console")
-	flag.BoolVar(&cuiEnabled, "cui", false, "Enable debug console interface")
-	flag.BoolVar(&colorEnabled, "color", true, "Enable CGB mode")
-	flag.BoolVar(&osbEnabled, "osb", false, "Enable on-screen-buttons")
-	flag.Float64Var(&soundVolume, "sound", 0.5, "Volume as a float (0.5 for 50%)")
+	flag.StringVar(&savePath, "save", "", "Enables RAM persistence and has to contain the path to the desired savefile.")
+	flag.StringVar(&romPath, "rom", "", "Set to the path of the rom, which will be used. If not specified, then a file selector will be shown with all roms in the current folder.")
+	flag.StringVar(&paletteName, "palette", "DMG", "For non-color-mode: Specify which color palette shall be used. Currently available: dmg, red, white")
+	flag.BoolVar(&serialOutput, "serial", false, "Print bytes of serial output to console as ASCII characters.")
+	flag.BoolVar(&cuiEnabled, "cui", false, "Disable normal console output and show console debug gui instead")
+	flag.BoolVar(&colorEnabled, "color", true, "Defaults to true. If set to false, it forces all games to be in non-color-mode.")
+	flag.BoolVar(&osbEnabled, "osb", false, "Enable on-screen-button display.")
+	flag.Float64Var(&soundVolume, "sound", 0.5, "Sets the starting master volume. Specify between 0 and 1.")
 }
 
 func main() {

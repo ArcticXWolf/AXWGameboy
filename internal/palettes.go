@@ -1,17 +1,20 @@
 package internal
 
-import "image/color"
+import (
+	"image/color"
+	"strings"
+)
 
 func getPaletteColorsByName(name string) [4]color.Color {
-	switch name {
-	case "Red":
+	switch strings.ToLower(name) {
+	case "red":
 		return [4]color.Color{
 			color.RGBA{0xff, 0xf6, 0xd3, 255},
 			color.RGBA{0xf9, 0xa8, 0x75, 255},
 			color.RGBA{0xeb, 0x6b, 0x6f, 255},
 			color.RGBA{0x7c, 0x3f, 0x58, 255},
 		}
-	case "DMG":
+	case "dmg":
 		return [4]color.Color{
 			color.RGBA{0xe0, 0xf8, 0xd0, 255},
 			color.RGBA{0x88, 0xc0, 0x70, 255},

@@ -330,6 +330,19 @@ func (a *APU) ToggleSoundChannel(channel int) {
 	log.Printf("Toggle Channel %v mute", channel)
 }
 
+// ToggleSoundChannel toggles a sound channel for debugging.
+func (a *APU) ChangeVolume(increment float64) {
+	a.masterVolume += increment
+
+	if a.masterVolume > 1.0 {
+		a.masterVolume = 1.0
+	} else if a.masterVolume < 0.0 {
+		a.masterVolume = 0.0
+	}
+
+	a.audioPlayer.SetVolume(a.masterVolume)
+}
+
 func (a *APU) LogSoundState() {
 	fmt.Println("Channel 3")
 	fmt.Printf("  0xFF1A E--- ---- = %08b\n", a.memory[0x1A])
