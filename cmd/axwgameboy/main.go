@@ -28,7 +28,7 @@ var (
 func init() {
 	flag.StringVar(&savePath, "save", "", "Savefile to use")
 	flag.StringVar(&romPath, "rom", "", "Rom to use")
-	flag.StringVar(&paletteName, "palette", "white", "Name of a palette to use")
+	flag.StringVar(&paletteName, "palette", "DMG", "Name of a palette to use")
 	flag.BoolVar(&serialOutput, "serial", false, "Show serial output in console")
 	flag.BoolVar(&cuiEnabled, "cui", false, "Enable debug console interface")
 	flag.BoolVar(&colorEnabled, "color", true, "Enable CGB mode")
