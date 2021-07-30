@@ -107,10 +107,10 @@ func TestBlarggInstrTimingRoms(t *testing.T) {
 func TestMooneyeRoms(t *testing.T) {
 	maxExecutionCycles := 20000000
 	romDirectories := []string{
-		// "../roms/mooneye/acceptance",
-		// "../roms/mooneye/emulator-only/mbc1",
+		"../roms/mooneye/acceptance",
+		"../roms/mooneye/emulator-only/mbc1",
 		"../roms/mooneye/emulator-only/mbc5",
-		// "../roms/mooneye/misc",
+		"../roms/mooneye/misc",
 	}
 	completionFunc := func(result []byte) (bool, bool) {
 		return len(result) >= 6, len(result) == 6 &&
