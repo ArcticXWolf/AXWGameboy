@@ -61,7 +61,7 @@ func (a *AXWGameboyEbitenGameView) Update() error {
 	}
 
 	if !a.isPaused {
-		a.Gameboy.UpdateFrame(int(float32(internal.ClockSpeed) / 60.0 * a.Gameboy.Cpu.SpeedBoost))
+		a.Gameboy.UpdateFrame(int(float32(internal.ClockSpeed) / 60.0 * a.Gameboy.Cpu.SpeedBoost * a.Gameboy.GetSpeedMultiplier()))
 	} else {
 		a.Gameboy.Inputs.ClearButtonList()
 	}

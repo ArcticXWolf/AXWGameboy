@@ -104,7 +104,7 @@ func NewMemory(gb *Gameboy) (*Mmu, bool, error) {
 		},
 	}
 
-	if gb.Options.CGBEnabled && romCGBEnabled {
+	if gb.Options.CGBEnabled {
 		m.bios = cgb_bios
 	}
 
@@ -165,6 +165,19 @@ func (m *Mmu) ReadByte(address uint16) (result uint8) {
 			case 0x10, 0x20, 0x30:
 				return m.gb.Apu.ReadByte(address)
 			case 0x40, 0x50, 0x60, 0x70:
+				if address == 0xFF4D {
+					if m.gb.cgbModeEnabled {
+						value := uint8(0x00)
+						if m.gb.doubleSpeed {
+							value = value | 0x80
+						}
+						if m.gb.doubleSpeedRequested {
+							value = value | 0x1
+						}
+						return value
+					}
+					return 0x00
+				}
 				if address == 0xFF70 {
 					if m.gb.cgbModeEnabled {
 						return uint8(m.wramBank)
@@ -249,10 +262,16 @@ func (m *Mmu) WriteByte(address uint16, value uint8) {
 			case 0x30:
 				m.gb.Apu.WriteWaveform(address, value)
 			case 0x40, 0x50, 0x60, 0x70:
+				if address == 0xFF4D {
+					if m.gb.cgbModeEnabled {
+						m.gb.doubleSpeedRequested = value&0x1 > 0
+					}
+					return
+				}
 				if address == 0xFF50 {
 					m.inbios = false
-					m.gb.Gpu.ResetTileAttributes()
-					m.gb.Gpu.ResetOAM()
+					// m.gb.Gpu.ResetTileAttributes()
+					// m.gb.Gpu.ResetOAM()
 					return
 				}
 				if address == 0xFF70 {

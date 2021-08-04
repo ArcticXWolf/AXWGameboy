@@ -566,7 +566,7 @@ func (g *Gpu) Update(gb *Gameboy, cyclesUsed int) {
 		return
 	}
 
-	g.modeClock += cyclesUsed
+	g.modeClock += cyclesUsed / int(gb.GetSpeedMultiplier())
 
 	switch g.currentMode {
 	case 0: // HBlank

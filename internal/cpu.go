@@ -188,6 +188,18 @@ func (gb *Gameboy) popPc16() uint16 {
 	return uint16(result2)<<8 | uint16(result1)
 }
 
+func (gb *Gameboy) speedSwitchRequest() {
+	gb.doubleSpeed = !gb.doubleSpeed
+	gb.Halted = false
+}
+
+func (gb *Gameboy) GetSpeedMultiplier() float32 {
+	if gb.doubleSpeed {
+		return 2.0
+	}
+	return 1.0
+}
+
 func (gb *Gameboy) String() string {
 	step := fmt.Sprintf("(0x%04x) %02x, %15s", gb.Cpu.Registers.Pc, gb.PeekPc(0), Opcodes[gb.PeekPc(0)].Label)
 	peek := fmt.Sprintf("%02x %02x %02x", gb.PeekPc(1), gb.PeekPc(2), gb.PeekPc(3))

@@ -28,21 +28,23 @@ type GameboyOptions struct {
 }
 
 type Gameboy struct {
-	InputProvider  InputProvider
-	Cpu            *Cpu
-	Memory         *Mmu
-	Gpu            *Gpu
-	Apu            Apu
-	Timer          *Timer
-	Inputs         *Inputs
-	Debugger       *Debugger
-	WorkingScreen  [ScreenWidth][ScreenHeight][3]uint8
-	ReadyToRender  [ScreenWidth][ScreenHeight][3]uint8
-	cgbModeEnabled bool
-	Halted         bool
-	Quit           bool
-	Options        *GameboyOptions
-	LastSave       time.Time
+	InputProvider        InputProvider
+	Cpu                  *Cpu
+	Memory               *Mmu
+	Gpu                  *Gpu
+	Apu                  Apu
+	Timer                *Timer
+	Inputs               *Inputs
+	Debugger             *Debugger
+	WorkingScreen        [ScreenWidth][ScreenHeight][3]uint8
+	ReadyToRender        [ScreenWidth][ScreenHeight][3]uint8
+	cgbModeEnabled       bool
+	doubleSpeed          bool
+	doubleSpeedRequested bool
+	Halted               bool
+	Quit                 bool
+	Options              *GameboyOptions
+	LastSave             time.Time
 }
 
 func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
@@ -68,13 +70,12 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 	gb.Gpu = NewGpu(gb)
 	gb.Timer = NewTimer(gb)
 	var err error
-	var romCGBEnabled bool
-	gb.Memory, romCGBEnabled, err = NewMemory(gb)
+	gb.Memory, _, err = NewMemory(gb)
 	if err != nil {
 		return nil, err
 	}
 
-	gb.cgbModeEnabled = options.CGBEnabled && romCGBEnabled
+	gb.cgbModeEnabled = options.CGBEnabled
 
 	return gb, err
 }
@@ -88,7 +89,7 @@ func (gb *Gameboy) Run() {
 	ticker := time.NewTicker(frameDuration)
 
 	for ; !gb.Quit; <-ticker.C {
-		cyclesPerFrame := int(float32(ClockSpeed) / float32(FramesPerSecond) * gb.Cpu.SpeedBoost)
+		cyclesPerFrame := int(float32(ClockSpeed) / float32(FramesPerSecond) * gb.Cpu.SpeedBoost * gb.GetSpeedMultiplier())
 		frameCount++
 
 		if gb.InputProvider != nil {
@@ -107,7 +108,7 @@ func (gb *Gameboy) Run() {
 			if gb.Options.OnCycleFunction != nil {
 				gb.Options.OnCycleFunction(gb)
 			}
-			gb.Apu.Buffer(cyclesCPU, 1, float64(gb.Cpu.SpeedBoost))
+			gb.Apu.Buffer(cyclesCPU, int(gb.GetSpeedMultiplier()), float64(gb.Cpu.SpeedBoost))
 		}
 
 		if gb.Options.OnFrameFunction != nil {
@@ -150,7 +151,7 @@ func (gb *Gameboy) UpdateFrame(cyclesPerFrame int) {
 			gb.Options.OnCycleFunction(gb)
 		}
 
-		gb.Apu.Buffer(cyclesCPU, 1, float64(gb.Cpu.SpeedBoost))
+		gb.Apu.Buffer(cyclesCPU, int(gb.GetSpeedMultiplier()), float64(gb.Cpu.SpeedBoost))
 	}
 
 	if gb.Options.OnFrameFunction != nil {

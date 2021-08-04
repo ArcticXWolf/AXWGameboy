@@ -1135,6 +1135,11 @@ var Opcodes = [0x100]*Opcode{
 	}},
 	0x10: {"STOP", 4, func(gb *Gameboy) {
 		gb.Halted = true
+		if gb.cgbModeEnabled && gb.doubleSpeedRequested {
+			gb.doubleSpeedRequested = false
+			gb.speedSwitchRequest()
+		}
+
 		gb.popPc()
 	}},
 	// Disallowed
