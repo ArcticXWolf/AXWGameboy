@@ -2,7 +2,6 @@ package internal
 
 import (
 	"image/color"
-	"log"
 )
 
 type SpriteObject struct {
@@ -77,11 +76,11 @@ type Gpu struct {
 	cgbOCPS              uint8
 	cgbOCPSAutoincrement bool
 
-	cgbHDMASource      uint16
-	cgbHDMADestination uint16
-	cgbHDMALength      byte
-	cgbHDMAActive      bool
-	cgbHDMAMode        bool // true = HDMA, false = GDMA
+	cgbDMASource      uint16
+	cgbDMADestination uint16
+	cgbDMALength      byte
+	cgbHDMAActive     bool
+	cgbHDMAAborted    bool
 }
 
 func NewGpu(gb *Gameboy) *Gpu {
@@ -212,6 +211,13 @@ func (g *Gpu) ReadByte(address uint16) (result uint8) {
 			case 0xFF54:
 				return 0xFF
 			case 0xFF55:
+				if g.gb.cgbModeEnabled {
+					if g.cgbHDMAActive {
+						return g.cgbDMALength
+					} else if g.cgbHDMAAborted {
+						return g.cgbDMALength | 0x80
+					}
+				}
 				return 0xFF
 			case 0xFF68:
 				if g.gb.cgbModeEnabled {
@@ -328,31 +334,24 @@ func (g *Gpu) WriteByte(address uint16, value uint8) {
 				}
 			case 0xFF51:
 				if g.gb.cgbModeEnabled {
-					g.cgbHDMASource = (g.cgbHDMASource & 0x00FF) | (uint16(value) << 8)
-					log.Printf("Switched HDMASource to 0x%04x", g.cgbHDMASource)
+					g.cgbDMASource = (g.cgbDMASource & 0x00FF) | (uint16(value) << 8)
+
 				}
 			case 0xFF52:
 				if g.gb.cgbModeEnabled {
-					g.cgbHDMASource = (g.cgbHDMASource & 0xFF00) | uint16(value&0xF0)
-					log.Printf("Switched HDMASource to 0x%04x", g.cgbHDMASource)
+					g.cgbDMASource = (g.cgbDMASource & 0xFF00) | uint16(value&0xF0)
 				}
 			case 0xFF53:
 				if g.gb.cgbModeEnabled {
-					g.cgbHDMADestination = (g.cgbHDMADestination & 0x00FF) | (uint16(value&0x1F) << 8)
-					log.Printf("Switched HDMADest to 0x%04x", g.cgbHDMADestination)
+					g.cgbDMADestination = (g.cgbDMADestination & 0x00FF) | (uint16(value&0x1F) << 8)
 				}
 			case 0xFF54:
 				if g.gb.cgbModeEnabled {
-					g.cgbHDMADestination = (g.cgbHDMADestination & 0xfeff) | uint16(value&0xF0)
-					log.Printf("Switched HDMADest to 0x%04x", g.cgbHDMADestination)
+					g.cgbDMADestination = (g.cgbDMADestination & 0xFF00) | uint16(value&0xF0)
 				}
 			case 0xFF55:
 				if g.gb.cgbModeEnabled {
-					if (value >> 7) > 0 {
-						g.oamStartHDMA(value & 0x7F)
-					} else {
-						g.oamGDMA(value & 0x7F)
-					}
+					g.startDMA(value)
 				}
 			case 0xFF68:
 				if g.gb.cgbModeEnabled {
@@ -472,45 +471,48 @@ func (g *Gpu) oamDMA(value uint8) {
 	g.gb.Cpu.ClockCycles += 164
 }
 
-func (g *Gpu) oamGDMA(value uint8) {
-	bytesToCopy := (uint16(value) + 1) * 16
-	startAddress := g.cgbHDMASource
-	// log.Printf("------------------------")
-	log.Printf("Started GDMA: %x %d %x %x", startAddress, bytesToCopy, value, 0x8000+g.cgbHDMADestination)
-	// log.Printf("FROM: 0x%04x", startAddress)
-	// g.gb.Debugger.dumpMemory(g.gb, startAddress, uint16(bytesToCopy))
-	// log.Printf("TO: 0x%04x", g.cgbHDMADestination)
-	// g.gb.Debugger.dumpMemory(g.gb, 0x8000+g.cgbHDMADestination, uint16(bytesToCopy))
-
-	var x uint16
-	for x = 0; x < uint16(bytesToCopy); x++ {
-		if g.cgbHDMADestination+x > 0x1FFF {
-			log.Printf("Ping %x", 0x8000+g.cgbHDMADestination+x)
-			continue
-		}
-
-		if (startAddress+x) >= 0x8000 && (startAddress+x) < 0xA000 {
-			g.vram[g.cgbHDMADestination+x+0x2000*uint16(g.vramBank)] = 0xFF
-		} else if (startAddress + x) >= 0xE000 {
-			g.vram[g.cgbHDMADestination+x+0x2000*uint16(g.vramBank)] = g.gb.Memory.ReadByte(startAddress + x - 0x4000)
-		} else {
-			g.vram[g.cgbHDMADestination+x+0x2000*uint16(g.vramBank)] = g.gb.Memory.ReadByte(startAddress + x)
-		}
-		g.updateTile(0x8000 + g.cgbHDMADestination + x)
-		g.updateTileAttribute(0x8000 + g.cgbHDMADestination + x)
+func (g *Gpu) startDMA(value uint8) {
+	if g.cgbHDMAActive && (value>>7) == 0 {
+		g.cgbHDMAActive = false
+		g.cgbHDMAAborted = true
+		return
 	}
-	// g.gb.Debugger.dumpMemory(g.gb, 0x8000+g.cgbHDMADestination, uint16(bytesToCopy))
-	g.gb.Cpu.ClockCycles += 4 + (32 * int(value+1))
-	g.cgbHDMASource += uint16(bytesToCopy)
-	g.cgbHDMADestination += uint16(bytesToCopy)
+
+	bytesToCopy := (uint16(value&0x7F) + 1) * 0x10
+	g.cgbHDMAAborted = false
+
+	if (value >> 7) == 0 {
+		g.performDMA(bytesToCopy)
+		return
+	}
+
+	g.cgbDMALength = byte(value & 0x7F)
+	g.cgbHDMAActive = true
 }
 
-func (g *Gpu) oamStartHDMA(value uint8) {
-	log.Println("HDMA")
-	g.oamGDMA(value)
+func (g *Gpu) stepHDMA() {
+	if !g.cgbHDMAActive {
+		return
+	}
+
+	g.performDMA(0x10)
+
+	if g.cgbDMALength > 0 {
+		g.cgbDMALength--
+		return
+	}
+
+	g.cgbHDMAActive = false
 }
 
-func (g *Gpu) oamStepHDMA() {
+func (g *Gpu) performDMA(length uint16) {
+	var x uint16
+	for x = 0; x < length; x++ {
+		g.WriteByte(0x8000+g.cgbDMADestination+x, g.gb.Memory.ReadByte(g.cgbDMASource+x))
+	}
+
+	g.cgbDMASource += length
+	g.cgbDMADestination += length
 }
 
 func (g *Gpu) updateSpriteObject(address uint16, value uint8) {
@@ -571,6 +573,7 @@ func (g *Gpu) Update(gb *Gameboy, cyclesUsed int) {
 		if g.modeClock >= 204 {
 			g.modeClock = 0
 			g.SetScanline(gb, g.CurrentScanline+1)
+			g.stepHDMA()
 
 			if g.CurrentScanline > uint8(ScreenHeight)-1 {
 				g.SetLCDMode(gb, 1)
