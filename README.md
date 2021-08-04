@@ -1,6 +1,6 @@
 # AXWGameboy
 
-This is a work-in-progress gameboy emulator written in golang. So far most of the regular gameboy features are implemented. CGB support is currently in progress.
+This is a work-in-progress gameboy emulator written in golang. So far most of the regular gameboy features are implemented. CGB support is mostly done with a few bugs still existing.
 
 Binaries are available for 64-bit Windows, Linux and Android. It should be compatible to macOS, FreeBSD, iOS, WebAssembly and Nintendo Switch™ thanks to cross plattform support by [Ebiten](https://github.com/hajimehoshi/ebiten) and GoMobile. For compilation support please refer to those projects first.
 
@@ -9,9 +9,11 @@ Binaries are available for 64-bit Windows, Linux and Android. It should be compa
 * CPU emulation
     * z80 specifications
     * All opcodes with instruction timing
+    * CGB double speed mode
 * Memory emulation
     * MBC1, MBC3, MBC5 mappers
     * Multiple ROM banks and RAM banks
+    * CGB HDMA and GDMA transfers
 * PPU
     * Background layer
     * Window layer
