@@ -30,6 +30,8 @@ var keyboardMiscEventMap = map[ebiten.Key]MiscEvent{
 	ebiten.Key4:              SoundChannel4Toggle,
 	ebiten.KeyNumpadAdd:      VolumeUp,
 	ebiten.KeyNumpadSubtract: VolumeDown,
+	ebiten.KeyK:              StartProfiling,
+	ebiten.KeyL:              StopProfiling,
 }
 
 func (a *AXWGameboyEbitenGameView) handleKeyboardInputs() {

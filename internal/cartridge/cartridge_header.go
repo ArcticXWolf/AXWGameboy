@@ -1,6 +1,7 @@
 package cartridge
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"math"
@@ -80,9 +81,9 @@ func NewCartridgeHeader(binary []byte) (*CartridgeHeader, error) {
 		HeaderBinary: cleanBinary,
 	}
 
+	ch.parseGBMode()
 	ch.parseTitle()
 	ch.parseManufacturerCode()
-	ch.parseGBMode()
 	ch.parseNewLicenseeCode()
 	ch.parseSGBSupport()
 	ch.parseType()
@@ -102,7 +103,11 @@ func NewCartridgeHeader(binary []byte) (*CartridgeHeader, error) {
 }
 
 func (ch *CartridgeHeader) parseTitle() {
-	ch.Title = string(ch.HeaderBinary[0x34:0x44])
+	if ch.CartridgeGBMode == OnlyDMG {
+		ch.Title = string(bytes.Trim(ch.HeaderBinary[0x34:0x44], "\x00"))
+		return
+	}
+	ch.Title = string(bytes.Trim(ch.HeaderBinary[0x34:0x3F], "\x00"))
 }
 
 func (ch *CartridgeHeader) parseManufacturerCode() {

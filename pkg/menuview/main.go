@@ -53,6 +53,9 @@ func (a *AXWGameboyEbitenMenuView) Update() error {
 	if a.CheckForButtonPress() {
 		return ErrGoToGame
 	}
+
+	ebiten.SetWindowTitle("AXWGameboy")
+
 	return nil
 }
 

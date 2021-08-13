@@ -867,14 +867,15 @@ func (g *Gpu) Reset(gb *Gameboy) {
 }
 
 func (gb *Gameboy) clearScreen() {
-	r, g, b, _ := gb.Gpu.bgPaletteColors[0].RGBA()
-	for y := 0; y < ScreenHeight; y++ {
-		for x := 0; x < ScreenWidth; x++ {
-			gb.WorkingScreen[x][y][0] = uint8(r)
-			gb.WorkingScreen[x][y][1] = uint8(g)
-			gb.WorkingScreen[x][y][2] = uint8(b)
-		}
-	}
+	// r, g, b, _ := gb.Gpu.bgPaletteColors[0].RGBA()
+	// for y := 0; y < ScreenHeight; y++ {
+	// 	for x := 0; x < ScreenWidth; x++ {
+	// 		gb.WorkingScreen[x][y][0] = uint8(r)
+	// 		gb.WorkingScreen[x][y][1] = uint8(g)
+	// 		gb.WorkingScreen[x][y][2] = uint8(b)
+	// 	}
+	// }
+	gb.WorkingScreen = [ScreenWidth][ScreenHeight][3]uint8{}
 	gb.ReadyToRender = gb.WorkingScreen
 	gb.WorkingScreen = [ScreenWidth][ScreenHeight][3]uint8{}
 }

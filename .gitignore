@@ -34,3 +34,4 @@ internal/bootroms/*
 *.gbc
 *.sav
 *.apk
+*.profile

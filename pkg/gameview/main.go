@@ -2,6 +2,7 @@ package gameview
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	"log"
 
@@ -65,6 +66,9 @@ func (a *AXWGameboyEbitenGameView) Update() error {
 	} else {
 		a.Gameboy.Inputs.ClearButtonList()
 	}
+
+	ebiten.SetWindowTitle(fmt.Sprintf("%s (%.02f TPS)", a.Gameboy.Memory.Cartridge.CartridgeHeader().Title, ebiten.CurrentTPS()))
+
 	return nil
 }
 

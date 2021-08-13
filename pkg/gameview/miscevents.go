@@ -1,5 +1,11 @@
 package gameview
 
+import (
+	"log"
+	"os"
+	"runtime/pprof"
+)
+
 type MiscEvent int
 
 const (
@@ -15,6 +21,8 @@ const (
 	SoundChannel4Toggle
 	VolumeUp
 	VolumeDown
+	StartProfiling
+	StopProfiling
 )
 
 func (a *AXWGameboyEbitenGameView) handleMiscEvents(events []MiscEvent) {
@@ -43,6 +51,10 @@ func (a *AXWGameboyEbitenGameView) handleMiscEvents(events []MiscEvent) {
 			a.Gameboy.Apu.ChangeVolume(0.1)
 		} else if event == VolumeDown {
 			a.Gameboy.Apu.ChangeVolume(-0.1)
+		} else if event == StartProfiling {
+			a.startProfiling()
+		} else if event == StopProfiling {
+			a.stopProfiling()
 		}
 	}
 }
@@ -71,4 +83,18 @@ func (a *AXWGameboyEbitenGameView) toggleTilemap(number int) {
 
 func (a *AXWGameboyEbitenGameView) markGameForShutdown() {
 	a.isTerminated = true
+}
+
+func (a *AXWGameboyEbitenGameView) startProfiling() {
+	f, err := os.Create("cpu.profile")
+	if err != nil {
+		log.Fatal("could not create CPU profile: ", err)
+	}
+	if err := pprof.StartCPUProfile(f); err != nil {
+		log.Fatal("could not start CPU profile: ", err)
+	}
+}
+
+func (a *AXWGameboyEbitenGameView) stopProfiling() {
+	pprof.StopCPUProfile()
 }
