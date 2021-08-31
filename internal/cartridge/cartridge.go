@@ -29,6 +29,14 @@ func LoadCartridgeFromPath(filename string) (Cartridge, error) {
 	return InitializeCartridge(header, data)
 }
 
+func LoadCartridgeFromByteArray(data []byte) (Cartridge, error) {
+	header, err := ParseHeaderFromRomData(data)
+	if err != nil {
+		return nil, err
+	}
+	return InitializeCartridge(header, data)
+}
+
 func LoadDataFromRomFile(filepath string) (data []byte, err error) {
 	data, err = ioutil.ReadFile(filepath)
 	if err != nil {

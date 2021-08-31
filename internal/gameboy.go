@@ -16,6 +16,7 @@ const (
 type GameboyOptions struct {
 	SavePath             string
 	RomPath              string
+	RomData              []byte
 	Palette              string
 	SoundVolume          float64
 	OSBEnabled           bool

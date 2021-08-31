@@ -80,6 +80,11 @@ func NewMemory(gb *Gameboy) (*Mmu, bool, error) {
 		if err != nil {
 			return nil, false, err
 		}
+	} else if len(gb.Options.RomData) != 0 {
+		cart, err = cartridge.LoadCartridgeFromByteArray(gb.Options.RomData)
+		if err != nil {
+			return nil, false, err
+		}
 	} else {
 		log.Panic("no rom loaded")
 	}

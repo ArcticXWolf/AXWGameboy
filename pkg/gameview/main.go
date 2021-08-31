@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"go.janniklasrichter.de/axwgameboy/internal"
 )
 
@@ -85,6 +86,9 @@ func (a *AXWGameboyEbitenGameView) Draw(screen *ebiten.Image) {
 			osbscreen.ReplacePixels(a.osbData)
 		}
 	}
+
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f", ebiten.CurrentTPS()), 5, 5)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("FPS: %0.2f", ebiten.CurrentFPS()), 5, 15)
 }
 
 func (a *AXWGameboyEbitenGameView) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
