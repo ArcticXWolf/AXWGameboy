@@ -35,6 +35,7 @@ type Gpu struct {
 	windowActivated     bool
 	windowMap           bool
 	lcdActivated        bool
+	lcdCleared          bool
 
 	currentMode        uint8
 	StatTriggerLYC     bool
@@ -296,6 +297,7 @@ func (g *Gpu) WriteByte(address uint16, value uint8) {
 				g.windowActivated = value&0x20 != 0
 				g.windowMap = value&0x40 != 0
 				g.lcdActivated = value&0x80 != 0
+				g.lcdCleared = false
 			case 0xFF41:
 				g.StatEnableMode0 = value&0x8 != 0
 				g.StatEnableMode1 = value&0x10 != 0
@@ -562,7 +564,10 @@ func (g *Gpu) Update(gb *Gameboy, cyclesUsed int) {
 	if !g.lcdActivated {
 		g.CurrentScanline = 0
 		g.currentMode = 0
-		gb.clearScreen()
+		if !g.lcdCleared {
+			gb.clearScreen()
+			g.lcdCleared = true
+		}
 		return
 	}
 
