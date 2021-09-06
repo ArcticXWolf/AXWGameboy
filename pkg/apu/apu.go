@@ -46,6 +46,10 @@ type APU struct {
 	masterVolume           float64
 }
 
+func NewApu() *APU {
+	return &APU{}
+}
+
 // Init the sound emulation for a Gameboy.
 func (a *APU) Init(sound bool, masterVolume float64) {
 	a.playing = sound

@@ -17,6 +17,7 @@ type GameboyOptions struct {
 	SavePath             string
 	RomPath              string
 	Palette              string
+	SoundEnabled         bool
 	SoundVolume          float64
 	OSBEnabled           bool
 	CGBEnabled           bool
@@ -50,15 +51,13 @@ type Gameboy struct {
 func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 	c := NewCpu()
 	i := NewInputs()
-	a := &apu.APU{}
-	a.Init(true, options.SoundVolume)
 
 	gb := &Gameboy{
 		Cpu:           c,
 		InputProvider: options.InputProvider,
 		Memory:        nil,
 		Gpu:           nil,
-		Apu:           a,
+		Apu:           nil,
 		Timer:         nil,
 		Inputs:        i,
 		Debugger:      &Debugger{AddressEnabled: false},
@@ -66,6 +65,10 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 		Options:       options,
 		LastSave:      time.Now(),
 	}
+
+	a := apu.NewApu()
+	a.Init(options.SoundEnabled, options.SoundVolume)
+	gb.Apu = a
 
 	gb.Gpu = NewGpu(gb)
 	gb.Timer = NewTimer(gb)
@@ -98,7 +101,9 @@ func (gb *Gameboy) Update(cyclesPerFrame int) {
 			gb.Options.OnCycleFunction(gb)
 		}
 
-		gb.Apu.Buffer(cyclesCPU, int(gb.GetSpeedMultiplier()), float64(gb.Cpu.SpeedBoost))
+		if gb.Options.SoundEnabled {
+			gb.Apu.Buffer(cyclesCPU, int(gb.GetSpeedMultiplier()), float64(gb.Cpu.SpeedBoost))
+		}
 	}
 
 	if gb.Options.OnFrameFunction != nil {

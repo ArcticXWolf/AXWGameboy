@@ -18,6 +18,7 @@ var (
 	savePath     string
 	romPath      string
 	paletteName  string
+	soundEnabled bool
 	soundVolume  float64
 	serialOutput bool
 	colorEnabled bool
@@ -33,7 +34,8 @@ func init() {
 	flag.BoolVar(&cuiEnabled, "cui", false, "Disable normal console output and show console debug gui instead")
 	flag.BoolVar(&colorEnabled, "color", true, "Defaults to true. If set to false, it forces all games to be in non-color-mode.")
 	flag.BoolVar(&osbEnabled, "osb", false, "Enable on-screen-button display.")
-	flag.Float64Var(&soundVolume, "sound", 0.5, "Sets the starting master volume. Specify between 0 and 1.")
+	flag.BoolVar(&soundEnabled, "sound", true, "Defaults to true. Enable/Disable sound.")
+	flag.Float64Var(&soundVolume, "volume", 0.5, "Sets the starting master volume. Specify between 0 and 1.")
 }
 
 func main() {
@@ -45,12 +47,13 @@ func start() {
 	log.Printf("AXWGameboy | Version %v | Builddate %v | Commit %v", version, date, commit)
 
 	options := &internal.GameboyOptions{
-		RomPath:     romPath,
-		SavePath:    savePath,
-		Palette:     paletteName,
-		SoundVolume: soundVolume,
-		OSBEnabled:  osbEnabled,
-		CGBEnabled:  colorEnabled,
+		RomPath:      romPath,
+		SavePath:     savePath,
+		Palette:      paletteName,
+		SoundEnabled: soundEnabled,
+		SoundVolume:  soundVolume,
+		OSBEnabled:   osbEnabled,
+		CGBEnabled:   colorEnabled,
 	}
 	if serialOutput {
 		options.SerialOutputFunction = func(b byte) {
