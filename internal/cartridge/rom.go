@@ -22,7 +22,7 @@ func (rc *RomCartridge) ReadByte(address uint16) uint8 {
 
 func (rc *RomCartridge) WriteByte(address uint16, value uint8) {}
 
-func (c *RomCartridge) UpdateComponentsPerCycle() {}
+func (c *RomCartridge) UpdateComponentsPerCycle(cycles uint16) {}
 
 func (c *RomCartridge) String() string {
 	return "ROM Cartridge"

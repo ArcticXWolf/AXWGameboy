@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+const (
+	RtcRefreshAfterCycles uint16 = 35000
+)
+
 type Mbc3RTC struct {
 	Seconds                     uint8
 	Minutes                     uint8
@@ -23,16 +27,17 @@ type Mbc3RTC struct {
 
 type Mbc3Cartridge struct {
 	BaseCartridge
-	Ram               []byte
-	RamEnabled        bool
-	RtcEnabled        bool
-	RomBank           int
-	RamBank           int
-	hasRTC            bool
-	Rtc               *Mbc3RTC
-	RtcRegister       uint8
-	RtcLatchFlagValue uint8
-	RtcLastUpdate     time.Time
+	Ram                   []byte
+	RamEnabled            bool
+	RtcEnabled            bool
+	RomBank               int
+	RamBank               int
+	hasRTC                bool
+	Rtc                   *Mbc3RTC
+	RtcRegister           uint8
+	RtcLatchFlagValue     uint8
+	RtcLastUpdate         time.Time
+	RtcRefreshCyclesCount uint16
 }
 
 func NewMbc3Cartridge(header *CartridgeHeader, data []byte) *Mbc3Cartridge {
@@ -204,9 +209,13 @@ func (c *Mbc3Cartridge) UpdateRTC() {
 	}
 }
 
-func (c *Mbc3Cartridge) UpdateComponentsPerCycle() {
+func (c *Mbc3Cartridge) UpdateComponentsPerCycle(cycles uint16) {
 	if c.hasRTC {
-		c.UpdateRTC()
+		c.RtcRefreshCyclesCount += cycles
+		if c.RtcRefreshCyclesCount >= RtcRefreshAfterCycles {
+			c.UpdateRTC()
+			c.RtcRefreshCyclesCount = 0
+		}
 	}
 }
 

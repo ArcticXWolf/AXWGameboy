@@ -92,7 +92,7 @@ func (gb *Gameboy) Update(cyclesPerFrame int) {
 		cyclesCPU := gb.Cpu.Tick(gb)
 		cycles += cyclesCPU
 		gb.Gpu.Update(gb, cyclesCPU)
-		gb.Memory.Cartridge.UpdateComponentsPerCycle()
+		gb.Memory.Cartridge.UpdateComponentsPerCycle(uint16(cyclesCPU))
 
 		if gb.Options.OnCycleFunction != nil {
 			gb.Options.OnCycleFunction(gb)
