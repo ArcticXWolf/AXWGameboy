@@ -829,8 +829,8 @@ func (g *Gpu) renderSprites(gb *Gameboy, scanrow [ScreenWidth]byte) {
 		tilerow := g.tileSet[tileId][tilerowIndex]
 
 		for x := 0; x < 8; x++ {
+			// skip pixels out of bounds
 			pixelPos := spriteObject.x + x
-
 			if pixelPos < 0 || pixelPos >= ScreenWidth {
 				continue
 			}
@@ -839,17 +839,26 @@ func (g *Gpu) renderSprites(gb *Gameboy, scanrow [ScreenWidth]byte) {
 			if spriteObject.xflip {
 				pixelPaletteColor = tilerow[7-x]
 			}
-			if pixelPaletteColor > 0 && (spriteObject.priority || scanrow[pixelPos] == 0) {
-				pixelRealColor := palette[pixelPaletteColor]
-				red, green, blue, _ := paletteColors[pixelRealColor].RGBA()
-				if g.gb.cgbModeEnabled {
-					palette := spriteObject.cgbPalette
-					red, green, blue, _ = g.CgbObjPaletteColors[palette][pixelPaletteColor].RGBA()
-				}
-				gb.WorkingScreen[spriteObject.x+x][g.CurrentScanline][0] = uint8(red)
-				gb.WorkingScreen[spriteObject.x+x][g.CurrentScanline][1] = uint8(green)
-				gb.WorkingScreen[spriteObject.x+x][g.CurrentScanline][2] = uint8(blue)
+
+			// skip transparent pixels
+			if pixelPaletteColor == 0 {
+				continue
 			}
+
+			// skip pixels without priority that are hidden by BG
+			if !spriteObject.priority && scanrow[pixelPos] != 0 {
+				continue
+			}
+
+			pixelRealColor := palette[pixelPaletteColor]
+			red, green, blue, _ := paletteColors[pixelRealColor].RGBA()
+			if g.gb.cgbModeEnabled {
+				palette := spriteObject.cgbPalette
+				red, green, blue, _ = g.CgbObjPaletteColors[palette][pixelPaletteColor].RGBA()
+			}
+			gb.WorkingScreen[spriteObject.x+x][g.CurrentScanline][0] = uint8(red)
+			gb.WorkingScreen[spriteObject.x+x][g.CurrentScanline][1] = uint8(green)
+			gb.WorkingScreen[spriteObject.x+x][g.CurrentScanline][2] = uint8(blue)
 		}
 	}
 }
@@ -872,14 +881,6 @@ func (g *Gpu) Reset(gb *Gameboy) {
 }
 
 func (gb *Gameboy) clearScreen() {
-	// r, g, b, _ := gb.Gpu.bgPaletteColors[0].RGBA()
-	// for y := 0; y < ScreenHeight; y++ {
-	// 	for x := 0; x < ScreenWidth; x++ {
-	// 		gb.WorkingScreen[x][y][0] = uint8(r)
-	// 		gb.WorkingScreen[x][y][1] = uint8(g)
-	// 		gb.WorkingScreen[x][y][2] = uint8(b)
-	// 	}
-	// }
 	gb.WorkingScreen = [ScreenWidth][ScreenHeight][3]uint8{}
 	gb.ReadyToRender = gb.WorkingScreen
 	gb.WorkingScreen = [ScreenWidth][ScreenHeight][3]uint8{}
