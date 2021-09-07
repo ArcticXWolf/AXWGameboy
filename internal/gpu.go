@@ -64,6 +64,7 @@ type Gpu struct {
 
 	tileSet        [768][8][8]uint8
 	TileAttributes [0x800]TileAttributes
+	tileBGPriority [ScreenWidth][ScreenHeight]bool
 
 	BgPaletteMap        [4]uint8
 	bgPaletteColors     [4]color.Color
@@ -683,6 +684,7 @@ func (g *Gpu) renderTiles(gb *Gameboy) (scanrow [ScreenWidth]byte) {
 		if g.gb.cgbModeEnabled {
 			palette := tileAttr.bgPaletteNumber
 			red, green, blue, _ = g.CgbBgPaletteColors[palette][pixelPaletteColor].RGBA()
+			g.tileBGPriority[i][g.CurrentScanline] = tileAttr.useBgPriorityInsteadOfOam
 		}
 		gb.WorkingScreen[i][g.CurrentScanline][0] = uint8(red)
 		gb.WorkingScreen[i][g.CurrentScanline][1] = uint8(green)
@@ -737,6 +739,7 @@ func (g *Gpu) renderWindow(gb *Gameboy, scanrow [ScreenWidth]byte) [ScreenWidth]
 		if g.gb.cgbModeEnabled {
 			palette := tileAttr.bgPaletteNumber
 			red, green, blue, _ = g.CgbBgPaletteColors[palette][pixelPaletteColor].RGBA()
+			g.tileBGPriority[i][g.CurrentScanline] = tileAttr.useBgPriorityInsteadOfOam
 		}
 		gb.WorkingScreen[i][g.CurrentScanline][0] = uint8(red)
 		gb.WorkingScreen[i][g.CurrentScanline][1] = uint8(green)
@@ -778,8 +781,12 @@ func (g *Gpu) GetTilemapAsBytearray(vramBank int) []byte {
 	return frame
 }
 
+const spriteXPixelComparisonOffset int = 10
+
 func (g *Gpu) renderSprites(gb *Gameboy, scanrow [ScreenWidth]byte) {
+	var spriteXPerScreenPixel [ScreenWidth]int
 	spriteCount := 0
+
 	for i := 0; i < len(g.SpriteObjectData); i++ {
 		var ySize int = 8
 		spriteObject := g.SpriteObjectData[i]
@@ -846,8 +853,20 @@ func (g *Gpu) renderSprites(gb *Gameboy, scanrow [ScreenWidth]byte) {
 			}
 
 			// skip pixels without priority that are hidden by BG
-			if !spriteObject.priority && scanrow[pixelPos] != 0 {
+			if !spriteObject.priority || g.tileBGPriority[pixelPos][g.CurrentScanline] && scanrow[pixelPos] != 0 {
 				continue
+			}
+
+			if g.gb.cgbModeEnabled {
+				// skip if pixel is occupied by sprite with lower spriteObjectID
+				if spriteXPerScreenPixel[pixelPos] != 0 {
+					continue
+				}
+			} else {
+				// skip if pixel is occupied by sprite with lower x coordinate
+				if spriteXPerScreenPixel[pixelPos] != 0 && spriteXPerScreenPixel[pixelPos] <= spriteObject.x+spriteXPixelComparisonOffset {
+					continue
+				}
 			}
 
 			pixelRealColor := palette[pixelPaletteColor]
@@ -856,9 +875,11 @@ func (g *Gpu) renderSprites(gb *Gameboy, scanrow [ScreenWidth]byte) {
 				palette := spriteObject.cgbPalette
 				red, green, blue, _ = g.CgbObjPaletteColors[palette][pixelPaletteColor].RGBA()
 			}
-			gb.WorkingScreen[spriteObject.x+x][g.CurrentScanline][0] = uint8(red)
-			gb.WorkingScreen[spriteObject.x+x][g.CurrentScanline][1] = uint8(green)
-			gb.WorkingScreen[spriteObject.x+x][g.CurrentScanline][2] = uint8(blue)
+			gb.WorkingScreen[pixelPos][g.CurrentScanline][0] = uint8(red)
+			gb.WorkingScreen[pixelPos][g.CurrentScanline][1] = uint8(green)
+			gb.WorkingScreen[pixelPos][g.CurrentScanline][2] = uint8(blue)
+
+			spriteXPerScreenPixel[pixelPos] = spriteObject.x + spriteXPixelComparisonOffset
 		}
 	}
 }

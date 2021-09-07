@@ -270,8 +270,6 @@ func (m *Mmu) WriteByte(address uint16, value uint8) {
 				}
 				if address == 0xFF50 {
 					m.inbios = false
-					// m.gb.Gpu.ResetTileAttributes()
-					// m.gb.Gpu.ResetOAM()
 					return
 				}
 				if address == 0xFF70 {
