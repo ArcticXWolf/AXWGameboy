@@ -1,11 +1,19 @@
 package cartridge
 
 import (
+	"encoding/binary"
 	"encoding/gob"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"log"
 	"os"
 	"time"
+)
+
+const (
+	RtcRefreshAfterCycles uint16 = 35000
 )
 
 type Mbc3RTC struct {
@@ -23,16 +31,17 @@ type Mbc3RTC struct {
 
 type Mbc3Cartridge struct {
 	BaseCartridge
-	Ram               []byte
-	RamEnabled        bool
-	RtcEnabled        bool
-	RomBank           int
-	RamBank           int
-	hasRTC            bool
-	Rtc               *Mbc3RTC
-	RtcRegister       uint8
-	RtcLatchFlagValue uint8
-	RtcLastUpdate     time.Time
+	Ram                   []byte
+	RamEnabled            bool
+	RtcEnabled            bool
+	RomBank               int
+	RamBank               int
+	hasRTC                bool
+	Rtc                   *Mbc3RTC
+	RtcRegister           uint8
+	RtcLatchFlagValue     uint8
+	RtcLastUpdate         time.Time
+	RtcRefreshCyclesCount uint16
 }
 
 func NewMbc3Cartridge(header *CartridgeHeader, data []byte) *Mbc3Cartridge {
@@ -204,9 +213,13 @@ func (c *Mbc3Cartridge) UpdateRTC() {
 	}
 }
 
-func (c *Mbc3Cartridge) UpdateComponentsPerCycle() {
+func (c *Mbc3Cartridge) UpdateComponentsPerCycle(cycles uint16) {
 	if c.hasRTC {
-		c.UpdateRTC()
+		c.RtcRefreshCyclesCount += cycles
+		if c.RtcRefreshCyclesCount >= RtcRefreshAfterCycles {
+			c.UpdateRTC()
+			c.RtcRefreshCyclesCount = 0
+		}
 	}
 }
 
@@ -214,13 +227,11 @@ func (c *Mbc3Cartridge) String() string {
 	return fmt.Sprintf("%v %d %d | RTC %v %v %08b %v", c.RamEnabled, c.RamBank, c.RomBank, c.RtcEnabled, c.Rtc, c.Rtc.DaysHigherAndControl, time.Since(c.RtcLastUpdate).Milliseconds())
 }
 
-type Mbc3SaveFile struct {
-	Ram           []byte
-	Rtc           []byte
-	RtcLastUpdate time.Time
+func (c *Mbc3Cartridge) SaveRam(filename string) error {
+	return c.SaveRamBGBFormat(filename)
 }
 
-func (c *Mbc3Cartridge) SaveRam(filename string) error {
+func (c *Mbc3Cartridge) SaveRamOldAXWFormat(filename string) error {
 	saveFile := Mbc3SaveFile{
 		Ram:           c.Ram,
 		Rtc:           []byte{},
@@ -241,16 +252,139 @@ func (c *Mbc3Cartridge) SaveRam(filename string) error {
 	return e.Encode(saveFile)
 }
 
-func (c *Mbc3Cartridge) LoadRam(filename string) error {
-	loadFile := Mbc3SaveFile{}
+func (c *Mbc3Cartridge) SaveRamBGBFormat(filename string) error {
+	dataFile, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer dataFile.Close()
 
+	err = binary.Write(dataFile, binary.LittleEndian, c.Ram)
+	if err != nil {
+		return err
+	}
+
+	if c.hasRTC {
+		var rtc_data = []interface{}{
+			uint32(c.Rtc.Seconds),
+			uint32(c.Rtc.Minutes),
+			uint32(c.Rtc.Hours),
+			uint32(c.Rtc.DaysLower),
+			uint32(c.Rtc.DaysHigherAndControl),
+			uint32(c.Rtc.LatchedSeconds),
+			uint32(c.Rtc.LatchedMinutes),
+			uint32(c.Rtc.LatchedHours),
+			uint32(c.Rtc.LatchedDaysLower),
+			uint32(c.Rtc.LatchedDaysHigherAndControl),
+			uint64(c.RtcLastUpdate.Unix()),
+		}
+
+		for _, v := range rtc_data {
+			err = binary.Write(dataFile, binary.LittleEndian, v)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+type Mbc3SaveFile struct {
+	Ram           []byte
+	Rtc           []byte
+	RtcLastUpdate time.Time
+}
+
+func (c *Mbc3Cartridge) LoadRam(filename string) error {
 	dataFile, err := os.Open(filename)
 	if err != nil {
 		return err
 	}
 	defer dataFile.Close()
 
-	d := gob.NewDecoder(dataFile)
+	fileInfo, err := dataFile.Stat()
+	if err != nil {
+		return err
+	}
+
+	if fileInfo.Size() == int64(c.Header.RamSize)+48 {
+		log.Printf("would load with bgb sav format")
+
+		_, err = dataFile.Seek(0, 0)
+		if err != nil {
+			return err
+		}
+
+		return c.LoadRamBGBFormat(dataFile)
+	}
+
+	_, err = dataFile.Seek(0, 0)
+	if err != nil {
+		return err
+	}
+
+	return c.LoadRamOldAXWFormat(dataFile)
+}
+
+func (c *Mbc3Cartridge) LoadRamBGBFormat(file *os.File) error {
+	// var data byte
+	var err error
+	// for i := 0; i < c.Header.RamSize; i++ {
+	// 	err = binary.Read(file, binary.LittleEndian, data)
+	// 	if err != nil {
+	// 		log.Printf("error during reading of ram data at offset %v", i)
+	// 		return err
+	// 	}
+	// 	c.Ram[i] = data
+	// }
+	c.Ram, err = ioutil.ReadAll(io.LimitReader(file, int64(c.Header.RamSize)))
+	if err != nil {
+		log.Printf("error during reading of ram data")
+		return err
+	}
+
+	if c.hasRTC {
+		var rtcData = []*uint8{
+			&c.Rtc.Seconds,
+			&c.Rtc.Minutes,
+			&c.Rtc.Hours,
+			&c.Rtc.DaysLower,
+			&c.Rtc.DaysHigherAndControl,
+			&c.Rtc.LatchedSeconds,
+			&c.Rtc.LatchedMinutes,
+			&c.Rtc.LatchedHours,
+			&c.Rtc.LatchedDaysLower,
+			&c.Rtc.LatchedDaysHigherAndControl,
+		}
+
+		var data []byte
+		for k, v := range rtcData {
+			data, err = ioutil.ReadAll(io.LimitReader(file, 4))
+			if err != nil {
+				log.Printf("error during reading of rtc data part %v", k)
+				return err
+			}
+			*v = uint8(data[0])
+		}
+
+		var rtcTimestamp []byte
+		rtcTimestamp, err = ioutil.ReadAll(io.LimitReader(file, 8))
+		if err != nil {
+			log.Printf("error during reading of rtc timestamp")
+			return err
+		}
+		c.RtcLastUpdate = time.Unix(int64(binary.LittleEndian.Uint64(rtcTimestamp)), 0)
+	}
+
+	return nil
+}
+
+func (c *Mbc3Cartridge) LoadRamOldAXWFormat(file *os.File) error {
+	var err error
+	loadFile := Mbc3SaveFile{}
+
+	d := gob.NewDecoder(file)
 	err = d.Decode(&loadFile)
 	if err != nil {
 		return err

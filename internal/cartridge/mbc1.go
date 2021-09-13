@@ -97,7 +97,7 @@ func (c *Mbc1Cartridge) WriteByte(address uint16, value uint8) {
 	}
 }
 
-func (c *Mbc1Cartridge) UpdateComponentsPerCycle() {}
+func (c *Mbc1Cartridge) UpdateComponentsPerCycle(cycles uint16) {}
 
 func (c *Mbc1Cartridge) String() string {
 	return fmt.Sprintf("%v %d %v %d", c.RamEnabled, c.RamBank, c.RamMode, c.RomBank)

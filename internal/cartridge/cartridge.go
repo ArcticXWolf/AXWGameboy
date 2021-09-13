@@ -14,7 +14,7 @@ type Cartridge interface {
 	CartridgeHeader() *CartridgeHeader
 	SaveRam(filename string) error
 	LoadRam(filename string) error
-	UpdateComponentsPerCycle()
+	UpdateComponentsPerCycle(cycles uint16)
 }
 
 func LoadCartridgeFromPath(filename string) (Cartridge, error) {

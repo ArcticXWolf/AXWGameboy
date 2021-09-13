@@ -18,6 +18,7 @@ type GameboyOptions struct {
 	RomPath              string
 	RomData              []byte
 	Palette              string
+	SoundEnabled         bool
 	SoundVolume          float64
 	OSBEnabled           bool
 	CGBEnabled           bool
@@ -51,15 +52,13 @@ type Gameboy struct {
 func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 	c := NewCpu()
 	i := NewInputs()
-	a := &apu.APU{}
-	a.Init(true, options.SoundVolume)
 
 	gb := &Gameboy{
 		Cpu:           c,
 		InputProvider: options.InputProvider,
 		Memory:        nil,
 		Gpu:           nil,
-		Apu:           a,
+		Apu:           nil,
 		Timer:         nil,
 		Inputs:        i,
 		Debugger:      &Debugger{AddressEnabled: false},
@@ -67,6 +66,10 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 		Options:       options,
 		LastSave:      time.Now(),
 	}
+
+	a := apu.NewApu()
+	a.Init(options.SoundEnabled, options.SoundVolume)
+	gb.Apu = a
 
 	gb.Gpu = NewGpu(gb)
 	gb.Timer = NewTimer(gb)
@@ -81,60 +84,7 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 	return gb, err
 }
 
-// Deprecated
-func (gb *Gameboy) Run() {
-	frameDuration := time.Second / time.Duration(FramesPerSecond)
-	frameCount := 0
-	lastSave := time.Now()
-
-	ticker := time.NewTicker(frameDuration)
-
-	for ; !gb.Quit; <-ticker.C {
-		cyclesPerFrame := int(float32(ClockSpeed) / float32(FramesPerSecond) * gb.Cpu.SpeedBoost * gb.GetSpeedMultiplier())
-		frameCount++
-
-		if gb.InputProvider != nil {
-			gb.InputProvider.HandleInput(gb)
-		}
-		gb.Inputs.HandleInput(gb)
-		gb.Inputs.ClearButtonList()
-
-		cycles := 0
-		for cycles <= cyclesPerFrame {
-			cyclesCPU := gb.Cpu.Tick(gb)
-			cycles += cyclesCPU
-			gb.Gpu.Update(gb, cyclesCPU)
-			gb.Memory.Cartridge.UpdateComponentsPerCycle()
-
-			if gb.Options.OnCycleFunction != nil {
-				gb.Options.OnCycleFunction(gb)
-			}
-			gb.Apu.Buffer(cyclesCPU, int(gb.GetSpeedMultiplier()), float64(gb.Cpu.SpeedBoost))
-		}
-
-		if gb.Options.OnFrameFunction != nil {
-			gb.Options.OnFrameFunction(gb)
-		}
-
-		if time.Since(lastSave) > time.Minute {
-			if gb.Options.SavePath != "" {
-				err := gb.Memory.Cartridge.SaveRam(gb.Options.SavePath)
-				if err != nil {
-					log.Println(err)
-				}
-			}
-		}
-	}
-
-	if gb.Options.SavePath != "" {
-		err := gb.Memory.Cartridge.SaveRam(gb.Options.SavePath)
-		if err != nil {
-			log.Panic(err)
-		}
-	}
-}
-
-func (gb *Gameboy) UpdateFrame(cyclesPerFrame int) {
+func (gb *Gameboy) Update(cyclesPerFrame int) {
 	if gb.InputProvider != nil {
 		gb.InputProvider.HandleInput(gb)
 	}
@@ -146,13 +96,15 @@ func (gb *Gameboy) UpdateFrame(cyclesPerFrame int) {
 		cyclesCPU := gb.Cpu.Tick(gb)
 		cycles += cyclesCPU
 		gb.Gpu.Update(gb, cyclesCPU)
-		gb.Memory.Cartridge.UpdateComponentsPerCycle()
+		gb.Memory.Cartridge.UpdateComponentsPerCycle(uint16(cyclesCPU))
 
 		if gb.Options.OnCycleFunction != nil {
 			gb.Options.OnCycleFunction(gb)
 		}
 
-		gb.Apu.Buffer(cyclesCPU, int(gb.GetSpeedMultiplier()), float64(gb.Cpu.SpeedBoost))
+		if gb.Options.SoundEnabled {
+			gb.Apu.Buffer(cyclesCPU, int(gb.GetSpeedMultiplier()), float64(gb.Cpu.SpeedBoost))
+		}
 	}
 
 	if gb.Options.OnFrameFunction != nil {

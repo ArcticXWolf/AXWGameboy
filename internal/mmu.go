@@ -2,8 +2,8 @@ package internal
 
 import (
 	_ "embed"
+	"errors"
 	"fmt"
-	"log"
 	"os"
 
 	"go.janniklasrichter.de/axwgameboy/internal/cartridge"
@@ -86,14 +86,17 @@ func NewMemory(gb *Gameboy) (*Mmu, bool, error) {
 			return nil, false, err
 		}
 	} else {
-		log.Panic("no rom loaded")
+		return nil, false, errors.New("no rom loaded")
 	}
 
 	romCGBEnabled := cart.CartridgeHeader().CartridgeGBMode == cartridge.OnlyCGB || cart.CartridgeHeader().CartridgeGBMode == cartridge.SupportsCGB
 
 	if gb.Options.SavePath != "" {
-		if _, err := os.Stat(gb.Options.SavePath); err == nil {
-			cart.LoadRam(gb.Options.SavePath)
+		if _, err = os.Stat(gb.Options.SavePath); err == nil {
+			err = cart.LoadRam(gb.Options.SavePath)
+			if err != nil {
+				return nil, false, err
+			}
 		}
 	}
 
@@ -275,8 +278,6 @@ func (m *Mmu) WriteByte(address uint16, value uint8) {
 				}
 				if address == 0xFF50 {
 					m.inbios = false
-					// m.gb.Gpu.ResetTileAttributes()
-					// m.gb.Gpu.ResetOAM()
 					return
 				}
 				if address == 0xFF70 {
