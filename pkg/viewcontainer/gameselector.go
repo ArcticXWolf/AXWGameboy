@@ -32,7 +32,27 @@ func (a *AXWGameboyViewContainer) createGameSelector() {
 	fileInput = document.Call("createElement", "input")
 	fileInput.Set("type", "file")
 	fileInput.Set("id", "fileInput")
+
+	fileInputLabel := document.Call("createElement", "label")
+	fileInputLabel.Set("innerHTML", "Open ROM")
+	fileInputLabel.Call("setAttribute", "for", "fileInput")
+	fileInputLabel.Get("style").Set("border", "1px solid #ccc")
+	fileInputLabel.Get("style").Set("display", "inline-block")
+	fileInputLabel.Get("style").Set("padding", "6px 12px")
+	fileInputLabel.Get("style").Set("cursor", "pointer")
+	fileInputLabel.Get("style").Set("width", "300px")
+	fileInputLabel.Get("style").Set("height", "50px")
+	fileInputLabel.Get("style").Set("margin", "-25px 0px 0px -150px")
+	fileInputLabel.Get("style").Set("position", "absolute")
+	fileInputLabel.Get("style").Set("top", "50%")
+	fileInputLabel.Get("style").Set("left", "50%")
+	fileInputLabel.Get("style").Set("text-align", "center")
+	fileInputLabel.Get("style").Set("font-size", "40px")
+
+	gameSelector.Call("appendChild", fileInputLabel)
 	gameSelector.Call("appendChild", fileInput)
+
+	fileInput.Get("style").Set("display", "none")
 
 	fileInput.Call("addEventListener", "change", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		js.Global().Call("readFileInputToFunction", "fileInput", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
@@ -51,10 +71,11 @@ func (a *AXWGameboyViewContainer) handleGameSelector(romData []byte) {
 	a.destroyGameSelector()
 
 	options := &internal.GameboyOptions{
-		RomData:     romData,
-		OSBEnabled:  true,
-		SoundVolume: 1.0,
-		CGBEnabled:  true,
+		RomData:      romData,
+		OSBEnabled:   true,
+		SoundEnabled: true,
+		SoundVolume:  1.0,
+		CGBEnabled:   true,
 	}
 
 	a.GameView = gameview.NewAXWGameboyEbitenGameView(options)

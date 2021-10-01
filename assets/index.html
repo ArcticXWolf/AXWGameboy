@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<script src="wasm_exec.js"></script>
+<script>
+// Polyfill
+if (!WebAssembly.instantiateStreaming) {
+  WebAssembly.instantiateStreaming = async (resp, importObject) => {
+    const source = await (await resp).arrayBuffer();
+    return await WebAssembly.instantiate(source, importObject);
+  };
+}
+
+function readFileInputToFunction(fileInputId, handler) {
+  var reader = new FileReader();
+  reader.onload = function() {
+    var arrayBuffer = this.result,
+    array = new Uint8Array(arrayBuffer);
+    handler(array);
+  }
+  reader.readAsArrayBuffer(document.getElementById(fileInputId).files[0]);
+}
+
+const go = new Go();
+WebAssembly.instantiateStreaming(fetch("axwgameboy-wasm.wasm"), go.importObject).then(result => {
+  go.run(result.instance);
+});
+</script>

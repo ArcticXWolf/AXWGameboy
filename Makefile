@@ -17,7 +17,18 @@ linux:
 
 wasm:
 	GOOS=js GOARCH=wasm \
-		go build -o build/${BINARY}-wasm.wasm ${LDFLAGS} go.janniklasrichter.de/axwgameboy/cmd/axwgameboy
+		go build -o build/wasm/${BINARY}-wasm.wasm ${LDFLAGS} go.janniklasrichter.de/axwgameboy/cmd/axwgameboy
+	cp assets/index.html build/wasm/
+	cp assets/wasm_exec.js build/wasm/
+
+wasmserver:
+	GOOS=linux GOARCH=amd64 \
+		go build -o build/wasm/wasmserver ${LDFLAGS} go.janniklasrichter.de/axwgameboy/cmd/wasmserver
+	chmod +x build/wasm/wasmserver
+
+runwasm: wasm wasmserver
+	cd build/wasm/
+	./wasmserver
 
 android:
 	gomobile build -target=android go.janniklasrichter.de/axwgameboy/cmd/axwgameboy
