@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
+	"strings"
 	"syscall/js"
 
 	"go.janniklasrichter.de/axwgameboy/internal"
@@ -67,6 +68,7 @@ func (ag *AXWGameboyViewContainer) installSettingsHandler() {
 		}
 		ag.GameView.Gameboy.Options.SoundEnabled = args[0].Get("soundEnabled").Bool()
 		ag.GameView.Gameboy.Options.OSBEnabled = args[0].Get("osbEnabled").Bool()
+		ag.GameView.Gameboy.CheatCodeManager.ReplaceCodeList(strings.NewReader(args[0].Get("cheats").String()))
 		return nil
 	}))
 }

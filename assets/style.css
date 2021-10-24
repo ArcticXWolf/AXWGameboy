@@ -114,6 +114,15 @@ html, body, #game {
 	border: 2px solid #77bb77;
 }
 
+#settings .cheatcodes {
+  margin: 10px;
+}
+
+#settings .cheatcodes textarea {
+  width: 100%;
+  height: 200px;
+}
+
 .keybindings {
   color: #ffffff;
 }

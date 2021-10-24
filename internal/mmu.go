@@ -124,9 +124,9 @@ func (m *Mmu) ReadByte(address uint16) (result uint8) {
 		if m.inbios && m.gb.cgbModeEnabled && address >= 0x200 && address < 0x900 {
 			return m.bios[address]
 		}
-		return m.Cartridge.ReadByte(address)
+		return m.gb.CheatCodeManager.ApplyGameGenie(address, m.Cartridge.ReadByte(address))
 	case 0x1000, 0x2000, 0x3000, 0x4000, 0x5000, 0x6000, 0x7000: // ROM
-		return m.Cartridge.ReadByte(address)
+		return m.gb.CheatCodeManager.ApplyGameGenie(address, m.Cartridge.ReadByte(address))
 	case 0x8000, 0x9000: // VRAM
 		return m.gb.Gpu.ReadByte(address)
 	case 0xA000, 0xB000: // External RAM

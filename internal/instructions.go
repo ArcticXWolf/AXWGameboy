@@ -186,6 +186,7 @@ func instructionInterrupt(gb *Gameboy, interruptIndex int) bool {
 	switch interruptIndex {
 	case 0:
 		gb.Cpu.Registers.Pc = 0x40
+		gb.CheatCodeManager.ApplyGameShark(gb)
 	case 1:
 		gb.Cpu.Registers.Pc = 0x48
 	case 2:

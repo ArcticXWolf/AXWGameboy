@@ -39,6 +39,7 @@ type Gameboy struct {
 	Timer                *Timer
 	Inputs               *Inputs
 	Debugger             *Debugger
+	CheatCodeManager     *CheatCodeManager
 	WorkingScreen        [ScreenWidth][ScreenHeight][3]uint8
 	ReadyToRender        [ScreenWidth][ScreenHeight][3]uint8
 	cgbModeEnabled       bool
@@ -55,17 +56,18 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 	i := NewInputs()
 
 	gb := &Gameboy{
-		Cpu:           c,
-		InputProvider: options.InputProvider,
-		Memory:        nil,
-		Gpu:           nil,
-		Apu:           nil,
-		Timer:         nil,
-		Inputs:        i,
-		Debugger:      &Debugger{AddressEnabled: false},
-		Halted:        false,
-		Options:       options,
-		LastSave:      time.Now(),
+		Cpu:              c,
+		InputProvider:    options.InputProvider,
+		Memory:           nil,
+		Gpu:              nil,
+		Apu:              nil,
+		Timer:            nil,
+		Inputs:           i,
+		Debugger:         &Debugger{AddressEnabled: false},
+		CheatCodeManager: &CheatCodeManager{genieEnabled: true, sharkEnabled: true},
+		Halted:           false,
+		Options:          options,
+		LastSave:         time.Now(),
 	}
 
 	a := apu.NewApu()

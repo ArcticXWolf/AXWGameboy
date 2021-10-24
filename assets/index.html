@@ -25,6 +25,10 @@
         <input type="checkbox" checked="checked" name="settingsOsbEnabled" id="settingsOsbEnabled" />
         <label for="settingsOsbEnabled">Toggle OnScreenButtons</label>
       </div>
+      <h2>Cheatcodes</h2>
+      <div class="cheatcodes">
+        <textarea id="cheatcodesTextArea"></textarea>
+      </div>
     </form>
     <h2>Keybindings for PC</h2>
     <div class="keybindings">
@@ -137,9 +141,10 @@
     };
 
     document.getElementById("settingsHandler").addEventListener("change", function () {
-      soundEnabled = document.getElementById("settingsSoundEnabled").checked
-      osbEnabled = document.getElementById("settingsOsbEnabled").checked
-      gameboy.postMessage({ type: "changeSettings", settings: { soundEnabled: soundEnabled, osbEnabled: osbEnabled } }, "*");
+      soundEnabled = document.getElementById("settingsSoundEnabled").checked;
+      osbEnabled = document.getElementById("settingsOsbEnabled").checked;
+      cheats = document.getElementById("cheatcodesTextArea").value;
+      gameboy.postMessage({ type: "changeSettings", settings: { soundEnabled: soundEnabled, osbEnabled: osbEnabled, cheats: cheats } }, "*");
     });
   </script>
 </body>
