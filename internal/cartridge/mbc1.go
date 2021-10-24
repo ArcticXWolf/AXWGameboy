@@ -2,7 +2,7 @@ package cartridge
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 )
 
 type Mbc1Cartridge struct {
@@ -103,11 +103,15 @@ func (c *Mbc1Cartridge) String() string {
 	return fmt.Sprintf("%v %d %v %d", c.RamEnabled, c.RamBank, c.RamMode, c.RomBank)
 }
 
-func (c *Mbc1Cartridge) SaveRam(filename string) error {
-	return ioutil.WriteFile(filename, c.Ram, 0644)
-}
-func (c *Mbc1Cartridge) LoadRam(filename string) error {
-	var err error
-	c.Ram, err = ioutil.ReadFile(filename)
+func (c *Mbc1Cartridge) SaveRam(writer io.Writer) error {
+	_, err := writer.Write(c.Ram)
 	return err
+}
+func (c *Mbc1Cartridge) LoadRam(reader io.Reader) error {
+	var err error
+	_, err = reader.Read(c.Ram)
+	if err != io.EOF {
+		return err
+	}
+	return nil
 }

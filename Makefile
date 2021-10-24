@@ -18,7 +18,9 @@ linux:
 wasm:
 	GOOS=js GOARCH=wasm \
 		go build -o build/wasm/${BINARY}-wasm.wasm ${LDFLAGS} go.janniklasrichter.de/axwgameboy/cmd/axwgameboy
+	cp assets/gameframe.html build/wasm/
 	cp assets/index.html build/wasm/
+	cp assets/style.css build/wasm/
 	cp assets/wasm_exec.js build/wasm/
 
 wasmserver:

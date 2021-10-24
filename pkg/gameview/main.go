@@ -56,8 +56,8 @@ func (a *AXWGameboyEbitenGameView) Update() error {
 	a.handleMiscEvents(events)
 
 	if a.isTerminated {
-		if a.Gameboy.Options.SavePath != "" {
-			a.Gameboy.Memory.Cartridge.SaveRam(a.Gameboy.Options.SavePath)
+		if a.Gameboy.Options.SaveWriter != nil {
+			a.Gameboy.Memory.Cartridge.SaveRam(a.Gameboy.Options.SaveWriter)
 		}
 		return Terminated
 	}
@@ -67,6 +67,8 @@ func (a *AXWGameboyEbitenGameView) Update() error {
 	} else {
 		a.Gameboy.Inputs.ClearButtonList()
 	}
+
+	a.isOSBRequested = a.Gameboy.Options.OSBEnabled
 
 	ebiten.SetWindowTitle(fmt.Sprintf("%s (%.02f TPS)", a.Gameboy.Memory.Cartridge.CartridgeHeader().Title, ebiten.CurrentTPS()))
 

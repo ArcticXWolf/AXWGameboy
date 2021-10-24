@@ -22,9 +22,8 @@ func NewAXWGameboyViewContainer() *AXWGameboyViewContainer {
 	ag := &AXWGameboyViewContainer{
 		currentStage: GameSelection,
 	}
-
-	ag.createGameSelector()
-
+	ag.installRomLoader()
+	ag.installSettingsHandler()
 	return ag
 }
 

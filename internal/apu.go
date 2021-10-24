@@ -5,6 +5,8 @@ type Apu interface {
 	WriteByte(address uint16, value byte)
 	WriteWaveform(address uint16, value byte)
 	Buffer(cpuTicks int, speed int, cpuSpeedBoost float64)
+	IsSoundEnabled() bool
+	ToggleSound(enabled bool)
 	ToggleSoundChannel(channel int)
 	ChangeVolume(increment float64)
 }

@@ -1,10 +1,9 @@
 package internal
 
 import (
+	"bytes"
 	_ "embed"
-	"errors"
 	"fmt"
-	"os"
 
 	"go.janniklasrichter.de/axwgameboy/internal/cartridge"
 )
@@ -75,25 +74,22 @@ func NewMemory(gb *Gameboy) (*Mmu, bool, error) {
 	var cart cartridge.Cartridge
 	var err error
 
-	if gb.Options.RomPath != "" {
-		cart, err = cartridge.LoadCartridgeFromPath(gb.Options.RomPath)
-		if err != nil {
-			return nil, false, err
-		}
-	} else if len(gb.Options.RomData) != 0 {
-		cart, err = cartridge.LoadCartridgeFromByteArray(gb.Options.RomData)
-		if err != nil {
-			return nil, false, err
-		}
-	} else {
-		return nil, false, errors.New("no rom loaded")
+	cart, err = cartridge.LoadCartridge(gb.Options.RomReader)
+	if err != nil {
+		return nil, false, err
 	}
 
 	romCGBEnabled := cart.CartridgeHeader().CartridgeGBMode == cartridge.OnlyCGB || cart.CartridgeHeader().CartridgeGBMode == cartridge.SupportsCGB
 
-	if gb.Options.SavePath != "" {
-		if _, err = os.Stat(gb.Options.SavePath); err == nil {
-			err = cart.LoadRam(gb.Options.SavePath)
+	if gb.Options.SaveReader != nil {
+		buffer := new(bytes.Buffer)
+		n, err := buffer.ReadFrom(gb.Options.SaveReader)
+		if err != nil {
+			return nil, false, err
+		}
+
+		if n > 0 {
+			err = cart.LoadRam(buffer)
 			if err != nil {
 				return nil, false, err
 			}

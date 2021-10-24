@@ -1,6 +1,7 @@
 package cartridge
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/gob"
 	"errors"
@@ -8,7 +9,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"os"
 	"time"
 )
 
@@ -227,39 +227,13 @@ func (c *Mbc3Cartridge) String() string {
 	return fmt.Sprintf("%v %d %d | RTC %v %v %08b %v", c.RamEnabled, c.RamBank, c.RomBank, c.RtcEnabled, c.Rtc, c.Rtc.DaysHigherAndControl, time.Since(c.RtcLastUpdate).Milliseconds())
 }
 
-func (c *Mbc3Cartridge) SaveRam(filename string) error {
-	return c.SaveRamBGBFormat(filename)
+func (c *Mbc3Cartridge) SaveRam(writer io.Writer) error {
+	return c.SaveRamBGBFormat(writer)
 }
 
-func (c *Mbc3Cartridge) SaveRamOldAXWFormat(filename string) error {
-	saveFile := Mbc3SaveFile{
-		Ram:           c.Ram,
-		Rtc:           []byte{},
-		RtcLastUpdate: time.Now(),
-	}
-	if c.hasRTC {
-		saveFile.Rtc = []byte{c.Rtc.Seconds, c.Rtc.Minutes, c.Rtc.Hours, c.Rtc.DaysLower, c.Rtc.DaysHigherAndControl}
-		saveFile.RtcLastUpdate = c.RtcLastUpdate
-	}
-
-	dataFile, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer dataFile.Close()
-
-	e := gob.NewEncoder(dataFile)
-	return e.Encode(saveFile)
-}
-
-func (c *Mbc3Cartridge) SaveRamBGBFormat(filename string) error {
-	dataFile, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer dataFile.Close()
-
-	err = binary.Write(dataFile, binary.LittleEndian, c.Ram)
+func (c *Mbc3Cartridge) SaveRamBGBFormat(writer io.Writer) error {
+	buffer := new(bytes.Buffer)
+	err := binary.Write(buffer, binary.LittleEndian, c.Ram)
 	if err != nil {
 		return err
 	}
@@ -280,11 +254,16 @@ func (c *Mbc3Cartridge) SaveRamBGBFormat(filename string) error {
 		}
 
 		for _, v := range rtc_data {
-			err = binary.Write(dataFile, binary.LittleEndian, v)
+			err = binary.Write(buffer, binary.LittleEndian, v)
 			if err != nil {
 				return err
 			}
 		}
+	}
+
+	_, err = writer.Write(buffer.Bytes())
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -296,49 +275,29 @@ type Mbc3SaveFile struct {
 	RtcLastUpdate time.Time
 }
 
-func (c *Mbc3Cartridge) LoadRam(filename string) error {
-	dataFile, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer dataFile.Close()
-
-	fileInfo, err := dataFile.Stat()
+func (c *Mbc3Cartridge) LoadRam(reader io.Reader) error {
+	buffer := new(bytes.Buffer)
+	nRead, err := io.Copy(buffer, reader)
 	if err != nil {
 		return err
 	}
 
-	if fileInfo.Size() == int64(c.Header.RamSize)+48 {
-		log.Printf("would load with bgb sav format")
+	log.Printf("%v %v %v", nRead, err, int64(c.Header.RamSize)+48)
 
-		_, err = dataFile.Seek(0, 0)
-		if err != nil {
-			return err
-		}
-
-		return c.LoadRamBGBFormat(dataFile)
+	expectedSize := int64(c.Header.RamSize)
+	if c.hasRTC {
+		expectedSize += 48
+	}
+	if nRead == expectedSize {
+		return c.LoadRamBGBFormat(buffer)
 	}
 
-	_, err = dataFile.Seek(0, 0)
-	if err != nil {
-		return err
-	}
-
-	return c.LoadRamOldAXWFormat(dataFile)
+	return c.LoadRamOldAXWFormat(buffer)
 }
 
-func (c *Mbc3Cartridge) LoadRamBGBFormat(file *os.File) error {
-	// var data byte
+func (c *Mbc3Cartridge) LoadRamBGBFormat(reader io.Reader) error {
 	var err error
-	// for i := 0; i < c.Header.RamSize; i++ {
-	// 	err = binary.Read(file, binary.LittleEndian, data)
-	// 	if err != nil {
-	// 		log.Printf("error during reading of ram data at offset %v", i)
-	// 		return err
-	// 	}
-	// 	c.Ram[i] = data
-	// }
-	c.Ram, err = ioutil.ReadAll(io.LimitReader(file, int64(c.Header.RamSize)))
+	c.Ram, err = ioutil.ReadAll(io.LimitReader(reader, int64(c.Header.RamSize)))
 	if err != nil {
 		log.Printf("error during reading of ram data")
 		return err
@@ -360,7 +319,7 @@ func (c *Mbc3Cartridge) LoadRamBGBFormat(file *os.File) error {
 
 		var data []byte
 		for k, v := range rtcData {
-			data, err = ioutil.ReadAll(io.LimitReader(file, 4))
+			data, err = ioutil.ReadAll(io.LimitReader(reader, 4))
 			if err != nil {
 				log.Printf("error during reading of rtc data part %v", k)
 				return err
@@ -369,7 +328,7 @@ func (c *Mbc3Cartridge) LoadRamBGBFormat(file *os.File) error {
 		}
 
 		var rtcTimestamp []byte
-		rtcTimestamp, err = ioutil.ReadAll(io.LimitReader(file, 8))
+		rtcTimestamp, err = ioutil.ReadAll(io.LimitReader(reader, 8))
 		if err != nil {
 			log.Printf("error during reading of rtc timestamp")
 			return err
@@ -380,13 +339,14 @@ func (c *Mbc3Cartridge) LoadRamBGBFormat(file *os.File) error {
 	return nil
 }
 
-func (c *Mbc3Cartridge) LoadRamOldAXWFormat(file *os.File) error {
+func (c *Mbc3Cartridge) LoadRamOldAXWFormat(reader io.Reader) error {
 	var err error
 	loadFile := Mbc3SaveFile{}
 
-	d := gob.NewDecoder(file)
+	d := gob.NewDecoder(reader)
 	err = d.Decode(&loadFile)
 	if err != nil {
+		log.Printf("error during decoding of old ram format")
 		return err
 	}
 

@@ -1,9 +1,10 @@
 package cartridge
 
 import (
+	"bytes"
 	_ "embed"
 	"fmt"
-	"io/ioutil"
+	"io"
 )
 
 type Cartridge interface {
@@ -12,16 +13,16 @@ type Cartridge interface {
 	String() string
 	CartridgeInfo() string
 	CartridgeHeader() *CartridgeHeader
-	SaveRam(filename string) error
-	LoadRam(filename string) error
+	SaveRam(writer io.Writer) error
+	LoadRam(reader io.Reader) error
 	UpdateComponentsPerCycle(cycles uint16)
 }
 
-func LoadCartridgeFromPath(filename string) (Cartridge, error) {
-	data, err := LoadDataFromRomFile(filename)
-	if err != nil {
-		return nil, err
-	}
+func LoadCartridge(reader io.Reader) (Cartridge, error) {
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(reader)
+	data := buf.Bytes()
+
 	header, err := ParseHeaderFromRomData(data)
 	if err != nil {
 		return nil, err
@@ -35,14 +36,6 @@ func LoadCartridgeFromByteArray(data []byte) (Cartridge, error) {
 		return nil, err
 	}
 	return InitializeCartridge(header, data)
-}
-
-func LoadDataFromRomFile(filepath string) (data []byte, err error) {
-	data, err = ioutil.ReadFile(filepath)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
 }
 
 func ParseHeaderFromRomData(data []byte) (header *CartridgeHeader, err error) {

@@ -51,8 +51,8 @@ func NewApu() *APU {
 }
 
 // Init the sound emulation for a Gameboy.
-func (a *APU) Init(sound bool, masterVolume float64) {
-	a.playing = sound
+func (a *APU) Init(enabled bool, masterVolume float64) {
+	a.playing = false
 	a.waveformRam = make([]byte, 0x20)
 	a.masterVolume = masterVolume
 	a.audioBuffer = make([]byte, 0)
@@ -73,22 +73,63 @@ func (a *APU) Init(sound bool, masterVolume float64) {
 	a.chn3 = NewChannel()
 	a.chn4 = NewChannel()
 
-	if sound {
-		ctx := audio.CurrentContext()
-		if ctx == nil {
-			ctx = audio.NewContext(sampleRate)
-		}
-
-		a.audioContext = ctx
-		var err error
-		a.audioPlayer, err = audio.NewPlayer(a.audioContext, a)
-		if err != nil {
-			log.Panicf("could not create player: %s", err)
-		}
-
-		a.audioPlayer.SetVolume(a.masterVolume)
-		a.audioPlayer.Play()
+	a.playing = true
+	ctx := audio.CurrentContext()
+	if ctx == nil {
+		ctx = audio.NewContext(sampleRate)
 	}
+
+	a.audioContext = ctx
+	var err error
+	a.audioPlayer, err = audio.NewPlayer(a.audioContext, a)
+	if err != nil {
+		log.Panicf("could not create player: %s", err)
+	}
+
+	a.audioPlayer.SetVolume(a.masterVolume)
+	a.audioPlayer.Play()
+}
+
+func (a *APU) IsSoundEnabled() bool {
+	return a.playing
+}
+
+func (a *APU) ToggleSound(enabled bool) {
+	if a.playing && !enabled {
+		log.Println("disabled sound")
+		a.disableSound()
+	} else if !a.playing && enabled {
+		log.Println("enabled sound")
+		a.enableSound()
+	}
+}
+
+func (a *APU) enableSound() {
+	a.playing = true
+	ctx := audio.CurrentContext()
+	if ctx == nil {
+		ctx = audio.NewContext(sampleRate)
+	}
+
+	a.audioContext = ctx
+	var err error
+	a.audioPlayer, err = audio.NewPlayer(a.audioContext, a)
+	if err != nil {
+		log.Panicf("could not create player: %s", err)
+	}
+
+	a.audioPlayer.SetVolume(a.masterVolume)
+	a.audioPlayer.Play()
+}
+
+func (a *APU) disableSound() {
+	a.playing = false
+	a.audioPlayer.SetVolume(0.0)
+	a.audioPlayer.Pause()
+	a.audioPlayer.Close()
+
+	a.audioPlayer = nil
+	a.audioContext = nil
 }
 
 func (a *APU) Read(buf []byte) (int, error) {

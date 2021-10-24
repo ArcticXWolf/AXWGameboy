@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"io"
 	"log"
 	"time"
 
@@ -14,9 +15,9 @@ const (
 )
 
 type GameboyOptions struct {
-	SavePath             string
-	RomPath              string
-	RomData              []byte
+	SaveWriter           io.Writer
+	SaveReader           io.Reader
+	RomReader            io.Reader
 	Palette              string
 	SoundEnabled         bool
 	SoundVolume          float64
@@ -91,6 +92,8 @@ func (gb *Gameboy) Update(cyclesPerFrame int) {
 	gb.Inputs.HandleInput(gb)
 	gb.Inputs.ClearButtonList()
 
+	gb.Apu.ToggleSound(gb.Options.SoundEnabled)
+
 	cycles := 0
 	for cycles <= cyclesPerFrame {
 		cyclesCPU := gb.Cpu.Tick(gb)
@@ -102,7 +105,7 @@ func (gb *Gameboy) Update(cyclesPerFrame int) {
 			gb.Options.OnCycleFunction(gb)
 		}
 
-		if gb.Options.SoundEnabled {
+		if gb.Apu.IsSoundEnabled() {
 			gb.Apu.Buffer(cyclesCPU, int(gb.GetSpeedMultiplier()), float64(gb.Cpu.SpeedBoost))
 		}
 	}
@@ -112,12 +115,12 @@ func (gb *Gameboy) Update(cyclesPerFrame int) {
 	}
 
 	if time.Since(gb.LastSave) > time.Minute {
-		if gb.Options.SavePath != "" {
-			err := gb.Memory.Cartridge.SaveRam(gb.Options.SavePath)
+		if gb.Options.SaveWriter != nil {
+			err := gb.Memory.Cartridge.SaveRam(gb.Options.SaveWriter)
 			if err != nil {
 				log.Println(err)
 			}
-			gb.LastSave = time.Now()
 		}
+		gb.LastSave = time.Now()
 	}
 }

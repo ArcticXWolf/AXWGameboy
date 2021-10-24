@@ -2,7 +2,7 @@ package cartridge
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 )
 
@@ -91,11 +91,15 @@ func (c *Mbc5Cartridge) String() string {
 	return fmt.Sprintf("%v %d %d", c.RamEnabled, c.RamBank, c.RomBank)
 }
 
-func (c *Mbc5Cartridge) SaveRam(filename string) error {
-	return ioutil.WriteFile(filename, c.Ram, 0644)
-}
-func (c *Mbc5Cartridge) LoadRam(filename string) error {
-	var err error
-	c.Ram, err = ioutil.ReadFile(filename)
+func (c *Mbc5Cartridge) SaveRam(writer io.Writer) error {
+	_, err := writer.Write(c.Ram)
 	return err
+}
+func (c *Mbc5Cartridge) LoadRam(reader io.Reader) error {
+	var err error
+	_, err = reader.Read(c.Ram)
+	if err != io.EOF {
+		return err
+	}
+	return nil
 }

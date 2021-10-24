@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,14 +29,14 @@ func saveCurrentDisplayToImage(gb *Gameboy, filename string) {
 	png.Encode(f, image)
 }
 
-func executeRomUntilCompletionOrTimeout(t *testing.T, romPath string, maxExecutionCycles int, completionFunction func([]byte) (bool, bool)) {
+func executeRomUntilCompletionOrTimeout(t *testing.T, romPath string, romReader io.Reader, maxExecutionCycles int, completionFunction func([]byte) (bool, bool)) {
 	name := strings.TrimSuffix(filepath.Base(romPath), filepath.Ext(romPath))
 	t.Run(
 		name,
 		func(t *testing.T) {
 			result := make([]byte, 0)
 			options := &GameboyOptions{
-				RomPath: romPath,
+				RomReader: romReader,
 				SerialOutputFunction: func(character byte) {
 					result = append(result, character)
 				},
@@ -79,7 +80,12 @@ func executeRomDirectories(t *testing.T, romDirectories []string, maxExecutionCy
 	for _, romDirectory := range romDirectories {
 		filepath.Walk(romDirectory, func(path string, _ os.FileInfo, _ error) error {
 			if filepath.Ext(path) == ".gb" {
-				executeRomUntilCompletionOrTimeout(t, path, maxExecutionCycles, completionFunction)
+				file, err := os.Open(path)
+				if err != nil {
+					return err
+				}
+				defer file.Close()
+				executeRomUntilCompletionOrTimeout(t, path, file, maxExecutionCycles, completionFunction)
 			}
 			return nil
 		})
@@ -101,7 +107,13 @@ func TestBlarggInstrTimingRoms(t *testing.T) {
 	completionFunc := func(result []byte) (bool, bool) {
 		return strings.Contains(string(result), "Passed") || strings.Contains(string(result), "Failed"), strings.Contains(string(result), "Passed")
 	}
-	executeRomUntilCompletionOrTimeout(t, romPath, maxExecutionCycles, completionFunc)
+	file, err := os.Open(romPath)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	executeRomUntilCompletionOrTimeout(t, romPath, file, maxExecutionCycles, completionFunc)
 }
 
 func TestMooneyeRoms(t *testing.T) {

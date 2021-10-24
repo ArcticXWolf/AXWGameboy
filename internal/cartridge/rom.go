@@ -1,5 +1,7 @@
 package cartridge
 
+import "io"
+
 type RomCartridge struct {
 	BaseCartridge
 }
@@ -28,5 +30,5 @@ func (c *RomCartridge) String() string {
 	return "ROM Cartridge"
 }
 
-func (c *RomCartridge) SaveRam(filename string) error { return nil }
-func (c *RomCartridge) LoadRam(filename string) error { return nil }
+func (c *RomCartridge) SaveRam(writer io.Writer) error { return nil }
+func (c *RomCartridge) LoadRam(reader io.Reader) error { return nil }
