@@ -282,8 +282,6 @@ func (c *Mbc3Cartridge) LoadRam(reader io.Reader) error {
 		return err
 	}
 
-	log.Printf("%v %v %v", nRead, err, int64(c.Header.RamSize)+48)
-
 	expectedSize := int64(c.Header.RamSize)
 	if c.hasRTC {
 		expectedSize += 48

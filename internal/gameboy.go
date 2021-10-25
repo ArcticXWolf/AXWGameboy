@@ -116,7 +116,7 @@ func (gb *Gameboy) Update(cyclesPerFrame int) {
 		gb.Options.OnFrameFunction(gb)
 	}
 
-	if time.Since(gb.LastSave) > time.Minute {
+	if time.Since(gb.LastSave) > time.Second {
 		if gb.Options.SaveWriter != nil {
 			err := gb.Memory.Cartridge.SaveRam(gb.Options.SaveWriter)
 			if err != nil {

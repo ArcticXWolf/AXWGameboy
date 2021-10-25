@@ -41,11 +41,11 @@
         </thead>
         <tbody>
           <tr>
-            <td><kbd>Y</kbd>/<kbd>Z</kbd></td>
+            <td><kbd>A</kbd></td>
             <td>A button</td>
           </tr>
           <tr>
-            <td><kbd>X</kbd></td>
+            <td><kbd>S</kbd></td>
             <td>B button</td>
           </tr>
           <tr>
@@ -57,7 +57,7 @@
             <td>Select button</td>
           </tr>
           <tr>
-            <td><kbd>←</kbd> <kbd>↑</kbd> <kbd>↓</kbd> <kbd>→</kbd></td>
+            <td><kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&darr;</kbd> <kbd>&rarr;</kbd></td>
             <td>Arrow buttons</td>
           </tr>
           <tr>
@@ -67,10 +67,6 @@
           <tr>
             <td><kbd>P</kbd></td>
             <td>Pause game</td>
-          </tr>
-          <tr>
-            <td><kbd>Escape</kbd></td>
-            <td>Close emulator</td>
           </tr>
           <tr>
             <td><kbd>+</kbd></td>
@@ -97,15 +93,11 @@
             <td>Toggle sound channel 4</td>
           </tr>
           <tr>
-            <td><kbd>d</kbd></td>
-            <td>Pause execution and enter debug mode in console</td>
-          </tr>
-          <tr>
-            <td><kbd>t</kbd></td>
+            <td><kbd>T</kbd></td>
             <td>Toggle tilemap0</td>
           </tr>
           <tr>
-            <td><kbd>Z</kbd>/<kbd>Y</kbd></td>
+            <td><kbd>G</kbd></td>
             <td>Toggle tilemap1</td>
         </tbody>
       </table>
@@ -136,6 +128,7 @@
         osbEnabled = document.getElementById("settingsOsbEnabled").checked
         gameboy.postMessage({ type: "loadRom", data: reader.result, settings: { soundEnabled: soundEnabled, osbEnabled: osbEnabled } }, "*");
         closeNav();
+        gameboy.focus();
       };
       reader.readAsBinaryString(file);
     };

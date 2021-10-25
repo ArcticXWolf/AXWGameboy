@@ -158,7 +158,7 @@ func (m *Mmu) ReadByte(address uint16) (result uint8) {
 					return m.serialOutput
 				}
 				if address == 0xFF02 {
-					return 0x00
+					return 0x7E
 				}
 				if address >= 0xFF04 && address <= 0xFF07 {
 					return m.gb.Timer.ReadByte(address)
