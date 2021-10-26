@@ -17,6 +17,8 @@
   window.addEventListener("message", msg => {
     if (msg.data.type == "loadRom") {
       window.loadROM(msg.data.data, msg.data.settings);
+    } else if (msg.data.type == "loadSave") {
+      window.loadSave(msg.data.data, msg.data.settings);
     } else if (msg.data.type == "changeSettings") {
       window.changeSettings(msg.data.settings);
     }

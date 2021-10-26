@@ -64,6 +64,10 @@ html, body, #game {
   max-width: 300px;
 }
 
+#settingsWhileLoaded {
+  display: none;
+}
+
 #settings h1, #settings h2 {
   color: #ffffff;
   text-align: center;
@@ -89,6 +93,19 @@ html, body, #game {
 }
 
 #settings #romData {
+	display: none;
+}
+
+#settings #saveDataLabel {
+	display: block;
+	padding: 20px;
+	margin: 10px;
+	color: #ffffff;
+	border: 2px solid #ffffff;
+	text-align: center;
+}
+
+#settings #saveData {
 	display: none;
 }
 

@@ -15,21 +15,27 @@
       <label for="romData" id="romDataLabel">Load ROM from File</label>
       <input type="file" name="romData" id="romData" onchange="handleROM(this.files[0])" />
     </form>
-    <h2>Settings</h2>
-    <form id="settingsHandler">
-      <div class="checkboxSettings">
-        <input type="checkbox" checked="checked" name="settingsSoundEnabled" id="settingsSoundEnabled" />
-        <label for="settingsSoundEnabled">Toggle Sound</label>
-      </div>
-      <div class="checkboxSettings">
-        <input type="checkbox" checked="checked" name="settingsOsbEnabled" id="settingsOsbEnabled" />
-        <label for="settingsOsbEnabled">Toggle OnScreenButtons</label>
-      </div>
-      <h2>Cheatcodes</h2>
-      <div class="cheatcodes">
-        <textarea id="cheatcodesTextArea"></textarea>
-      </div>
-    </form>
+    <div id="settingsWhileLoaded">
+      <form id="saveLoader">
+        <label for="saveData" id="saveDataLabel">Import savegame and restart</label>
+        <input type="file" name="saveData" id="saveData" onchange="handleSave(this.files[0])" />
+      </form>
+      <h2>Settings</h2>
+      <form id="settingsHandler">
+        <div class="checkboxSettings">
+          <input type="checkbox" checked="checked" name="settingsSoundEnabled" id="settingsSoundEnabled" />
+          <label for="settingsSoundEnabled">Toggle Sound</label>
+        </div>
+        <div class="checkboxSettings">
+          <input type="checkbox" checked="checked" name="settingsOsbEnabled" id="settingsOsbEnabled" />
+          <label for="settingsOsbEnabled">Toggle OnScreenButtons</label>
+        </div>
+        <h2>Cheatcodes</h2>
+        <div class="cheatcodes">
+          <textarea id="cheatcodesTextArea"></textarea>
+        </div>
+      </form>
+    </div>
     <h2>Keybindings for PC</h2>
     <div class="keybindings">
       <table>
@@ -127,6 +133,19 @@
         soundEnabled = document.getElementById("settingsSoundEnabled").checked
         osbEnabled = document.getElementById("settingsOsbEnabled").checked
         gameboy.postMessage({ type: "loadRom", data: reader.result, settings: { soundEnabled: soundEnabled, osbEnabled: osbEnabled } }, "*");
+        closeNav();
+        document.getElementById("settingsWhileLoaded").style.display = "block";
+        gameboy.focus();
+      };
+      reader.readAsBinaryString(file);
+    };
+
+    function handleSave(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        soundEnabled = document.getElementById("settingsSoundEnabled").checked
+        osbEnabled = document.getElementById("settingsOsbEnabled").checked
+        gameboy.postMessage({ type: "loadSave", data: reader.result }, "*");
         closeNav();
         gameboy.focus();
       };

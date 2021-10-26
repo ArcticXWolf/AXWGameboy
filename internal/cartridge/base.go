@@ -20,3 +20,7 @@ func (b *BaseCartridge) CartridgeHash() [32]byte {
 func (b *BaseCartridge) CartridgeHeader() *CartridgeHeader {
 	return b.Header
 }
+
+func (b *BaseCartridge) GetBinaryData() []byte {
+	return b.BinaryData
+}

@@ -13,6 +13,7 @@ type Cartridge interface {
 	String() string
 	CartridgeInfo() string
 	CartridgeHeader() *CartridgeHeader
+	GetBinaryData() []byte
 	SaveRam(writer io.Writer) error
 	LoadRam(reader io.Reader) error
 	UpdateComponentsPerCycle(cycles uint16)

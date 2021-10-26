@@ -22,6 +22,7 @@ type GameGenieCode struct {
 	CompareData     uint8
 	ReplacementData uint8
 	Checksum        uint8
+	Code            string
 }
 
 func NewGameGenieCodeFromString(codeString string) (*GameGenieCode, error) {
@@ -67,6 +68,7 @@ type GameSharkCode struct {
 	MemoryAddress   uint16
 	ReplacementData uint8
 	Type            uint8
+	Code            string
 }
 
 func NewGameSharkCodeFromString(codeString string) (*GameSharkCode, error) {
@@ -170,4 +172,17 @@ func (c *CheatCodeManager) ApplyGameShark(gb *Gameboy) {
 
 		gb.Memory.WriteByte(v.MemoryAddress, v.ReplacementData)
 	}
+}
+
+func (c *CheatCodeManager) GetCodeList() string {
+	var codeList string
+
+	for _, v := range c.genieCodes {
+		codeList = fmt.Sprintf("%s%s\n", codeList, v.Code)
+	}
+	for _, v := range c.sharkCodes {
+		codeList = fmt.Sprintf("%s%s\n", codeList, v.Code)
+	}
+
+	return codeList
 }

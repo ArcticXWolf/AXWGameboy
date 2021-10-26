@@ -24,6 +24,7 @@ func NewAXWGameboyViewContainer() *AXWGameboyViewContainer {
 	}
 	ag.installRomLoader()
 	ag.installSettingsHandler()
+	ag.installSavegameHandler()
 	return ag
 }
 
