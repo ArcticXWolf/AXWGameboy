@@ -1,0 +1,167 @@
+html, body, #game {
+	width: 100%;
+	height: 100%;
+	padding: 0;
+	margin: 0;
+	position: relative;
+	overflow: hidden;
+}
+
+#menuToggle {
+	display: block;
+	width: 33px;
+	height: 22px;
+	padding: 14px 10px;
+	background: transparent;
+	position: absolute;
+	top: 0;
+	right: 0;
+	z-index: 1;
+	opacity: 0.2;
+}
+
+#menuToggle span
+{
+  display: block;
+  width: 33px;
+  height: 4px;
+  margin-bottom: 5px;
+  position: relative;
+  
+  background: #ffffff;
+  border-radius: 3px;
+  
+  
+  transform-origin: 4px 0px;
+  
+  transition: transform 0.5s cubic-bezier(0.77,0.2,0.05,1.0),
+              background 0.5s cubic-bezier(0.77,0.2,0.05,1.0),
+              opacity 0.55s ease;
+}
+
+#menuToggle span:first-child
+{
+  transform-origin: 0% 0%;
+}
+
+#menuToggle span:nth-last-child(2)
+{
+  transform-origin: 0% 100%;
+}
+
+/* The side navigation menu */
+#settings {
+  height: 100%; /* 100% Full-height */
+  width: 100%; /* 0 width - change this with JavaScript */
+  position: fixed; /* Stay in place */
+  z-index: 2; /* Stay on top */
+  top: 0; /* Stay at the top */
+  left: 0;
+  background-color: #111; /* Black*/
+  overflow-x: hidden; /* Disable horizontal scroll */
+  padding-top: 60px; /* Place content 60px from the top */
+  transition: 0.5s; /* 0.5 second transition effect to slide in the sidenav */
+  max-width: 300px;
+}
+
+#settingsWhileLoaded {
+  display: none;
+}
+
+#settings h1, #settings h2 {
+  color: #ffffff;
+  text-align: center;
+}
+
+#settings .closebtn, #settings .closebtn:visited {
+  position: absolute;
+  top: 0;
+  right: 10px;
+  font-size: 36px;
+  margin-left: 50px;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+#settings #romDataLabel {
+	display: block;
+	padding: 20px;
+	margin: 10px;
+	color: #ffffff;
+	border: 2px solid #ffffff;
+	text-align: center;
+}
+
+#settings #romData {
+	display: none;
+}
+
+#settings #saveDataLabel {
+	display: block;
+	padding: 20px;
+	margin: 10px;
+	color: #ffffff;
+	border: 2px solid #ffffff;
+	text-align: center;
+}
+
+#settings #saveData {
+	display: none;
+}
+
+#settings .checkboxSettings {
+  width: 100%;
+}
+
+#settings .checkboxSettings input {
+  display: none;
+}
+
+#settings .checkboxSettings label {
+	display: block;
+	padding: 20px;
+	margin: 10px;
+	color: #bb7777;
+	border: 2px solid #bb7777;
+	text-align: center;
+}
+
+#settings .checkboxSettings input:checked + label {
+	color: #77bb77;
+	border: 2px solid #77bb77;
+}
+
+#settings .cheatcodes {
+  margin: 10px;
+}
+
+#settings .cheatcodes textarea {
+  width: 100%;
+  height: 200px;
+}
+
+.keybindings {
+  color: #ffffff;
+}
+
+.keybindings table {
+  margin: 10px;
+}
+.keybindings table th:first-child {
+  width: 35%;
+}
+
+kbd {
+  display: inline-block;
+  padding: 3px 5px;
+  font: 11px ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
+  line-height: normal;
+  line-height: 10px;
+  color: #ffffff;
+  vertical-align: middle;
+  background-color: #1d1d1d;
+  border: solid 1px #dddddd;
+  border-bottom-color: #dddddd;
+  border-radius: 6px;
+  box-shadow: inset 0 -1px 0 #dddddd;
+}

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>AXWGameboy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="black" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <link rel="apple-touch-icon" href="icons/152.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="AXWGameboy">
+  <meta name="msapplication-TileImage" content="icons/144.png">
+  <meta name="msapplication-TileColor" content="#000000">
+</head>
+
+<body>
+  <div id="settings">
+    <h1>AXWGameboy</h1>
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+    <form id="romLoader">
+      <label for="romData" id="romDataLabel">Load ROM from File</label>
+      <input type="file" name="romData" id="romData" onchange="handleROM(this.files[0])" />
+    </form>
+    <div id="settingsWhileLoaded">
+      <form id="saveLoader">
+        <label for="saveData" id="saveDataLabel">Import savegame and restart</label>
+        <input type="file" name="saveData" id="saveData" onchange="handleSave(this.files[0])" />
+      </form>
+      <h2>Settings</h2>
+      <form id="settingsHandler">
+        <div class="checkboxSettings">
+          <input type="checkbox" checked="checked" name="settingsSoundEnabled" id="settingsSoundEnabled" />
+          <label for="settingsSoundEnabled">Toggle Sound</label>
+        </div>
+        <div class="checkboxSettings">
+          <input type="checkbox" checked="checked" name="settingsOsbEnabled" id="settingsOsbEnabled" />
+          <label for="settingsOsbEnabled">Toggle OnScreenButtons</label>
+        </div>
+        <h2>Cheatcodes</h2>
+        <div class="cheatcodes">
+          <textarea id="cheatcodesTextArea"></textarea>
+        </div>
+      </form>
+    </div>
+    <h2>Keybindings for PC</h2>
+    <div class="keybindings">
+      <table>
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><kbd>A</kbd></td>
+            <td>A button</td>
+          </tr>
+          <tr>
+            <td><kbd>S</kbd></td>
+            <td>B button</td>
+          </tr>
+          <tr>
+            <td><kbd>Space</kbd></td>
+            <td>Start button</td>
+          </tr>
+          <tr>
+            <td><kbd>LeftAlt</kbd></td>
+            <td>Select button</td>
+          </tr>
+          <tr>
+            <td><kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&darr;</kbd> <kbd>&rarr;</kbd></td>
+            <td>Arrow buttons</td>
+          </tr>
+          <tr>
+            <td><kbd>LeftShift</kbd></td>
+            <td>Speedboost (3x Speed)</td>
+          </tr>
+          <tr>
+            <td><kbd>P</kbd></td>
+            <td>Pause game</td>
+          </tr>
+          <tr>
+            <td><kbd>+</kbd></td>
+            <td>Increase volume</td>
+          </tr>
+          <tr>
+            <td><kbd>-</kbd></td>
+            <td>Decrease volume</td>
+          </tr>
+          <tr>
+            <td><kbd>1</kbd></td>
+            <td>Toggle sound channel 1</td>
+          </tr>
+          <tr>
+            <td><kbd>2</kbd></td>
+            <td>Toggle sound channel 2</td>
+          </tr>
+          <tr>
+            <td><kbd>3</kbd></td>
+            <td>Toggle sound channel 3</td>
+          </tr>
+          <tr>
+            <td><kbd>4</kbd></td>
+            <td>Toggle sound channel 4</td>
+          </tr>
+          <tr>
+            <td><kbd>T</kbd></td>
+            <td>Toggle tilemap0</td>
+          </tr>
+          <tr>
+            <td><kbd>G</kbd></td>
+            <td>Toggle tilemap1</td>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div id="menuToggle" onclick="openNav()">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+  <iframe src="gameframe.html" id="game" scrolling="no" allow="autoplay"></iframe>
+  <script>
+    /* Open the sidenav */
+    function openNav() {
+      document.getElementById("settings").style.width = "100%";
+    }
+
+    /* Close/hide the sidenav */
+    function closeNav() {
+      document.getElementById("settings").style.width = "0";
+    }
+
+    gameboy = document.getElementById("game").contentWindow;
+    function handleROM(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        soundEnabled = document.getElementById("settingsSoundEnabled").checked
+        osbEnabled = document.getElementById("settingsOsbEnabled").checked
+        gameboy.postMessage({ type: "loadRom", data: reader.result, settings: { soundEnabled: soundEnabled, osbEnabled: osbEnabled } }, "*");
+        closeNav();
+        document.getElementById("settingsWhileLoaded").style.display = "block";
+        gameboy.focus();
+      };
+      reader.readAsBinaryString(file);
+    };
+
+    function handleSave(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        soundEnabled = document.getElementById("settingsSoundEnabled").checked
+        osbEnabled = document.getElementById("settingsOsbEnabled").checked
+        gameboy.postMessage({ type: "loadSave", data: reader.result }, "*");
+        closeNav();
+        gameboy.focus();
+      };
+      reader.readAsBinaryString(file);
+    };
+
+    document.getElementById("settingsHandler").addEventListener("change", function () {
+      soundEnabled = document.getElementById("settingsSoundEnabled").checked;
+      osbEnabled = document.getElementById("settingsOsbEnabled").checked;
+      cheats = document.getElementById("cheatcodesTextArea").value;
+      gameboy.postMessage({ type: "changeSettings", settings: { soundEnabled: soundEnabled, osbEnabled: osbEnabled, cheats: cheats } }, "*");
+    });
+
+    window.onload = () => {
+      'use strict';
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js');
+      }
+    }
+  </script>
+</body>
+
+</html>
