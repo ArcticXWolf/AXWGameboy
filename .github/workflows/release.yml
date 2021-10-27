@@ -18,6 +18,19 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: "^1.17.2"
+      - name: Add bootrom folder
+        shell: bash
+        run: 'mkdir -p internal/bootroms/'
+      - name: Add cgb bootrom
+        shell: bash
+        run: 'echo "$BOOTROM_SECRET_CGB" | base64 -d > internal/bootroms/cgb_bios.bin'
+        env:
+          BOOTROM_SECRET_CGB: ${{secrets.BOOTROM_SECRET_CGB}}
+      - name: Add dmg bootrom
+        shell: bash
+        run: 'echo "$BOOTROM_SECRET_DMG" | base64 -d > internal/bootroms/dmg_bios.bin'
+        env:
+          BOOTROM_SECRET_DMG: ${{secrets.BOOTROM_SECRET_DMG}}
       - name: Build
         run: make build
       - name: Deploy
