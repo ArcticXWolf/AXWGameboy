@@ -17,6 +17,7 @@ type Cartridge interface {
 	SaveRam(writer io.Writer) error
 	LoadRam(reader io.Reader) error
 	UpdateComponentsPerCycle(cycles uint16)
+	GetRamBank() uint8
 }
 
 func LoadCartridge(reader io.Reader) (Cartridge, error) {

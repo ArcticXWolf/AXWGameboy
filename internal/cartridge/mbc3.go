@@ -365,3 +365,5 @@ func (c *Mbc3Cartridge) LoadRamOldAXWFormat(reader io.Reader) error {
 
 	return err
 }
+
+func (c *Mbc3Cartridge) GetRamBank() uint8 { return uint8(c.RamBank) }

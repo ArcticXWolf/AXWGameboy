@@ -32,3 +32,5 @@ func (c *RomCartridge) String() string {
 
 func (c *RomCartridge) SaveRam(writer io.Writer) error { return nil }
 func (c *RomCartridge) LoadRam(reader io.Reader) error { return nil }
+
+func (c *RomCartridge) GetRamBank() uint8 { return 0 }

@@ -57,6 +57,7 @@ func NewGameGenieCodeFromString(codeString string) (*GameGenieCode, error) {
 		CompareData:     uint8(compareData),
 		ReplacementData: uint8(replacementData),
 		Checksum:        uint8(checksum),
+		Code:            codeString,
 	}, nil
 }
 
@@ -67,7 +68,7 @@ func (g *GameGenieCode) String() string {
 type GameSharkCode struct {
 	MemoryAddress   uint16
 	ReplacementData uint8
-	Type            uint8
+	RamBank         uint8
 	Code            string
 }
 
@@ -86,20 +87,24 @@ func NewGameSharkCodeFromString(codeString string) (*GameSharkCode, error) {
 		return nil, errors.New("invalid gameshark code given - could not parse memory address")
 	}
 
-	codeType, err := strconv.ParseUint(codeString[0:2], 16, 8)
+	ramBank, err := strconv.ParseUint(codeString[0:2], 16, 8)
 	if err != nil {
-		return nil, errors.New("invalid gameshark code given - could not parse type")
+		return nil, errors.New("invalid gameshark code given - could not parse rambank")
+	}
+	if ramBank >= 0x80 {
+		ramBank = ramBank & 0xF0
 	}
 
 	return &GameSharkCode{
 		MemoryAddress:   uint16(memoryAddress),
 		ReplacementData: uint8(replacementData),
-		Type:            uint8(codeType),
+		RamBank:         uint8(ramBank),
+		Code:            codeString,
 	}, nil
 }
 
 func (g *GameSharkCode) String() string {
-	return fmt.Sprintf("Code (Address 0x%04x, replace with 0x%02x, type 0x%02x)", g.MemoryAddress, g.ReplacementData, g.Type)
+	return fmt.Sprintf("Code (Address 0x%04x, replace with 0x%02x, type 0x%02x)", g.MemoryAddress, g.ReplacementData, g.RamBank)
 }
 
 func (c *CheatCodeManager) ReplaceCodeList(reader io.Reader) {
@@ -109,7 +114,9 @@ func (c *CheatCodeManager) ReplaceCodeList(reader io.Reader) {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if len([]rune(line)) == 11 {
+		if len([]rune(line)) == 0 || line == "<undefined>" {
+			continue
+		} else if len([]rune(line)) == 11 && line[3:4] == "-" {
 			code, err := NewGameGenieCodeFromString(line)
 			if err != nil {
 				log.Printf("error parsing code %s - %s \n", line, err)
@@ -162,14 +169,17 @@ func (c *CheatCodeManager) ApplyGameShark(gb *Gameboy) {
 	}
 
 	for _, v := range c.sharkCodes {
-		if v.Type != 0x01 {
-			continue
-		}
-
 		if v.MemoryAddress < 0xA000 || v.MemoryAddress >= 0xE000 {
 			continue
 		}
 
+		if v.MemoryAddress >= 0xA000 && v.MemoryAddress < 0xC000 {
+			if gb.Memory.Cartridge.GetRamBank() != v.RamBank {
+				continue
+			}
+		}
+
+		log.Printf("replacing value at %x with %x (rambank %x) \n", v.MemoryAddress, v.ReplacementData, v.RamBank)
 		gb.Memory.WriteByte(v.MemoryAddress, v.ReplacementData)
 	}
 }

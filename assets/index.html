@@ -1,10 +1,20 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+  <meta charset="utf-8">
   <title>AXWGameboy</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" type="text/css" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="black" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <link rel="apple-touch-icon" href="icons/152.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="AXWGameboy">
+  <meta name="msapplication-TileImage" content="icons/144.png">
+  <meta name="msapplication-TileColor" content="#000000">
 </head>
 
 <body>
@@ -158,6 +168,14 @@
       cheats = document.getElementById("cheatcodesTextArea").value;
       gameboy.postMessage({ type: "changeSettings", settings: { soundEnabled: soundEnabled, osbEnabled: osbEnabled, cheats: cheats } }, "*");
     });
+
+    window.onload = () => {
+      'use strict';
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js');
+      }
+    }
   </script>
 </body>
 

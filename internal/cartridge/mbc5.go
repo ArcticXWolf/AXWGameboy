@@ -103,3 +103,5 @@ func (c *Mbc5Cartridge) LoadRam(reader io.Reader) error {
 	}
 	return nil
 }
+
+func (c *Mbc5Cartridge) GetRamBank() uint8 { return uint8(c.RamBank) }
