@@ -1,6 +1,6 @@
-var cacheName = 'axwgameboy-pwa';
+const CURRENT_CACHE = 'axwgameboy-pwa';
 
-var filesToCache = [
+const filesToCache = [
     "/",
     "/index.html",
     "/gameframe.html",
@@ -9,18 +9,57 @@ var filesToCache = [
     "/axwgameboy-wasm.wasm",
 ];
 
+self.addEventListener('activate', evt =>
+    evt.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cacheName => {
+                    if (cacheName !== CURRENT_CACHE) {
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        })
+    )
+);
+
 self.addEventListener('install', function (e) {
     e.waitUntil(
-        caches.open(cacheName).then(function (cache) {
+        caches.open(CURRENT_CACHE).then(function (cache) {
             return cache.addAll(filesToCache);
         })
     );
 });
 
-self.addEventListener('fetch', function (e) {
-    e.respondWith(
-        caches.match(e.request).then(function (response) {
-            return response || fetch(e.request);
-        })
+const fromNetwork = (request, timeout) =>
+    new Promise((fulfill, reject) => {
+        const timeoutId = setTimeout(reject, timeout);
+        fetch(request).then(response => {
+            clearTimeout(timeoutId);
+            fulfill(response);
+            update(request);
+        }, reject);
+    });
+
+const fromCache = request =>
+    caches
+        .open(CURRENT_CACHE)
+        .then(cache =>
+            cache
+                .match(request)
+                .then(matching => matching || cache.match('/offline/'))
+        );
+
+const update = request =>
+    caches
+        .open(CURRENT_CACHE)
+        .then(cache =>
+            fetch(request).then(response => cache.put(request, response))
+        );
+
+self.addEventListener('fetch', evt => {
+    evt.respondWith(
+        fromNetwork(evt.request, 10000).catch(() => fromCache(evt.request))
     );
+    evt.waitUntil(update(evt.request));
 });

@@ -1,19 +1,24 @@
 package internal
 
 import (
+	"fmt"
 	"image/color"
 )
 
 type SpriteObject struct {
-	x                int
-	y                int
-	tile             uint8
-	useSecondPalette bool
-	xflip            bool
-	yflip            bool
-	priority         bool
-	vramBank         int
-	cgbPalette       int
+	X                int
+	Y                int
+	Tile             uint8
+	UseSecondPalette bool
+	Xflip            bool
+	Yflip            bool
+	Priority         bool
+	VramBank         int
+	CgbPalette       int
+}
+
+func (s *SpriteObject) String() string {
+	return fmt.Sprintf("Sprite X%d Y%d T%d V%d P%d", s.X, s.Y, s.Tile, s.VramBank, s.CgbPalette)
 }
 
 type TileAttributes struct {
@@ -115,8 +120,8 @@ func NewGpu(gb *Gameboy) *Gpu {
 
 	for i := 0; i < len(g.SpriteObjectData); i++ {
 		g.SpriteObjectData[i] = SpriteObject{
-			x: -8,
-			y: -16,
+			X: -8,
+			Y: -16,
 		}
 	}
 	for i := 0; i < len(g.TileAttributes); i++ {
@@ -523,31 +528,31 @@ func (g *Gpu) updateSpriteObject(address uint16, value uint8) {
 	if objectId < uint16(len(g.SpriteObjectData)) {
 		switch address & 0x3 {
 		case 0:
-			g.SpriteObjectData[objectId].y = int(value) - 16
+			g.SpriteObjectData[objectId].Y = int(value) - 16
 		case 1:
-			g.SpriteObjectData[objectId].x = int(value) - 8
+			g.SpriteObjectData[objectId].X = int(value) - 8
 		case 2:
-			g.SpriteObjectData[objectId].tile = value
+			g.SpriteObjectData[objectId].Tile = value
 		case 3:
-			g.SpriteObjectData[objectId].useSecondPalette = false
-			g.SpriteObjectData[objectId].xflip = false
-			g.SpriteObjectData[objectId].yflip = false
-			g.SpriteObjectData[objectId].priority = false
+			g.SpriteObjectData[objectId].UseSecondPalette = false
+			g.SpriteObjectData[objectId].Xflip = false
+			g.SpriteObjectData[objectId].Yflip = false
+			g.SpriteObjectData[objectId].Priority = false
 			if value&0x10 > 0 {
-				g.SpriteObjectData[objectId].useSecondPalette = true
+				g.SpriteObjectData[objectId].UseSecondPalette = true
 			}
 			if value&0x20 > 0 {
-				g.SpriteObjectData[objectId].xflip = true
+				g.SpriteObjectData[objectId].Xflip = true
 			}
 			if value&0x40 > 0 {
-				g.SpriteObjectData[objectId].yflip = true
+				g.SpriteObjectData[objectId].Yflip = true
 			}
 			if value&0x80 == 0 {
-				g.SpriteObjectData[objectId].priority = true
+				g.SpriteObjectData[objectId].Priority = true
 			}
 			if g.gb.CgbModeEnabled {
-				g.SpriteObjectData[objectId].cgbPalette = int(value & 0x7)
-				g.SpriteObjectData[objectId].vramBank = int((value >> 3) & 0x1)
+				g.SpriteObjectData[objectId].CgbPalette = int(value & 0x7)
+				g.SpriteObjectData[objectId].VramBank = int((value >> 3) & 0x1)
 			}
 		}
 	}
@@ -762,7 +767,7 @@ func (g *Gpu) renderSprites(gb *Gameboy, scanrow [ScreenWidth]byte) {
 			ySize = 16
 		}
 
-		if spriteObject.y > int(g.CurrentScanline) || spriteObject.y+ySize <= int(g.CurrentScanline) {
+		if spriteObject.Y > int(g.CurrentScanline) || spriteObject.Y+ySize <= int(g.CurrentScanline) {
 			continue
 		}
 		if spriteCount >= 10 {
@@ -772,26 +777,26 @@ func (g *Gpu) renderSprites(gb *Gameboy, scanrow [ScreenWidth]byte) {
 
 		palette := g.SpritePaletteMap[0]
 		paletteColors := g.SpritePaletteColors[0]
-		if spriteObject.useSecondPalette {
+		if spriteObject.UseSecondPalette {
 			palette = g.SpritePaletteMap[1]
 			paletteColors = g.SpritePaletteColors[1]
 		}
 
-		tilerowIndex := g.CurrentScanline - uint8(spriteObject.y)
-		if spriteObject.yflip {
+		tilerowIndex := g.CurrentScanline - uint8(spriteObject.Y)
+		if spriteObject.Yflip {
 			tilerowIndex = uint8(ySize) - tilerowIndex - 1
 		}
 		tilerowIndex = tilerowIndex % 8
-		tileId := uint16(spriteObject.tile)
+		tileId := uint16(spriteObject.Tile)
 		if g.bigSpritesActivated {
-			if g.CurrentScanline-uint8(spriteObject.y) < 8 {
-				if spriteObject.yflip {
+			if g.CurrentScanline-uint8(spriteObject.Y) < 8 {
+				if spriteObject.Yflip {
 					tileId |= 0x01
 				} else {
 					tileId &= 0xFE
 				}
 			} else {
-				if spriteObject.yflip {
+				if spriteObject.Yflip {
 					tileId &= 0xFE
 				} else {
 					tileId |= 0x01
@@ -799,19 +804,19 @@ func (g *Gpu) renderSprites(gb *Gameboy, scanrow [ScreenWidth]byte) {
 			}
 		}
 		if g.gb.CgbModeEnabled {
-			tileId += uint16(384 * spriteObject.vramBank)
+			tileId += uint16(384 * spriteObject.VramBank)
 		}
 		tilerow := g.TileSet[tileId][tilerowIndex]
 
 		for x := 0; x < 8; x++ {
 			// skip pixels out of bounds
-			pixelPos := spriteObject.x + x
+			pixelPos := spriteObject.X + x
 			if pixelPos < 0 || pixelPos >= ScreenWidth {
 				continue
 			}
 
 			pixelPaletteColor := tilerow[x]
-			if spriteObject.xflip {
+			if spriteObject.Xflip {
 				pixelPaletteColor = tilerow[7-x]
 			}
 
@@ -821,7 +826,7 @@ func (g *Gpu) renderSprites(gb *Gameboy, scanrow [ScreenWidth]byte) {
 			}
 
 			// skip pixels without priority that are hidden by BG
-			if !spriteObject.priority || g.TileBGPriority[pixelPos][g.CurrentScanline] && scanrow[pixelPos] != 0 {
+			if !(spriteObject.Priority && !g.TileBGPriority[pixelPos][g.CurrentScanline]) && scanrow[pixelPos] != 0 {
 				continue
 			}
 
@@ -832,7 +837,7 @@ func (g *Gpu) renderSprites(gb *Gameboy, scanrow [ScreenWidth]byte) {
 				}
 			} else {
 				// skip if pixel is occupied by sprite with lower x coordinate
-				if spriteXPerScreenPixel[pixelPos] != 0 && spriteXPerScreenPixel[pixelPos] <= spriteObject.x+spriteXPixelComparisonOffset {
+				if spriteXPerScreenPixel[pixelPos] != 0 && spriteXPerScreenPixel[pixelPos] <= spriteObject.X+spriteXPixelComparisonOffset {
 					continue
 				}
 			}
@@ -840,14 +845,14 @@ func (g *Gpu) renderSprites(gb *Gameboy, scanrow [ScreenWidth]byte) {
 			pixelRealColor := palette[pixelPaletteColor]
 			red, green, blue, _ := paletteColors[pixelRealColor].RGBA()
 			if g.gb.CgbModeEnabled {
-				palette := spriteObject.cgbPalette
-				red, green, blue, _ = g.CgbObjPaletteColors[palette][pixelPaletteColor].RGBA()
+				cgbPalette := spriteObject.CgbPalette
+				red, green, blue, _ = g.CgbObjPaletteColors[cgbPalette][pixelPaletteColor].RGBA()
 			}
 			gb.WorkingScreen[pixelPos][g.CurrentScanline][0] = uint8(red)
 			gb.WorkingScreen[pixelPos][g.CurrentScanline][1] = uint8(green)
 			gb.WorkingScreen[pixelPos][g.CurrentScanline][2] = uint8(blue)
 
-			spriteXPerScreenPixel[pixelPos] = spriteObject.x + spriteXPixelComparisonOffset
+			spriteXPerScreenPixel[pixelPos] = spriteObject.X + spriteXPixelComparisonOffset
 		}
 	}
 }
@@ -863,8 +868,8 @@ func (g *Gpu) Reset(gb *Gameboy) {
 
 	for i := 0; i < len(g.SpriteObjectData); i++ {
 		g.SpriteObjectData[i] = SpriteObject{
-			x: -8,
-			y: -16,
+			X: -8,
+			Y: -16,
 		}
 	}
 }

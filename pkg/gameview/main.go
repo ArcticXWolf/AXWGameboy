@@ -57,6 +57,10 @@ func NewAXWGameboyEbitenGameView(options *internal.GameboyOptions) *AXWGameboyEb
 				Y:     260,
 				MapId: 1,
 			},
+			&debugscreens.SpriteList{
+				X: 0,
+				Y: 300,
+			},
 		},
 	}
 

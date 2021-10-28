@@ -15,7 +15,7 @@ type PaletteList struct {
 func (t *PaletteList) GetXPos() int   { return t.X }
 func (t *PaletteList) GetYPos() int   { return t.Y }
 func (t *PaletteList) GetWidth() int  { return 4 * 10 }
-func (t *PaletteList) GetHeight() int { return 19 * 10 }
+func (t *PaletteList) GetHeight() int { return 19 * 11 }
 
 func (t *PaletteList) GetPaletteListAsBytearray(gb *internal.Gameboy) []byte {
 	var frame []byte = make([]byte, 4*t.GetWidth()*t.GetHeight())
@@ -25,7 +25,7 @@ func (t *PaletteList) GetPaletteListAsBytearray(gb *internal.Gameboy) []byte {
 	for c := 0; c < 4; c++ {
 		for x := 0; x < 10; x++ {
 			for y := 0; y < 10; y++ {
-				pixelPos := (paletteId*10+y)*t.GetWidth() + (c*10 + x)
+				pixelPos := (paletteId*11+y)*t.GetWidth() + (c*10 + x)
 				pixelPalette := gb.Gpu.BgPaletteMap[c]
 				red, green, blue, _ := gb.Gpu.BgPaletteColors[pixelPalette].RGBA()
 				if 4*pixelPos+3 < len(frame) {
@@ -41,7 +41,7 @@ func (t *PaletteList) GetPaletteListAsBytearray(gb *internal.Gameboy) []byte {
 	for c := 0; c < 4; c++ {
 		for x := 0; x < 10; x++ {
 			for y := 0; y < 10; y++ {
-				pixelPos := (paletteId*10+y)*t.GetWidth() + (c*10 + x)
+				pixelPos := (paletteId*11+y)*t.GetWidth() + (c*10 + x)
 				pixelPalette := gb.Gpu.SpritePaletteMap[0][c]
 				red, green, blue, _ := gb.Gpu.SpritePaletteColors[0][pixelPalette].RGBA()
 				if 4*pixelPos+3 < len(frame) {
@@ -57,7 +57,7 @@ func (t *PaletteList) GetPaletteListAsBytearray(gb *internal.Gameboy) []byte {
 	for c := 0; c < 4; c++ {
 		for x := 0; x < 10; x++ {
 			for y := 0; y < 10; y++ {
-				pixelPos := (paletteId*10+y)*t.GetWidth() + (c*10 + x)
+				pixelPos := (paletteId*11+y)*t.GetWidth() + (c*10 + x)
 				pixelPalette := gb.Gpu.SpritePaletteMap[1][c]
 				red, green, blue, _ := gb.Gpu.SpritePaletteColors[1][pixelPalette].RGBA()
 				if 4*pixelPos+3 < len(frame) {
@@ -76,7 +76,7 @@ func (t *PaletteList) GetPaletteListAsBytearray(gb *internal.Gameboy) []byte {
 		for c := 0; c < 4; c++ {
 			for x := 0; x < 10; x++ {
 				for y := 0; y < 10; y++ {
-					pixelPos := (paletteId*10+y)*t.GetWidth() + (c*10 + x)
+					pixelPos := (paletteId*11+y)*t.GetWidth() + (c*10 + x)
 					red, green, blue, _ := gb.Gpu.CgbBgPaletteColors[p][c].RGBA()
 					if 4*pixelPos+3 < len(frame) {
 						frame[4*pixelPos] = byte(red)
@@ -93,7 +93,7 @@ func (t *PaletteList) GetPaletteListAsBytearray(gb *internal.Gameboy) []byte {
 		for c := 0; c < 4; c++ {
 			for x := 0; x < 10; x++ {
 				for y := 0; y < 10; y++ {
-					pixelPos := (paletteId*10+y)*t.GetWidth() + (c*10 + x)
+					pixelPos := (paletteId*11+y)*t.GetWidth() + (c*10 + x)
 					red, green, blue, _ := gb.Gpu.CgbObjPaletteColors[p][c].RGBA()
 					if 4*pixelPos+3 < len(frame) {
 						frame[4*pixelPos] = byte(red)
