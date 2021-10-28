@@ -42,7 +42,7 @@ type Gameboy struct {
 	CheatCodeManager     *CheatCodeManager
 	WorkingScreen        [ScreenWidth][ScreenHeight][3]uint8
 	ReadyToRender        [ScreenWidth][ScreenHeight][3]uint8
-	cgbModeEnabled       bool
+	CgbModeEnabled       bool
 	doubleSpeed          bool
 	doubleSpeedRequested bool
 	Halted               bool
@@ -82,7 +82,7 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 		return nil, err
 	}
 
-	gb.cgbModeEnabled = options.CGBEnabled
+	gb.CgbModeEnabled = options.CGBEnabled
 
 	return gb, err
 }

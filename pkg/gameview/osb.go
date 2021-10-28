@@ -118,14 +118,14 @@ func (a *AXWGameboyEbitenGameView) initOSB() {
 			isMiscButton: true,
 			event:        PauseToggle,
 		},
-		{
-			xMin:         140,
-			yMin:         0,
-			xMax:         160,
-			yMax:         20,
-			isMiscButton: true,
-			event:        ShutdownGame,
-		},
+		// {
+		// 	xMin:         140,
+		// 	yMin:         0,
+		// 	xMax:         160,
+		// 	yMax:         20,
+		// 	isMiscButton: true,
+		// 	event:        ShutdownGame,
+		// },
 	}
 }
 

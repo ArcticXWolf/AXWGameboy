@@ -10,10 +10,9 @@ build:
 		go build -o build/${BINARY}-wasm.wasm ${LDFLAGS} go.janniklasrichter.de/axwgameboy/cmd/axwgameboy
 	cp -r assets/* build/
 
-wasmserver:
+serve: build
 	GOOS=linux GOARCH=amd64 \
-		go build -o build/wasm/wasmserver ${LDFLAGS} go.janniklasrichter.de/axwgameboy/cmd/wasmserver
-	chmod +x build/wasmserver
+		go run go.janniklasrichter.de/axwgameboy/cmd/wasmserver --directory='./build'
 
 test:
 	go test go.janniklasrichter.de/axwgameboy/internal
@@ -30,6 +29,6 @@ blargg:
 clean:
 	rm -rf build/
 
-all: clean build
+all: clean build serve
 
 .PHONY: clean build all

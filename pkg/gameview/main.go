@@ -8,6 +8,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"go.janniklasrichter.de/axwgameboy/internal"
+	"go.janniklasrichter.de/axwgameboy/pkg/gameview/debugscreens"
 )
 
 type AXWGameboyEbitenGameView struct {
@@ -17,9 +18,9 @@ type AXWGameboyEbitenGameView struct {
 	isTerminated       bool
 	isOSBRequested     bool
 	isOSBEnabled       bool
-	isTilemapRequested bool
-	isTilemapEnabled   bool
-	tilemapVram        int
+	isDebugRequested   bool
+	isDebugEnabled     bool
+	debugScreens       []debugscreens.DebugScreen
 	osbData            []byte
 	osbImg             image.Image
 	osbMap             []*OnScreenButton
@@ -37,6 +38,26 @@ func NewAXWGameboyEbitenGameView(options *internal.GameboyOptions) *AXWGameboyEb
 	ag := &AXWGameboyEbitenGameView{
 		Gameboy:        gb,
 		isOSBRequested: options.OSBEnabled,
+		debugScreens: []debugscreens.DebugScreen{
+			&debugscreens.Tilemap{
+				X: 170,
+				Y: 0,
+			},
+			&debugscreens.PaletteList{
+				X: 300,
+				Y: 0,
+			},
+			&debugscreens.BgMap{
+				X:     350,
+				Y:     0,
+				MapId: 0,
+			},
+			&debugscreens.BgMap{
+				X:     350,
+				Y:     260,
+				MapId: 1,
+			},
+		},
 	}
 
 	err = ag.loadOSBBackground()
@@ -78,29 +99,33 @@ func (a *AXWGameboyEbitenGameView) Draw(screen *ebiten.Image) {
 	gamescreen := screen.SubImage(image.Rect(0, 0, internal.ScreenWidth, internal.ScreenHeight)).(*ebiten.Image)
 	gamescreen.ReplacePixels(a.Gameboy.GetReadyFramebufferAsBytearray())
 
-	if a.isOSBEnabled || a.isTilemapEnabled {
+	if a.isOSBEnabled {
 		bounds := a.osbImg.Bounds()
 		osbscreen := screen.SubImage(image.Rect(0, internal.ScreenHeight, bounds.Size().X, internal.ScreenHeight+bounds.Size().Y)).(*ebiten.Image)
-		if a.isTilemapEnabled {
-			osbscreen.ReplacePixels(a.Gameboy.Gpu.GetTilemapAsBytearray(a.tilemapVram))
-		} else {
-			osbscreen.ReplacePixels(a.osbData)
-		}
+		osbscreen.ReplacePixels(a.osbData)
 	}
 
-	// ebitenutil.DebugPrintAt(screen, fmt.Sprintf("TPS: %0.2f", ebiten.CurrentTPS()), 5, 5)
-	// ebitenutil.DebugPrintAt(screen, fmt.Sprintf("FPS: %0.2f", ebiten.CurrentFPS()), 5, 15)
+	if a.isDebugEnabled {
+		for i := 0; i < len(a.debugScreens); i++ {
+			debugscreen := a.debugScreens[i]
+			debugscreen.Draw(a.Gameboy, screen)
+		}
+	}
 }
 
 func (a *AXWGameboyEbitenGameView) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	if a.isOSBEnabled != a.isOSBRequested {
 		a.isOSBEnabled = a.isOSBRequested
 	}
-	if a.isTilemapEnabled != a.isTilemapRequested {
-		a.isTilemapEnabled = a.isTilemapRequested
+	if a.isDebugEnabled != a.isDebugRequested {
+		a.isDebugEnabled = a.isDebugRequested
 	}
 
-	if a.isOSBEnabled || a.isTilemapEnabled {
+	if a.isDebugEnabled {
+		return 700, 600
+	}
+
+	if a.isOSBEnabled {
 		bounds := a.osbImg.Bounds()
 		return internal.ScreenWidth, internal.ScreenHeight + bounds.Size().Y
 	}

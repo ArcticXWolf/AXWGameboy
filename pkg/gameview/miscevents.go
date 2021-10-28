@@ -13,8 +13,6 @@ const (
 	SpeedboostToggle
 	PauseToggle
 	DebugToggle
-	Tilemap0Toggle
-	Tilemap1Toggle
 	SoundChannel1Toggle
 	SoundChannel2Toggle
 	SoundChannel3Toggle
@@ -32,11 +30,7 @@ func (a *AXWGameboyEbitenGameView) handleMiscEvents(events []MiscEvent) {
 		} else if event == PauseToggle {
 			a.togglePause()
 		} else if event == DebugToggle {
-			a.Gameboy.Debugger.TriggerBreakpoint(a.Gameboy)
-		} else if event == Tilemap0Toggle {
-			a.toggleTilemap(0)
-		} else if event == Tilemap1Toggle {
-			a.toggleTilemap(1)
+			a.toggleDebugview()
 		} else if event == ShutdownGame {
 			a.markGameForShutdown()
 		} else if event == SoundChannel1Toggle {
@@ -73,12 +67,8 @@ func (a *AXWGameboyEbitenGameView) togglePause() {
 	a.isPaused = !a.isPaused
 }
 
-func (a *AXWGameboyEbitenGameView) toggleTilemap(number int) {
-	if a.tilemapVram != number && a.isTilemapEnabled {
-		a.tilemapVram = number
-	} else {
-		a.isTilemapRequested = !a.isTilemapRequested
-	}
+func (a *AXWGameboyEbitenGameView) toggleDebugview() {
+	a.isDebugRequested = !a.isDebugRequested
 }
 
 func (a *AXWGameboyEbitenGameView) markGameForShutdown() {

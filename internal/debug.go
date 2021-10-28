@@ -144,16 +144,16 @@ func (d *Debugger) dumpScreendata(data [ScreenWidth][ScreenHeight][3]uint8) {
 }
 
 func (d *Debugger) dumpTileset(gb *Gameboy) {
-	for i := 0; i < len(gb.Gpu.tileSet); i++ {
+	for i := 0; i < len(gb.Gpu.TileSet); i++ {
 		log.Printf("Tile %d:", i)
 		for y := 0; y < 8; y++ {
 			lineStr := ""
 			for x := 0; x < 8; x++ {
-				if gb.Gpu.tileSet[i][x][y] == 3 {
+				if gb.Gpu.TileSet[i][x][y] == 3 {
 					lineStr = fmt.Sprintf("%s#", lineStr)
-				} else if gb.Gpu.tileSet[i][x][y] == 2 {
+				} else if gb.Gpu.TileSet[i][x][y] == 2 {
 					lineStr = fmt.Sprintf("%s0", lineStr)
-				} else if gb.Gpu.tileSet[i][x][y] == 1 {
+				} else if gb.Gpu.TileSet[i][x][y] == 1 {
 					lineStr = fmt.Sprintf("%s:", lineStr)
 				} else {
 					lineStr = fmt.Sprintf("%s.", lineStr)
@@ -169,11 +169,11 @@ func (d *Debugger) dumpTile(gb *Gameboy, index int) {
 	for y := 0; y < 8; y++ {
 		lineStr := ""
 		for x := 0; x < 8; x++ {
-			if gb.Gpu.tileSet[index][x][y] == 3 {
+			if gb.Gpu.TileSet[index][x][y] == 3 {
 				lineStr = fmt.Sprintf("%s#", lineStr)
-			} else if gb.Gpu.tileSet[index][x][y] == 2 {
+			} else if gb.Gpu.TileSet[index][x][y] == 2 {
 				lineStr = fmt.Sprintf("%s0", lineStr)
-			} else if gb.Gpu.tileSet[index][x][y] == 1 {
+			} else if gb.Gpu.TileSet[index][x][y] == 1 {
 				lineStr = fmt.Sprintf("%s:", lineStr)
 			} else {
 				lineStr = fmt.Sprintf("%s.", lineStr)
@@ -184,13 +184,13 @@ func (d *Debugger) dumpTile(gb *Gameboy, index int) {
 }
 
 func (d *Debugger) identifyPalettes(gb *Gameboy) {
-	gb.Gpu.bgPaletteColors = [4]color.Color{
+	gb.Gpu.BgPaletteColors = [4]color.Color{
 		color.RGBA{255, 0, 0, 255},
 		color.RGBA{192, 0, 0, 255},
 		color.RGBA{96, 0, 0, 255},
 		color.RGBA{50, 0, 0, 255},
 	}
-	gb.Gpu.spritePaletteColors = [2][4]color.Color{
+	gb.Gpu.SpritePaletteColors = [2][4]color.Color{
 		{
 			color.RGBA{0, 255, 0, 255},
 			color.RGBA{0, 192, 0, 255},

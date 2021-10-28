@@ -121,7 +121,7 @@ func (m *Mmu) ReadByte(address uint16) (result uint8) {
 		if m.inbios && address < 0x0100 {
 			return m.bios[address]
 		}
-		if m.inbios && m.gb.cgbModeEnabled && address >= 0x200 && address < 0x900 {
+		if m.inbios && m.gb.CgbModeEnabled && address >= 0x200 && address < 0x900 {
 			return m.bios[address]
 		}
 		return m.gb.CheatCodeManager.ApplyGameGenie(address, m.Cartridge.ReadByte(address))
@@ -170,7 +170,7 @@ func (m *Mmu) ReadByte(address uint16) (result uint8) {
 				return m.gb.Apu.ReadByte(address)
 			case 0x40, 0x50, 0x60, 0x70:
 				if address == 0xFF4D {
-					if m.gb.cgbModeEnabled {
+					if m.gb.CgbModeEnabled {
 						value := uint8(0x00)
 						if m.gb.doubleSpeed {
 							value = value | 0x80
@@ -183,7 +183,7 @@ func (m *Mmu) ReadByte(address uint16) (result uint8) {
 					return 0x00
 				}
 				if address == 0xFF70 {
-					if m.gb.cgbModeEnabled {
+					if m.gb.CgbModeEnabled {
 						return uint8(m.wramBank)
 					}
 				}
@@ -267,7 +267,7 @@ func (m *Mmu) WriteByte(address uint16, value uint8) {
 				m.gb.Apu.WriteWaveform(address, value)
 			case 0x40, 0x50, 0x60, 0x70:
 				if address == 0xFF4D {
-					if m.gb.cgbModeEnabled {
+					if m.gb.CgbModeEnabled {
 						m.gb.doubleSpeedRequested = value&0x1 > 0
 					}
 					return
@@ -277,7 +277,7 @@ func (m *Mmu) WriteByte(address uint16, value uint8) {
 					return
 				}
 				if address == 0xFF70 {
-					if m.gb.cgbModeEnabled {
+					if m.gb.CgbModeEnabled {
 						m.wramBank = int(value & 0x7)
 						if m.wramBank == 0 {
 							m.wramBank = 1

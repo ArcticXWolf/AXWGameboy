@@ -19,11 +19,9 @@ var keyboardButtonMap = map[ebiten.Key]internal.Button{
 
 var keyboardMiscEventMap = map[ebiten.Key]MiscEvent{
 	// ebiten.KeyEscape:         ShutdownGame,
-	ebiten.KeyShiftLeft: SpeedboostToggle,
-	ebiten.KeyP:         PauseToggle,
-	// ebiten.KeyD:              DebugToggle,
-	ebiten.KeyT:              Tilemap0Toggle,
-	ebiten.KeyG:              Tilemap1Toggle,
+	ebiten.KeyShiftLeft:      SpeedboostToggle,
+	ebiten.KeyP:              PauseToggle,
+	ebiten.KeyD:              DebugToggle,
 	ebiten.Key1:              SoundChannel1Toggle,
 	ebiten.Key2:              SoundChannel2Toggle,
 	ebiten.Key3:              SoundChannel3Toggle,
