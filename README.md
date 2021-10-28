@@ -1,8 +1,10 @@
 # AXWGameboy
 
+You can try the emulator in your browser here: [https://arcticxwolf.github.io/AXWGameboy/](https://arcticxwolf.github.io/AXWGameboy/)
+
 This is a work-in-progress gameboy emulator written in golang. So far most of the regular gameboy features are implemented. CGB support is mostly done with a few bugs still existing.
 
-Binaries are available for 64-bit Windows, Linux and Android. It should be compatible to macOS, FreeBSD, iOS, WebAssembly and Nintendo Switch™ thanks to cross plattform support by [Ebiten](https://github.com/hajimehoshi/ebiten) and GoMobile. For compilation support please refer to those projects first.
+It should be compatible to macOS, FreeBSD, iOS, WebAssembly and Nintendo Switch™ thanks to cross plattform support by [Ebiten](https://github.com/hajimehoshi/ebiten) and GoMobile. For compilation support please refer to those projects first. Main target plattform is webassembly.
 
 # Features
 
@@ -24,39 +26,10 @@ Binaries are available for 64-bit Windows, Linux and Android. It should be compa
     * All 4 channels with all features
     * Big parts are adapted from [Goboy Emulator](https://github.com/Humpheh/goboy)
     * Changed audio backend to the ebiten native one
-* Simple debugger
-* Hardcoded keybindings
 
-# Usage
+# Try it online
 
-Just download the binaries and place them in your path (or in a place of your choosing).
-
-Afterwards you can doubleclick on the binary to open it into a file selector (showing all roms in the current folder).
-
-Otherwise you can use the following flags from commandline:
-
-```
-$ axwgameboy-windows-amd64.exe --help
-Usage of axwgameboy-windows-amd64.exe:
-  -color
-        Defaults to true. If set to false, it forces all games to be in non-color-mode. (default true)
-  -cui
-        Disable normal console output and show console debug gui instead
-  -osb
-        Enable on-screen-button display.
-  -palette string
-        For non-color-mode: Specify which color palette shall be used. Currently available: dmg, red, white (default "DMG")
-  -rom string
-        Set to the path of the rom, which will be used. If not specified, then a file selector will be shown with all roms in the current folder.
-  -save string
-        Enables RAM persistence and has to contain the path to the desired savefile.
-  -serial
-        Print bytes of serial output to console as ASCII characters.
-  -sound float
-        Sets the starting master volume. Specify between 0 and 1. (default 0.5)
-```
-
-If a rom is chosen via the file selector, this automatically creates a RAM savefile in the same location.
+A copy of the emulator running in your browser is available [here](https://arcticxwolf.github.io/AXWGameboy/).
 
 # Compilation
 
