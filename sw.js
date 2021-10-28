@@ -1,12 +1,12 @@
 const CURRENT_CACHE = 'axwgameboy-pwa';
 
 const filesToCache = [
-    "/",
-    "/index.html",
-    "/gameframe.html",
-    "/wasm_exec.js",
-    "/style.css",
-    "/axwgameboy-wasm.wasm",
+    "./",
+    "./index.html",
+    "./gameframe.html",
+    "./wasm_exec.js",
+    "./style.css",
+    "./axwgameboy-wasm.wasm",
 ];
 
 self.addEventListener('activate', evt =>
