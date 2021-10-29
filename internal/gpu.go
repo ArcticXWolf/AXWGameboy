@@ -38,7 +38,7 @@ type Gpu struct {
 	BackgroundMap       bool
 	BackgroundTile      bool
 	windowActivated     bool
-	windowMap           bool
+	WindowMap           bool
 	lcdActivated        bool
 	lcdCleared          bool
 
@@ -55,8 +55,8 @@ type Gpu struct {
 
 	ScrollX         uint8
 	ScrollY         uint8
-	windowX         uint8
-	windowY         uint8
+	WindowX         uint8
+	WindowY         uint8
 	ScanlineCompare uint8
 	CurrentScanline uint8
 	modeClock       int
@@ -164,7 +164,7 @@ func (g *Gpu) ReadByte(address uint16) (result uint8) {
 				if g.windowActivated {
 					wA = 0x20
 				}
-				if g.windowMap {
+				if g.WindowMap {
 					wM = 0x40
 				}
 				if g.lcdActivated {
@@ -204,9 +204,9 @@ func (g *Gpu) ReadByte(address uint16) (result uint8) {
 			case 0xFF49:
 				return g.SpritePaletteMap[1][0]&0x3 | ((g.SpritePaletteMap[1][1] & 0x3) << 2) | ((g.SpritePaletteMap[1][2] & 0x3) << 4) | ((g.SpritePaletteMap[1][3] & 0x3) << 6)
 			case 0xFF4A:
-				return g.windowY
+				return g.WindowY
 			case 0xFF4B:
-				return g.windowX
+				return g.WindowX
 			case 0xFF4F:
 				return uint8(g.VramBank)
 			case 0xFF51:
@@ -301,7 +301,7 @@ func (g *Gpu) WriteByte(address uint16, value uint8) {
 				g.BackgroundMap = value&0x08 != 0
 				g.BackgroundTile = value&0x10 == 0
 				g.windowActivated = value&0x20 != 0
-				g.windowMap = value&0x40 != 0
+				g.WindowMap = value&0x40 != 0
 				g.lcdActivated = value&0x80 != 0
 				g.lcdCleared = false
 			case 0xFF41:
@@ -333,9 +333,9 @@ func (g *Gpu) WriteByte(address uint16, value uint8) {
 				g.SpritePaletteMap[1][2] = (value >> 4) & 0x3
 				g.SpritePaletteMap[1][3] = (value >> 6) & 0x3
 			case 0xFF4A:
-				g.windowY = value
+				g.WindowY = value
 			case 0xFF4B:
-				g.windowX = value
+				g.WindowX = value
 			case 0xFF4F:
 				if g.gb.CgbModeEnabled {
 					g.VramBank = int(value & 0x1)
@@ -703,21 +703,25 @@ func (g *Gpu) renderWindow(gb *Gameboy, scanrow [ScreenWidth]byte) [ScreenWidth]
 	var mapOffset uint16
 	var xPos, yPos uint8
 
-	if g.CurrentScanline < g.windowY {
+	if g.CurrentScanline < g.WindowY {
 		return scanrow
 	}
 
 	mapOffset = 0x1800
-	if g.windowMap {
+	if g.WindowMap {
 		mapOffset = 0x1C00
 	}
 
-	yPos = g.CurrentScanline - g.windowY
+	yPos = g.CurrentScanline - g.WindowY
 
 	tileYIndex := uint16(yPos/8) * 32
 
 	for i := uint8(0); int(i) < ScreenWidth; i++ {
-		xPos = i + g.windowX - 7
+		if i < g.WindowX-7 {
+			continue
+		}
+
+		xPos = i - (g.WindowX - 7)
 		tileXIndex := uint16(xPos / 8)
 
 		tileId := uint16(g.Vram[mapOffset+tileYIndex+tileXIndex])

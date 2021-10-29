@@ -56,19 +56,21 @@ func (t *BgMap) GetAsBytearray(gb *internal.Gameboy) []byte {
 		}
 	}
 
-	for x := 0; x < t.GetWidth(); x++ {
-		pixelPos := int(gb.Gpu.ScrollY)*t.GetWidth() + x
-		frame[4*pixelPos] = 0xDD
-		frame[4*pixelPos+1] = 0xDD
-		frame[4*pixelPos+2] = 0xDD
-		frame[4*pixelPos+3] = 0xFF
-	}
-	for y := 0; y < t.GetHeight(); y++ {
-		pixelPos := y*t.GetWidth() + int(gb.Gpu.ScrollX)
-		frame[4*pixelPos] = 0xDD
-		frame[4*pixelPos+1] = 0xDD
-		frame[4*pixelPos+2] = 0xDD
-		frame[4*pixelPos+3] = 0xFF
+	if (gb.Gpu.BackgroundMap && t.MapId == 1) || (!gb.Gpu.BackgroundMap && t.MapId == 0) {
+		for x := 0; x < t.GetWidth(); x++ {
+			pixelPos := int(gb.Gpu.ScrollY)*t.GetWidth() + x
+			frame[4*pixelPos] = 0xDD
+			frame[4*pixelPos+1] = 0x00
+			frame[4*pixelPos+2] = 0x00
+			frame[4*pixelPos+3] = 0xFF
+		}
+		for y := 0; y < t.GetHeight(); y++ {
+			pixelPos := y*t.GetWidth() + int(gb.Gpu.ScrollX)
+			frame[4*pixelPos] = 0xDD
+			frame[4*pixelPos+1] = 0x00
+			frame[4*pixelPos+2] = 0x00
+			frame[4*pixelPos+3] = 0xFF
+		}
 	}
 
 	return frame
