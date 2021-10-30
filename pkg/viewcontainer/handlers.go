@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"strings"
 	"syscall/js"
@@ -87,6 +88,27 @@ func (ag *AXWGameboyViewContainer) installSavegameHandler() {
 		ag.changeSettingsFromLoadData(loadData)
 
 		return nil
+	}))
+
+	js.Global().Set("downloadSave", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		if ag.GameView == nil || ag.GameView.Gameboy == nil {
+			return nil
+		}
+
+		romHash := sha256.Sum256(ag.GameView.Gameboy.Memory.Cartridge.GetBinaryData())
+		savegame := &localStorageSavegame{
+			romHash: fmt.Sprintf("%x", romHash),
+		}
+		save, err := ioutil.ReadAll(savegame)
+		if err != nil {
+			log.Printf("reading of savegame failed")
+			return nil
+		}
+
+		dstArray := js.Global().Get("Uint8Array").New(len(save))
+		js.CopyBytesToJS(dstArray, save)
+
+		return dstArray
 	}))
 }
 

@@ -1,26 +1,44 @@
 <!DOCTYPE html>
-<script src="wasm_exec.js"></script>
-<script>
-  // Polyfill
-  if (!WebAssembly.instantiateStreaming) {
-    WebAssembly.instantiateStreaming = async (resp, importObject) => {
-      const source = await (await resp).arrayBuffer();
-      return await WebAssembly.instantiate(source, importObject);
-    };
-  }
+<html>
 
-  const go = new Go();
-  WebAssembly.instantiateStreaming(fetch("axwgameboy-wasm.wasm"), go.importObject).then(result => {
-    go.run(result.instance);
-  });
+<head></head>
 
-  window.addEventListener("message", msg => {
-    if (msg.data.type == "loadRom") {
-      window.loadROM(msg.data.data, msg.data.settings);
-    } else if (msg.data.type == "loadSave") {
-      window.loadSave(msg.data.data, msg.data.settings);
-    } else if (msg.data.type == "changeSettings") {
-      window.changeSettings(msg.data.settings);
+<body>
+  <a id="downloadlink" style="display: none;"></a>
+  <script src="wasm_exec.js"></script>
+  <script>
+    // Polyfill
+    if (!WebAssembly.instantiateStreaming) {
+      WebAssembly.instantiateStreaming = async (resp, importObject) => {
+        const source = await (await resp).arrayBuffer();
+        return await WebAssembly.instantiate(source, importObject);
+      };
     }
-  });
-</script>
+
+    const go = new Go();
+    WebAssembly.instantiateStreaming(fetch("axwgameboy-wasm.wasm"), go.importObject).then(result => {
+      go.run(result.instance);
+    });
+
+    window.addEventListener("message", msg => {
+      if (msg.data.type == "loadRom") {
+        window.loadROM(msg.data.data, msg.data.settings);
+      } else if (msg.data.type == "loadSave") {
+        window.loadSave(msg.data.data, msg.data.settings);
+      } else if (msg.data.type == "changeSettings") {
+        window.changeSettings(msg.data.settings);
+      } else if (msg.data.type == "downloadSave") {
+        const buf = window.downloadSave();
+        const blob = new Blob([buf], { type: "octet/stream" });
+        const blobUrl = URL.createObjectURL(blob);
+        var a = document.getElementById("downloadlink");
+        a.href = blobUrl;
+        a.download = "savegame.sav"
+        a.click();
+        URL.revokeObjectURL(blobUrl);
+      }
+    });
+  </script>
+</body>
+
+</html>
