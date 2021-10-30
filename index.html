@@ -30,6 +30,10 @@
         <label for="saveData" id="saveDataLabel">Import savegame and restart</label>
         <input type="file" name="saveData" id="saveData" onchange="handleSave(this.files[0])" />
       </form>
+      <form id="saveDownload">
+        <label for="saveDownloader" id="saveDownloaderLabel">Export savegame</label>
+        <input type="button" name="saveDownloader" id="saveDownloader" onclick="handleSaveDownload()" />
+      </form>
       <h2>Settings</h2>
       <form id="settingsHandler">
         <div class="checkboxSettings">
@@ -164,6 +168,11 @@
         gameboy.focus();
       };
       reader.readAsBinaryString(file);
+    };
+
+    function handleSaveDownload() {
+      gameboy.postMessage({ type: "downloadSave" }, "*");
+      gameboy.focus();
     };
 
     document.getElementById("settingsHandler").addEventListener("change", function () {

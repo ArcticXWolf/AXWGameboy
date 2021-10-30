@@ -5,6 +5,7 @@ html, body, #game {
 	margin: 0;
 	position: relative;
 	overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 #menuToggle {
@@ -71,6 +72,7 @@ html, body, #game {
 #settings h1, #settings h2 {
   color: #ffffff;
   text-align: center;
+  margin-top: 40px;
 }
 
 #settings .closebtn, #settings .closebtn:visited {
@@ -109,6 +111,18 @@ html, body, #game {
 	display: none;
 }
 
+#settings #saveDownloaderLabel {
+	display: block;
+	padding: 20px;
+	margin: 10px;
+	color: #ffffff;
+	border: 2px solid #ffffff;
+	text-align: center;
+}
+#settings #saveDownloader {
+	display: none;
+}
+
 #settings .checkboxSettings {
   width: 100%;
 }
@@ -142,13 +156,26 @@ html, body, #game {
 
 .keybindings {
   color: #ffffff;
+  padding-bottom: 200px;
+  margin: 10px;
 }
 
 .keybindings table {
-  margin: 10px;
+  width: 100%;
 }
+
 .keybindings table th:first-child {
   width: 35%;
+  text-align: center;
+}
+
+.keybindings table th {
+  text-align: left;
+  border-bottom: 1px solid #dddddd;
+}
+
+.keybindings table tr td:first-child {
+  text-align: center;
 }
 
 kbd {
