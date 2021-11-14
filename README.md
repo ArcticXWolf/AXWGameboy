@@ -4,7 +4,7 @@ You can try the emulator in your browser here: [https://arcticxwolf.github.io/AX
 
 This is a work-in-progress gameboy emulator written in golang. So far most of the regular gameboy features are implemented. CGB support is mostly done with a few bugs still existing.
 
-It should be compatible to macOS, FreeBSD, iOS, WebAssembly and Nintendo Switch™ thanks to cross plattform support by [Ebiten](https://github.com/hajimehoshi/ebiten) and GoMobile. For compilation support please refer to those projects first. Main target plattform is webassembly.
+It should be compatible (with some additional work) to macOS, FreeBSD, iOS, WebAssembly and Nintendo Switch™ thanks to cross plattform support by [Ebiten](https://github.com/hajimehoshi/ebiten) and GoMobile. For compilation support please refer to those projects first. Main target plattform is webassembly.
 
 # Features
 
@@ -26,6 +26,8 @@ It should be compatible to macOS, FreeBSD, iOS, WebAssembly and Nintendo Switch�
     * All 4 channels with all features
     * Big parts are adapted from [Goboy Emulator](https://github.com/Humpheh/goboy)
     * Changed audio backend to the ebiten native one
+* Cheat support with GameShark & Gamegenie
+* Open-Source bootroms adapted from [Sameboy Emulator](https://github.com/LIJI32/SameBoy)
 
 # Try it online
 
@@ -33,9 +35,9 @@ A copy of the emulator running in your browser is available [here](https://arcti
 
 # Compilation
 
-To compile the source for yourself, just clone the repo and use the provided makefile. You will also need to provide a dump/rom of the GB and GB color boot rom. Place these under `internal/bootroms/dmg_bios.bin` and `internal/bootroms/cgb_bios.bin`.
-
 You might need to install some build dependencies. These are required by ebiten as our game engine. For further instructions (and install help for each OS) please refer to the ebiten documentation.
+
+Afterwards you can build the bootroms with `make bootroms` and then use `make all` to build the emulator + start a webserver serving it on localhost:8008.
 
 # Keyboard bindings
 
@@ -89,3 +91,4 @@ q | Exit emulator
 * [Goboy Emulator](https://github.com/Humpheh/goboy)
 * [Pastraiser Gameboy CPU instruction set](https://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html)
 * [tomeks Blog](https://blog.rekawek.eu/2017/02/09/coffee-gb/)
+* [Sameboy Emulator](https://github.com/LIJI32/SameBoy)
