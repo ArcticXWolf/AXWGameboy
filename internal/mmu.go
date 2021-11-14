@@ -8,10 +8,10 @@ import (
 	"go.janniklasrichter.de/axwgameboy/internal/cartridge"
 )
 
-//go:embed bootroms/dmg_bios.bin
+//go:embed bootroms/dmg_boot.bin
 var gb_bios []byte
 
-//go:embed bootroms/cgb_bios.bin
+//go:embed bootroms/cgb_boot.bin
 var cgb_bios []byte
 
 type InterruptFlags struct {

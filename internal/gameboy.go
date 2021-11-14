@@ -47,6 +47,7 @@ type Gameboy struct {
 	doubleSpeedRequested bool
 	Halted               bool
 	Quit                 bool
+	RingLogger           *RingLogger
 	Options              *GameboyOptions
 	LastSave             time.Time
 }
@@ -65,6 +66,7 @@ func NewGameboy(options *GameboyOptions) (*Gameboy, error) {
 		Inputs:           i,
 		Debugger:         &Debugger{AddressEnabled: false},
 		CheatCodeManager: &CheatCodeManager{genieEnabled: true, sharkEnabled: true},
+		RingLogger:       NewRingLogger(60),
 		Halted:           false,
 		Options:          options,
 		LastSave:         time.Now(),

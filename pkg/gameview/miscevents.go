@@ -28,7 +28,7 @@ func (a *AXWGameboyEbitenGameView) handleMiscEvents(events []MiscEvent) {
 		if event == SpeedboostToggle {
 			a.toggleSpeedboost()
 		} else if event == PauseToggle {
-			a.togglePause()
+			a.TogglePause()
 		} else if event == DebugToggle {
 			a.toggleDebugview()
 		} else if event == ShutdownGame {
@@ -63,7 +63,7 @@ func (a *AXWGameboyEbitenGameView) toggleSpeedboost() {
 	}
 }
 
-func (a *AXWGameboyEbitenGameView) togglePause() {
+func (a *AXWGameboyEbitenGameView) TogglePause() {
 	a.isPaused = !a.isPaused
 }
 

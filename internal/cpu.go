@@ -140,6 +140,11 @@ func (c *Cpu) Tick(gb *Gameboy) int {
 	return cycles
 }
 
+func (c *Cpu) PeekNextOpcode(gb *Gameboy) (uint8, *Opcode) {
+	code := gb.PeekPc(0)
+	return code, Opcodes[code]
+}
+
 func (c *Cpu) getNextOpcode(gb *Gameboy) (uint8, *Opcode) {
 	code := gb.popPc()
 	return code, Opcodes[code]

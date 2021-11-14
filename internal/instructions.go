@@ -189,6 +189,7 @@ func instructionInterrupt(gb *Gameboy, interruptIndex int) bool {
 		gb.CheatCodeManager.ApplyGameShark(gb)
 	case 1:
 		gb.Cpu.Registers.Pc = 0x48
+		gb.RingLogger.Printf("gpu", "Interrupt LCD STAT triggered")
 	case 2:
 		gb.Cpu.Registers.Pc = 0x50
 	case 3:

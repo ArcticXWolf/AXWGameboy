@@ -61,6 +61,10 @@ func NewAXWGameboyEbitenGameView(options *internal.GameboyOptions) *AXWGameboyEb
 				X: 0,
 				Y: 300,
 			},
+			&debugscreens.LogList{
+				X: 700,
+				Y: 0,
+			},
 		},
 	}
 
@@ -126,7 +130,7 @@ func (a *AXWGameboyEbitenGameView) Layout(outsideWidth, outsideHeight int) (scre
 	}
 
 	if a.isDebugEnabled {
-		return 700, 600
+		return 1000, 600
 	}
 
 	if a.isOSBEnabled {

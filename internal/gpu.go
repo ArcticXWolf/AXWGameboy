@@ -3,6 +3,8 @@ package internal
 import (
 	"fmt"
 	"image/color"
+
+	"go.janniklasrichter.de/axwgameboy/internal/cartridge"
 )
 
 type SpriteObject struct {
@@ -18,7 +20,11 @@ type SpriteObject struct {
 }
 
 func (s *SpriteObject) String() string {
-	return fmt.Sprintf("Sprite X%d Y%d T%d V%d P%d", s.X, s.Y, s.Tile, s.VramBank, s.CgbPalette)
+	palette := 0
+	if s.UseSecondPalette {
+		palette = 1
+	}
+	return fmt.Sprintf("Sprite X%03d Y%03d T%03d V%01d D%01d P%01d", s.X, s.Y, s.Tile, s.VramBank, palette, s.CgbPalette)
 }
 
 type TileAttributes struct {
@@ -53,18 +59,19 @@ type Gpu struct {
 	StatEnableLYC      bool
 	StatInterruptDelay bool
 
-	ScrollX         uint8
-	ScrollY         uint8
-	WindowX         uint8
-	WindowY         uint8
-	ScanlineCompare uint8
-	CurrentScanline uint8
-	modeClock       int
+	ScrollX                    uint8
+	ScrollY                    uint8
+	WindowX                    uint8
+	WindowY                    uint8
+	WindowYInternalLineCounter uint8
+	ScanlineCompare            uint8
+	CurrentScanline            uint8
+	modeClock                  int
 
 	VramBank int
 	Vram     [0x4000]byte
 
-	oam              [0xA0]byte
+	Oam              [0xA0]byte
 	SpriteObjectData [40]SpriteObject
 
 	TileSet        [768][8][8]uint8
@@ -139,7 +146,7 @@ func (g *Gpu) ReadByte(address uint16) (result uint8) {
 		switch address & 0xFF00 {
 		case 0xFE00:
 			if address < 0xFEA0 {
-				return g.oam[address&0xFF]
+				return g.Oam[address&0xFF]
 			}
 			return 0
 		case 0xFF00:
@@ -289,12 +296,13 @@ func (g *Gpu) WriteByte(address uint16, value uint8) {
 		switch address & 0xFF00 {
 		case 0xFE00:
 			if address < 0xFEA0 {
-				g.oam[address&0xFF] = value
-				g.updateSpriteObject(address&0xFF, value)
+				g.Oam[address&0xFF] = value
+				g.updateSpriteObject(address, value)
 			}
 		case 0xFF00:
 			switch address {
 			case 0xFF40:
+				g.gb.RingLogger.Printf("gpu", "Register Write %5s $%08b to $%08b on line %d", "LDLC", g.ReadByte(address), value, g.CurrentScanline)
 				g.backgroundActivated = value&0x01 != 0
 				g.spritesActivated = value&0x02 != 0
 				g.bigSpritesActivated = value&0x04 != 0
@@ -310,11 +318,15 @@ func (g *Gpu) WriteByte(address uint16, value uint8) {
 				g.StatEnableMode2 = value&0x20 != 0
 				g.StatEnableLYC = value&0x40 != 0
 			case 0xFF42:
+				g.gb.RingLogger.Printf("gpu", "Register Write %5s $%02x to $%02x on line %d", "SCY", g.ReadByte(address), value, g.CurrentScanline)
 				g.ScrollY = value
 			case 0xFF43:
+				g.gb.RingLogger.Printf("gpu", "Register Write %5s $%02x to $%02x on line %d", "SCX", g.ReadByte(address), value, g.CurrentScanline)
 				g.ScrollX = value
 			case 0xFF45:
+				g.gb.RingLogger.Printf("gpu", "Register Write %5s $%02d to $%02d on line %d", "LYC", g.ReadByte(address), value, g.CurrentScanline)
 				g.ScanlineCompare = value
+				g.StatTriggerLYC = g.CurrentScanline == g.ScanlineCompare
 			case 0xFF46:
 				g.oamDMA(value)
 			case 0xFF47:
@@ -333,8 +345,10 @@ func (g *Gpu) WriteByte(address uint16, value uint8) {
 				g.SpritePaletteMap[1][2] = (value >> 4) & 0x3
 				g.SpritePaletteMap[1][3] = (value >> 6) & 0x3
 			case 0xFF4A:
+				g.gb.RingLogger.Printf("gpu", "Register Write %5s $%03d to $%03d on line %d", "WY", g.ReadByte(address), value, g.CurrentScanline)
 				g.WindowY = value
 			case 0xFF4B:
+				g.gb.RingLogger.Printf("gpu", "Register Write %5s $%03d to $%03d on line %d", "WX", g.ReadByte(address), value, g.CurrentScanline)
 				g.WindowX = value
 			case 0xFF4F:
 				if g.gb.CgbModeEnabled {
@@ -473,8 +487,8 @@ func (g *Gpu) ResetTileAttributes() {
 func (g *Gpu) oamDMA(value uint8) {
 	var x uint16
 	for x = 0; x < 0xA0; x++ {
-		g.oam[x] = g.gb.Memory.ReadByte((uint16(value) << 8) + x)
-		g.updateSpriteObject(x, g.oam[x])
+		g.Oam[x] = g.gb.Memory.ReadByte((uint16(value) << 8) + x)
+		g.updateSpriteObject(0xFE00+x, g.Oam[x])
 	}
 	g.gb.Cpu.ClockCycles += 164
 }
@@ -516,7 +530,12 @@ func (g *Gpu) stepHDMA() {
 func (g *Gpu) performDMA(length uint16) {
 	var x uint16
 	for x = 0; x < length; x++ {
-		g.WriteByte(0x8000+g.cgbDMADestination+x, g.gb.Memory.ReadByte(g.cgbDMASource+x))
+		address := 0x8000 + g.cgbDMADestination + x
+		value := g.gb.Memory.ReadByte(g.cgbDMASource + x)
+		g.WriteByte(address, value)
+		g.updateTile(address)
+		g.updateSpriteObject(address, value)
+		g.updateTileAttribute(address)
 	}
 
 	g.cgbDMASource += length
@@ -524,6 +543,11 @@ func (g *Gpu) performDMA(length uint16) {
 }
 
 func (g *Gpu) updateSpriteObject(address uint16, value uint8) {
+	if address < 0xFE00 || address >= 0xFEA0 {
+		return
+	}
+	address = address - 0xFE00
+
 	objectId := address >> 2
 	if objectId < uint16(len(g.SpriteObjectData)) {
 		switch address & 0x3 {
@@ -561,15 +585,17 @@ func (g *Gpu) updateSpriteObject(address uint16, value uint8) {
 func (g *Gpu) ResetOAM() {
 	var x uint16
 	for x = 0; x < 0xA0; x++ {
-		g.oam[x] = 0x00
-		g.updateSpriteObject(x, g.oam[x])
+		g.Oam[x] = 0x00
+		g.updateSpriteObject(x, g.Oam[x])
 	}
 }
 
 func (g *Gpu) Update(gb *Gameboy, cyclesUsed int) {
 	if !g.lcdActivated {
+		g.gb.RingLogger.Printf("gpu", "Clear LCD on line %d", g.CurrentScanline)
 		g.CurrentScanline = 0
 		g.currentMode = 0
+		g.WindowYInternalLineCounter = 0
 		if !g.lcdCleared {
 			gb.clearScreen()
 			g.lcdCleared = true
@@ -590,6 +616,7 @@ func (g *Gpu) Update(gb *Gameboy, cyclesUsed int) {
 				g.SetLCDMode(gb, 1)
 				gb.ReadyToRender = gb.WorkingScreen
 				gb.WorkingScreen = [ScreenWidth][ScreenHeight][3]uint8{}
+				g.WindowYInternalLineCounter = 0
 				gb.Memory.GetInterruptFlags().TriggeredFlags |= 0x01
 			} else {
 				g.SetLCDMode(gb, 2)
@@ -618,7 +645,7 @@ func (g *Gpu) Update(gb *Gameboy, cyclesUsed int) {
 			g.RenderScanline(gb)
 		}
 	}
-	g.HandleStatInterrupt()
+	gb.Gpu.HandleStatInterrupt()
 }
 
 func (g *Gpu) SetLCDMode(gb *Gameboy, value uint8) {
@@ -637,6 +664,8 @@ func (g *Gpu) RenderScanline(gb *Gameboy) {
 	var scanrow [ScreenWidth]byte
 	if g.backgroundActivated || g.gb.CgbModeEnabled {
 		scanrow = g.renderTiles(gb)
+	} else {
+		scanrow = g.renderEmptyLine(gb)
 	}
 
 	if (g.backgroundActivated || g.gb.CgbModeEnabled) && g.windowActivated {
@@ -646,6 +675,18 @@ func (g *Gpu) RenderScanline(gb *Gameboy) {
 	if g.spritesActivated {
 		g.renderSprites(gb, scanrow)
 	}
+}
+
+func (g *Gpu) renderEmptyLine(gb *Gameboy) (scanrow [ScreenWidth]byte) {
+	pixelRealColor := g.BgPaletteMap[0]
+	red, green, blue, _ := g.BgPaletteColors[pixelRealColor].RGBA()
+	for i := uint8(0); int(i) < ScreenWidth; i++ {
+		scanrow[i] = 0
+		gb.WorkingScreen[i][g.CurrentScanline][0] = uint8(red)
+		gb.WorkingScreen[i][g.CurrentScanline][1] = uint8(green)
+		gb.WorkingScreen[i][g.CurrentScanline][2] = uint8(blue)
+	}
+	return scanrow
 }
 
 func (g *Gpu) renderTiles(gb *Gameboy) (scanrow [ScreenWidth]byte) {
@@ -705,6 +746,10 @@ func (g *Gpu) renderWindow(gb *Gameboy, scanrow [ScreenWidth]byte) [ScreenWidth]
 
 	if g.CurrentScanline < g.WindowY {
 		return scanrow
+	} else if g.WindowX > uint8(ScreenWidth) {
+		return scanrow
+	} else if g.WindowY > uint8(ScreenHeight) {
+		return scanrow
 	}
 
 	mapOffset = 0x1800
@@ -712,9 +757,9 @@ func (g *Gpu) renderWindow(gb *Gameboy, scanrow [ScreenWidth]byte) [ScreenWidth]
 		mapOffset = 0x1C00
 	}
 
-	yPos = g.CurrentScanline - g.WindowY
+	yPos = g.WindowYInternalLineCounter
 
-	tileYIndex := uint16(yPos/8) * 32
+	tileYIndex := uint16((yPos)/8) * 32
 
 	for i := uint8(0); int(i) < ScreenWidth; i++ {
 		if i < g.WindowX-7 {
@@ -754,6 +799,8 @@ func (g *Gpu) renderWindow(gb *Gameboy, scanrow [ScreenWidth]byte) [ScreenWidth]
 		gb.WorkingScreen[i][g.CurrentScanline][1] = uint8(green)
 		gb.WorkingScreen[i][g.CurrentScanline][2] = uint8(blue)
 	}
+	g.gb.RingLogger.Printf("gpu", "Rendering Window L%d on S%d", g.WindowYInternalLineCounter, g.CurrentScanline)
+	g.WindowYInternalLineCounter++
 
 	return scanrow
 }
@@ -830,8 +877,10 @@ func (g *Gpu) renderSprites(gb *Gameboy, scanrow [ScreenWidth]byte) {
 			}
 
 			// skip pixels without priority that are hidden by BG
-			if !(spriteObject.Priority && !g.TileBGPriority[pixelPos][g.CurrentScanline]) && scanrow[pixelPos] != 0 {
-				continue
+			if !g.gb.CgbModeEnabled || g.backgroundActivated {
+				if !(spriteObject.Priority && !g.TileBGPriority[pixelPos][g.CurrentScanline]) && scanrow[pixelPos] != 0 {
+					continue
+				}
 			}
 
 			if g.gb.CgbModeEnabled {
@@ -850,6 +899,12 @@ func (g *Gpu) renderSprites(gb *Gameboy, scanrow [ScreenWidth]byte) {
 			red, green, blue, _ := paletteColors[pixelRealColor].RGBA()
 			if g.gb.CgbModeEnabled {
 				cgbPalette := spriteObject.CgbPalette
+				if g.gb.Memory.Cartridge.CartridgeHeader().CartridgeGBMode == cartridge.OnlyDMG {
+					cgbPalette = 0
+					if spriteObject.UseSecondPalette {
+						cgbPalette = 1
+					}
+				}
 				red, green, blue, _ = g.CgbObjPaletteColors[cgbPalette][pixelPaletteColor].RGBA()
 			}
 			gb.WorkingScreen[pixelPos][g.CurrentScanline][0] = uint8(red)
@@ -867,7 +922,7 @@ func (g *Gpu) Reset(gb *Gameboy) {
 	gb.clearScreen()
 
 	g.TileSet = [768][8][8]uint8{}
-	g.oam = [0xA0]uint8{}
+	g.Oam = [0xA0]uint8{}
 	g.SpriteObjectData = [40]SpriteObject{}
 
 	for i := 0; i < len(g.SpriteObjectData); i++ {
