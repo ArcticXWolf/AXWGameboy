@@ -3,7 +3,7 @@ BUILD=`date +%FT%T%z`
 COMMIT=`git rev-list -1 HEAD`
 BINARY=axwgameboy
 
-LDFLAGS=-ldflags "-w -s -X main.version=${VERSION} -X main.date=${BUILD} -X main.commit=${COMMIT}"
+LDFLAGS=-ldflags "-X main.version=${VERSION} -X main.date=${BUILD} -X main.commit=${COMMIT}"
 
 build:
 	GOOS=js GOARCH=wasm \

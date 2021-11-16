@@ -8,6 +8,14 @@ html, body, #game {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+#sourceLink {
+  text-align: center;
+  display: block;
+  color: white;
+  font-size: 12px;
+  margin: 0px 0px 30px;
+}
+
 #menuToggle {
 	display: block;
 	width: 33px;
@@ -73,6 +81,10 @@ html, body, #game {
   color: #ffffff;
   text-align: center;
   margin-top: 40px;
+}
+
+#settings h1 {
+  margin-bottom: 0px;
 }
 
 #settings .closebtn, #settings .closebtn:visited {
